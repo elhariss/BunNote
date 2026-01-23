@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BunNote</title>
+    <link rel="stylesheet" href="{{CSS_URI}}">
+    <link rel="stylesheet" type="text/css"href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+    <link rel="stylesheet" type="text/css"href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+
+            <div class="sidebar_header">
+                <h3>Vault</h3>
+                <button class="btn_icon" title="Settings">
+                    <i class="ph ph-gear"></i>
+                </button>
+                <button class="btn_icon" title="New Note">
+                   <i class="ph ph-file-plus"></i>
+                </button>
+                <button class="btn_icon" title="New Folder">
+                   <i class="ph ph-folder-plus"></i>
+                </button>
+            </div>
+
+
+            <div class="editor_area">
+                <div class="editor_tabs" id="editorTabs"></div>
+
+                <div class="editor_header">
+                    <div class="editor_title_warpper">
+                        <div class="editor_title_warpper">
+                            <div class="editor_title" id="editorTitle">No Note Open</div>
+                            <input class="editor-title-input" id="editorTitleInput" type="text" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="editor_container">
+                       <textarea class="markdown-editor" id="editor"></textarea>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</body>
+</html>
