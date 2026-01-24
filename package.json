@@ -1,7 +1,7 @@
 {
   "name": "bunnote",
   "displayName": "BunNote",
-  "description": "",
+  "description": "Write and manage notes directly from VS Code with full markdown support",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.108.1"
@@ -9,9 +9,27 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onView:bunNoteView"],
   "main": "./src/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id":"bunNote",
+          "title": "BunNote",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "bunNote":[
+        {
+          "id":"bunNoteView",
+          "name": "Vault",
+          "type": "webview"
+        }
+      ]
+    },
     "commands": [{
       "command": "bunnote.helloWorld",
       "title": "Hello World"
