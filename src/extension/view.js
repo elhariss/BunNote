@@ -10,6 +10,9 @@ class ViewProvider{
 
     resolveWebviewView(webviewView) {
         this.view = webviewView;
+
+        // Configure webview option
+        // webviewの設定
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
