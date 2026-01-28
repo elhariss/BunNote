@@ -4,7 +4,7 @@
   "description": "Write and manage notes directly from VS Code with full markdown support",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.108.1"
+    "vscode": "^1.95.0"
   },
   "categories": [
     "Other"
@@ -41,7 +41,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.108.1",
+    "@types/vscode": "^1.95.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "eslint": "^9.39.2",

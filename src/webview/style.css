@@ -43,13 +43,13 @@
     color: var(--vscode-editor-foreground);
 }
 
-.files-list {
+.files_list {
     flex: 1;
     overflow-y: auto;
     padding: 8px 0;
 }
 
-.file-item {
+.file_item {
     padding: 6px 12px;
     cursor: pointer;
     font-size: 13px;
@@ -60,7 +60,7 @@
     gap: 6px;
 }
 
-.folder-item {
+.folder_item {
     padding: 6px 12px;
     cursor: pointer;
     font-size: 13px;
@@ -72,12 +72,28 @@
     letter-spacing: 0.04em;
 }
 
-.file-item i,
-.folder-item i {
+.file_item i,
+.folder_item i {
     font-size: 16px;
 }
 
-.file-item:hover {
+.file_item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.file_item.active {
+    background-color: var(--vscode-list-activeSelectionBackground);
+    border-left-color: var(--vscode-list-activeSelectionForeground);
+}
+
+.file_item i,
+.folder_item i {
+    font-size: 16px;
+}
+
+
+
+.file_item:hover {
     background-color: var(--vscode-list-hoverBackground);
 }
 
@@ -86,23 +102,27 @@
     border-left-color: var(--vscode-list-activeSelectionForeground);
 }
 
-.file-item i,
-.folder-item i {
-    font-size: 16px;
+
+.empty_state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--vscode-descriptionForeground);
+  text-align: center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
 }
 
-
-
-.file-item:hover {
-    background-color: var(--vscode-list-hoverBackground);
+.empt_state_icon {
+  font-size: 48px;
+  opacity: 0.5;
 }
 
-.file-item.active {
-    background-color: var(--vscode-list-activeSelectionBackground);
-    border-left-color: var(--vscode-list-activeSelectionForeground);
+.empty_state_text {
+  font-size: 14px;
 }
-
-
 
 /* Editor section */
 

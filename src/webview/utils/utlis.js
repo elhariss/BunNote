@@ -13,13 +13,12 @@ function escapeHtml(text){
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-function getCurrentDirectory(fileName){
-    if(!fileName){
-        return '';
-    }
-
-    const idx = fileName.lastIndexOf('/');
-    return idx === -1 ? '' : fileName.slice(0, idx + 1)
+function getCurrentDirectory(fileName) {
+  if (!fileName) {
+    return '';
+  }
+  const idx = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
+  return idx === -1 ? '' : fileName.slice(0, idx + 1);
 }
 
 
@@ -52,7 +51,7 @@ function buildNewName(rawTitle, targetFile = currentFile){
 
     let newBase = trimmed;
 
-    if(!newBase.toLowerCase().endWith('.md')){
+    if(!newBase.toLowerCase().endsWith('.md')){
         newBase += '.md'
     }
 
