@@ -30,10 +30,44 @@
         }
       ]
     },
-    "commands": [{
-      "command": "bunnote.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "bunnote.setVault",
+        "title": "BunNote: Set Vault Folder"
+      },
+      {
+        "command": "bunnote.createNote",
+        "title": "BunNote: Create New Note"
+      },
+      {
+        "command": "bunnote.refreshFiles",
+        "title": "BunNote: Refresh Files"
+      },
+      {
+        "command": "bunnote.openSettings",
+        "title": "BunNote: Open Settings"
+      }
+    ],
+    "configuration": {
+      "title": "BunNote",
+      "properties": {
+        "bunnote.vaultPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to your BunNote vault folder"
+        },
+        "bunnote.defaultVaultPath": {
+          "type": "string",
+          "default": "",
+          "description": "Default vault path to use when no workspace vault is set"
+        },
+        "bunnote.autoUseDefaultVault": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically use the default vault path if no workspace vault is configured"
+        }
+      }
+    }
   },
   "scripts": {
     "lint": "eslint .",
