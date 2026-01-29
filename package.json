@@ -9,7 +9,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onView:bunNoteView"],
+  "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
     "viewsContainers": {
