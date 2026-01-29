@@ -218,7 +218,6 @@
     margin-right: 8px;
     position: relative;
     top: -1px;
-    opacity: 0.8;
     background-color: transparent;
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
@@ -254,16 +253,21 @@
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
 }
 
-.EasyMDEContainer .cm-task-checked-line {
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
-    text-decoration-color: var(--vscode-descriptionForeground);
+.EasyMDEContainer .CodeMirror-line.cm-task-checked-line {
     color: var(--vscode-descriptionForeground) !important;
     opacity: 0.75;
 }
 
-.EasyMDEContainer .cm-task-checked-line .cm-task-checkbox {
-    text-decoration: none;
+.EasyMDEContainer .CodeMirror-line.cm-task-checked-line > span > span {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--vscode-descriptionForeground);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-task-checked-line .cm-task-checkbox {
+    text-decoration: none !important;
 }
 
 /* Horizontal Rule / 水平線 */
