@@ -492,7 +492,7 @@ function buildFileTree(fileList, folderList) {
 }
 
 function renderTree(node, depth = 0) {
-  const indent = depth * 14;
+  const indent = depth * 16;
   let html = '';
 
   const folderNames = Object.keys(node.folders).sort((a, b) => a.localeCompare(b));
@@ -502,7 +502,7 @@ function renderTree(node, depth = 0) {
     const folderNode = node.folders[folderName];
     const folderPath = folderNode.path || folderName;
     const isExpanded = expandedFolders.has(folderPath);
-    html += "<div class=\"folder_item " + (isExpanded ? "expanded" : "collapsed") + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"toggleFolder('" + escapeHtml(folderPath) + "')\" oncontextmenu=\"showFolderContextMenu(event, '" + escapeHtml(folderPath) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'folder', '" + escapeHtml(folderPath) + "')\" ondragover=\"handleDragOver(event)\" ondragenter=\"handleFolderDragEnter(event, '" + escapeHtml(folderPath) + "')\" ondragleave=\"handleFolderDragLeave(event)\" ondrop=\"handleDropOnFolder(event, '" + escapeHtml(folderPath) + "')\" ondragend=\"handleDragEnd()\">" +
+    html += "<div class=\"folder_item " + (isExpanded ? "expanded" : "collapsed") + "\" data-depth=\"" + depth + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"toggleFolder('" + escapeHtml(folderPath) + "')\" oncontextmenu=\"showFolderContextMenu(event, '" + escapeHtml(folderPath) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'folder', '" + escapeHtml(folderPath) + "')\" ondragover=\"handleDragOver(event)\" ondragenter=\"handleFolderDragEnter(event, '" + escapeHtml(folderPath) + "')\" ondragleave=\"handleFolderDragLeave(event)\" ondrop=\"handleDropOnFolder(event, '" + escapeHtml(folderPath) + "')\" ondragend=\"handleDragEnd()\">" +
       "<span class=\"file_icon\"><i class=\"ph " + (isExpanded ? "ph-folder-open " : "ph-folder") + "\"></i></span>" +
       "<span class=\"file_name\" title=\"" + escapeHtml(folderPath) + "\">" + escapeHtml(folderName) + "</span>" +
       "</div>";
@@ -513,7 +513,7 @@ function renderTree(node, depth = 0) {
 
   fileEntries.forEach(file => {
     const displayName = file.name.replace(/\.md$/i, '');
-    html += "<div class=\"file_item " + (currentFile === file.path ? "active" : "") + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"openFile('" + escapeHtml(file.path) + "')\" oncontextmenu=\"showFileContextMenu(event, '" + escapeHtml(file.path) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'file', '" + escapeHtml(file.path) + "')\" ondragend=\"handleDragEnd()\">" +
+    html += "<div class=\"file_item " + (currentFile === file.path ? "active" : "") + "\" data-depth=\"" + depth + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"openFile('" + escapeHtml(file.path) + "')\" oncontextmenu=\"showFileContextMenu(event, '" + escapeHtml(file.path) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'file', '" + escapeHtml(file.path) + "')\" ondragend=\"handleDragEnd()\">" +
       "<span class=\"file_icon\"><i class=\"ph ph-file-text\"></i></span>" +
       "<span class=\"file_name\" title=\"" + escapeHtml(file.path) + "\">" + escapeHtml(displayName) + "</span>" +
       "</div>";

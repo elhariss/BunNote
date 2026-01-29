@@ -117,6 +117,82 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    position: relative;
+}
+
+/* Indent guides for files and folders */
+.file_item::before,
+.folder_item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+/* Generate indent guides based on depth */
+.file_item[data-depth="0"]::before,
+.folder_item[data-depth="0"]::before {
+    background: none;
+}
+.file_item[data-depth="1"]::before,
+.folder_item[data-depth="1"]::before {
+    width: 1px;
+    left: 12px;
+    background: var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3));
+}
+
+.file_item[data-depth="2"]::before,
+.folder_item[data-depth="2"]::before {
+    width: calc(16px * 2 + 1px);
+    left: 12px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+        transparent 1px,
+        transparent 16px
+    );
+}
+
+.file_item[data-depth="3"]::before,
+.folder_item[data-depth="3"]::before {
+    width: calc(16px * 3 + 1px);
+    left: 12px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+        transparent 1px,
+        transparent 16px
+    );
+}
+
+.file_item[data-depth="4"]::before,
+.folder_item[data-depth="4"]::before {
+    width: calc(16px * 4 + 1px);
+    left: 12px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+        transparent 1px,
+        transparent 16px
+    );
+}
+
+.file_item[data-depth="5"]::before,
+.folder_item[data-depth="5"]::before {
+    width: calc(16px * 5 + 1px);
+    left: 12px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+        transparent 1px,
+        transparent 16px
+    );
 }
 
 /* Folder Item / フォルダ */
@@ -128,6 +204,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    position: relative;
     text-transform: capitalize;
     letter-spacing: 0.04em;
 }
