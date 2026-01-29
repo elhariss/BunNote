@@ -17,6 +17,49 @@ class ViewProvider {
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     this.cacheKey = "bunnote.cachedIndex";
     this.cache = this.context.globalState.get(this.cacheKey, null);
+    this.fileWatcher = null;
+    this.setupFileWatcher();
+  }
+
+  // Setup file watcher for external changes / 外部変更用のファイルウォッチャーを設定
+  setupFileWatcher() {
+    // Dispose existing watcher if any
+    if (this.fileWatcher) {
+      this.fileWatcher.dispose();
+      this.fileWatcher = null;
+    }
+
+    const vaultPath = this.getVaultPath();
+    if (vaultPath && fs.existsSync(vaultPath)) {
+      // Watch for changes in the vault directory
+      const pattern = new vscode.RelativePattern(vaultPath, "**/*.md");
+      this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+      // File created
+      this.fileWatcher.onDidCreate(() => {
+        this.refresh();
+      });
+
+      // File changed
+      this.fileWatcher.onDidChange((uri) => {
+        if (this.view) {
+          const vaultPath = this.getVaultPath();
+          const relativePath = path.relative(vaultPath, uri.fsPath).split(path.sep).join("/");
+          // Notify webview to reload the file if it's open
+          this.view.webview.postMessage({ 
+            command: "fileChanged", 
+            fileName: relativePath 
+          });
+        }
+      });
+
+      // File deleted
+      this.fileWatcher.onDidDelete(() => {
+        this.refresh();
+      });
+
+      this.context.subscriptions.push(this.fileWatcher);
+    }
   }
 
   // Refresh webview / Webviewを更新
@@ -24,6 +67,8 @@ class ViewProvider {
     if (this.view) {
       this.view.webview.postMessage({ command: "refresh" });
     }
+    // Update file watcher when vault changes
+    this.setupFileWatcher();
   }
 
   // Scan vault for markdown files / Vault内のマークダウンファイルをスキャン
@@ -251,7 +296,7 @@ class ViewProvider {
           vscode.window.showErrorMessage("Failed to create note: " + err.message);
         }
       } else if (msg.command === "openSettings") {
-        vscode.commands.executeCommand("bunnote.setVault");
+        vscode.commands.executeCommand("bunnote.openSettings");
       } else if (msg.command === "loadFile") {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
