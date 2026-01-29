@@ -512,9 +512,10 @@ function renderTree(node, depth = 0) {
   });
 
   fileEntries.forEach(file => {
+    const displayName = file.name.replace(/\.md$/i, '');
     html += "<div class=\"file_item " + (currentFile === file.path ? "active" : "") + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"openFile('" + escapeHtml(file.path) + "')\" oncontextmenu=\"showFileContextMenu(event, '" + escapeHtml(file.path) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'file', '" + escapeHtml(file.path) + "')\" ondragend=\"handleDragEnd()\">" +
       "<span class=\"file_icon\"><i class=\"ph ph-file-text\"></i></span>" +
-      "<span class=\"file_name\" title=\"" + escapeHtml(file.path) + "\">" + escapeHtml(file.name) + "</span>" +
+      "<span class=\"file_name\" title=\"" + escapeHtml(file.path) + "\">" + escapeHtml(displayName) + "</span>" +
       "</div>";
   });
 
@@ -632,6 +633,15 @@ window.addEventListener('message', event => {
       break;
     case 'refresh':
       vscode.postMessage({ command: 'getVault' });
+      break;
+    case 'fileChanged':
+      // Reload file if it's currently open
+      if (message.fileName && openTabs[message.fileName]) {
+        vscode.postMessage({ 
+          command: 'loadFile', 
+          fileName: message.fileName 
+        });
+      }
       break;
   }
 });
