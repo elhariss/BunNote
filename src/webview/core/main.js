@@ -49,3 +49,25 @@ window.addEventListener('load', () => {
 });
 
 
+
+// ============================================
+// Vault Collapse / Vaultの折りたたみ
+// ============================================
+
+function toggleVaultCollapse() {
+  const sidebar = document.querySelector('.sidebar');
+  const filesList = document.getElementById('filesList');
+  const collapseBtn = document.getElementById('collapseBtn');
+  const icon = collapseBtn.querySelector('i');
+  
+  sidebar.classList.toggle('collapsed');
+  filesList.classList.toggle('collapsed');
+  
+  if (filesList.classList.contains('collapsed')) {
+    icon.className = 'ph ph-caret-right';
+    collapseBtn.title = 'Expand';
+  } else {
+    icon.className = 'ph ph-caret-down';
+    collapseBtn.title = 'Collapse';
+  }
+}

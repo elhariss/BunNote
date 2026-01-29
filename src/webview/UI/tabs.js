@@ -137,12 +137,13 @@ function renderTabs() {
   const tabsContainer = document.getElementById('editorTabs');
   const tabs = Object.keys(openTabs);
 
-  tabsContainer.innerHTML = tabs.map(fileName =>
-    "<div class=\"editor_tab " + (currentFile === fileName ? "active" : "") + "\" onclick=\"openFile('" + escapeHtml(fileName) + "')\">" +
-    "<span class=\"tab_title\">" + escapeHtml(fileName) + "</span>" +
-    "<span class=\"tab_close\" onclick=\"closeTab(event, '" + escapeHtml(fileName) + "')\" title=\"Close\">×</span>" +
-    "</div>"
-  ).join('');
+  tabsContainer.innerHTML = tabs.map(fileName => {
+    const displayName = fileName.split(/[\\/]/).pop().replace(/\.md$/i, '');
+    return "<div class=\"editor_tab " + (currentFile === fileName ? "active" : "") + "\" onclick=\"openFile('" + escapeHtml(fileName) + "')\">" +
+      "<span class=\"tab_title\">" + escapeHtml(displayName) + "</span>" +
+      "<span class=\"tab_close\" onclick=\"closeTab(event, '" + escapeHtml(fileName) + "')\" title=\"Close\">×</span>" +
+      "</div>";
+  }).join('');
 }
 
 function closeTab(e, fileName) {
