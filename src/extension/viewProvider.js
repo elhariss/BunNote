@@ -1,3 +1,9 @@
+// ============================================
+// Webview Provider / Webviewプロバイダー
+// Handles file operations and webview communication
+// ファイル操作とWebview通信を処理
+// ============================================
+
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
@@ -13,12 +19,14 @@ class ViewProvider {
     this.cache = this.context.globalState.get(this.cacheKey, null);
   }
 
+  // Refresh webview / Webviewを更新
   refresh() {
     if (this.view) {
       this.view.webview.postMessage({ command: "refresh" });
     }
   }
 
+  // Scan vault for markdown files / Vault内のマークダウンファイルをスキャン
   async getMarkdownFiles() {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -78,6 +86,7 @@ class ViewProvider {
     return result;
   }
 
+  // Initialize webview / Webviewを初期化
   resolveWebviewView(view) {
     this.view = view;
     view.webview.options = {
@@ -88,7 +97,9 @@ class ViewProvider {
     };
     view.webview.html = this.getHtml();
 
+    // Handle messages from webview / Webviewからのメッセージを処理
     view.webview.onDidReceiveMessage(async (msg) => {
+      // Sanitize file names for security / セキュリティのためファイル名をサニタイズ
       const sanitizeFileName = (name) => {
         if (!name || typeof name !== 'string') return name;
         let n = name.trim();
@@ -669,7 +680,8 @@ class ViewProvider {
 
   getHtml() {
     const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
-    const cssPath = path.join(this.context.extensionPath, "src", "webview", "style.css");
+    const cssPath = path.join(this.context.extensionPath, "src", "webview", "css","style.css");
+    const editorCssPath = path.join(this.context.extensionPath, "src", "webview","css", "editor.css");
     const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
     const filesPath = path.join(this.context.extensionPath, "src", "webview", "utils", "files.js");
     const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
@@ -681,6 +693,7 @@ class ViewProvider {
       this.view ? this.view.webview.asWebviewUri(vscode.Uri.file(filePath)).toString() : "";
 
     const cssUri = toWebviewUri(cssPath);
+    const editorCssUri = toWebviewUri(editorCssPath);
     const utilsUri = toWebviewUri(utilsPath);
     const filesUri = toWebviewUri(filesPath);
     const editorUri = toWebviewUri(editorPath);
@@ -692,6 +705,7 @@ class ViewProvider {
       const html = fs.readFileSync(htmlPath, "utf8");
       return html
         .replace("{{CSS_URI}}", cssUri)
+        .replace("{{EDITOR_CSS_URI}}", editorCssUri)
         .replace("{{UTILS_URI}}", utilsUri)
         .replace("{{FILES_URI}}", filesUri)
         .replace("{{EDITOR_URI}}", editorUri)

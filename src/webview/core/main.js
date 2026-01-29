@@ -1,7 +1,10 @@
-// @ts-nocheck
+// ============================================
+// Global State / グローバル状態
+// ============================================
 
 const vscode = acquireVsCodeApi();
 
+// File and editor state / ファイルとエディターの状態
 let currentFile = null;
 let openTabs = {};
 let files = [];
@@ -14,16 +17,19 @@ let editorTitleInput = null;
 let isTitleEditing = false;
 let pendingTitleEditFile = null;
 
+// Auto-save state / 自動保存の状態
 let autoSaveTimer = null;
 let autoSaveDelay = 750;
 let lastSavedContent = {};
 
+// Markdown syntax hiding state / マークダウン構文非表示の状態
 let lastTypingAt = 0;
 let typingGraceMs = 500;
 let lastCheckboxToggleAt = 0;
 let checkboxGraceMs = 1500;
 let suppressMarkersUntil = 0;
 
+// CodeMirror markers / CodeMirrorマーカー
 let hiddenMarks = [];
 let codeLineHandles = [];
 let listLineFlags = new WeakMap();

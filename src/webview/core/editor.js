@@ -1,9 +1,12 @@
-// @ts-nocheck
-
+// ============================================
+// EasyMDE Editor Initialization
+// EasyMDEエディターの初期化
+// ============================================
 
 function initEditor() {
   const editorElement = document.getElementById('editor');
 
+  // Initialize EasyMDE with custom config / カスタム設定でEasyMDEを初期化
   easyMDE = new EasyMDE({
     element: editorElement,
     spellChecker: false,
