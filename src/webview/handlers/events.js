@@ -1,5 +1,10 @@
-// @ts-nocheck
+// ============================================
+// Event Handlers / イベントハンドラー
+// Auto-save and markdown formatting events
+// 自動保存とマークダウンフォーマットイベント
+// ============================================
 
+// Queue auto-save after typing / 入力後に自動保存をキューに入れる
 function queueAutoSave() {
   if (!currentFile || !openTabs[currentFile]) {
     return;
@@ -24,8 +29,10 @@ function queueAutoSave() {
   }, autoSaveDelay);
 }
 
+// Initialize editor events / エディターイベントを初期化
 function initEvents() {
   if (cm) {
+    // Handle markdown syntax hiding / マークダウン構文の非表示を処理
     cm.on("beforeChange", function (cmInstance, change) {
       // Check if user typed space
       if (change.origin === "+input" && change.text[0] === " ") {
