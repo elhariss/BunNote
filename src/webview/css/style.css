@@ -1,8 +1,25 @@
-/* Global Reset / グローバルリセット */
+﻿/* Global Reset / グローバルリセット */
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    gap: 0;
 }
 
 .sidebar {
@@ -18,6 +35,7 @@
 
 /* Sidebar / サイドバー */
 .sidebar_header {
+    padding: 12px;
     border-bottom: 1px solid var(--vscode-sideBar-border);
     display: flex;
     gap: 8px;
@@ -111,42 +129,26 @@
     text-overflow: ellipsis;
 }
 
-.file_name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.file_item:hover {
-    background-color: var(--vscode-list-hoverBackground);
-}
-
-.file_item.active {
-    background-color: var(--vscode-list-activeSelectionBackground);
-    border-left-color: var(--vscode-list-activeSelectionForeground);
-}
-
 /* Empty State / 空の状態 */
 .empty_state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--vscode-descriptionForeground);
-  text-align: center;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--vscode-descriptionForeground);
+    text-align: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
 }
 
 .empty_state_icon {
-  font-size: 48px;
-  opacity: 0.5;
+    font-size: 48px;
+    opacity: 0.5;
 }
 
 .empty_state_text {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 /* Editor Area / エディター */
@@ -278,86 +280,90 @@
     height: 100%;
 }
 
-
 /* Context Menu / コンテキストメニュー */
 .context_menu {
-  position: fixed;
-  min-width: 180px;
-  background: var(--vscode-editorWidget-background, #252526);
-  color: var(--vscode-foreground, #d4d4d4);
-  border: 1px solid var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-  border-radius: 14px;
-  padding: 6px;
-  backdrop-filter: blur(8px);
-  z-index: 10000;
-  display: none;
+    position: fixed;
+    min-width: 180px;
+    background: var(--vscode-editorWidget-background, #252526);
+    color: var(--vscode-foreground, #d4d4d4);
+    border: 1px solid var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+    border-radius: 14px;
+    padding: 6px;
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: none;
 }
 
 .context_menu.visible {
-  display: block;
+    display: block;
 }
 
 .context_menu_item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
 }
 
 .context_menu_item i {
-  font-size: 16px;
-  color: var(--vscode-descriptionForeground, #9aa0a6);
+    font-size: 16px;
+    color: var(--vscode-descriptionForeground, #9aa0a6);
 }
 
 .context_menu_separator {
-  height: 1px;
-  margin: 6px 8px;
-  background: var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
+    height: 1px;
+    margin: 6px 8px;
+    background: var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
 }
 
 .context_menu_item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--vscode-foreground, #ffffff);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--vscode-foreground, #ffffff);
 }
 
 .context_menu_item.destructive {
-  color: #ff6b6b;
+    color: #ff6b6b;
 }
 
 .context_menu_item.destructive i {
-  color: #ff6b6b;
+    color: #ff6b6b;
 }
 
 /* Drag and Drop / ドラッグアンドドロップ */
 .folder_item.drop_target {
-  background: var(--vscode-list-dropBackground, rgba(255, 255, 255, 0.08));
-  outline: 1px solid var(--vscode-focusBorder, rgba(255, 255, 255, 0.35));
-  border-radius: 6px;
+    background: var(--vscode-list-dropBackground, rgba(255, 255, 255, 0.08));
+    outline: 1px solid var(--vscode-focusBorder, rgba(255, 255, 255, 0.35));
+    border-radius: 6px;
 }
 
 .drag_indicator {
-  position: fixed;
-  pointer-events: none;
-  z-index: 10001;
-  background: var(--vscode-editorHoverWidget-background, #1f1f1f);
-  color: var(--vscode-editorHoverWidget-foreground, #ffffff);
-  border: 1px solid var(--vscode-editorHoverWidget-border, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.12s ease, transform 0.12s ease;
+    position: fixed;
+    pointer-events: none;
+    z-index: 10001;
+    background: var(--vscode-editorHoverWidget-background, #1f1f1f);
+    color: var(--vscode-editorHoverWidget-foreground, #ffffff);
+    border: 1px solid var(--vscode-editorHoverWidget-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.drag_indicator.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Scrollbar / スクロールバー */

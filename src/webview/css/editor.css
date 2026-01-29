@@ -1,0 +1,287 @@
+/* ============================================
+   EasyMDE Editor Styling / エディタースタイル
+   ============================================ */
+
+.EasyMDEContainer {
+    height: 100% !important;
+}
+
+.EasyMDEContainer .CodeMirror {
+    height: 100% !important;
+    background-color: var(--vscode-editor-background) !important;
+    color: var(--vscode-editor-foreground) !important;
+    border: none !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+.EasyMDEContainer .CodeMirror-scroll {
+    padding: 20px !important;
+}
+
+.EasyMDEContainer .editor-toolbar {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+    border-left-color: var(--vscode-editorCursor-foreground) !important;
+}
+
+.EasyMDEContainer .CodeMirror-selected {
+    background-color: var(--vscode-editor-selectionBackground) !important;
+}
+
+/* Markdown Syntax Hiding / マークダウン構文の非表示 */
+.EasyMDEContainer .cm-hidden-syntax {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.EasyMDEContainer .cm-hidden-syntax-inline {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-activeline .cm-hidden-syntax-inline {
+    display: none !important;
+}
+
+.EasyMDEContainer .cm-inline-list .cm-formatting,
+.EasyMDEContainer .cm-inline-list .cm-formatting-strong,
+.EasyMDEContainer .cm-inline-list .cm-formatting-em,
+.EasyMDEContainer .cm-inline-list .cm-formatting-code,
+.EasyMDEContainer .cm-inline-list .cm-formatting-link {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-activeline .cm-formatting {
+    display: inline !important;
+}
+
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-strong,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-em,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-code,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-link,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-before,
+.EasyMDEContainer .CodeMirror-activeline .cm-inline-list .cm-formatting-after {
+    display: inline !important;
+}
+
+.cm-formatting {
+    opacity: 37% !important;
+    transition: opacity 0.15s ease;
+}
+
+/* Markdown Elements / マークダウン要素 */
+.EasyMDEContainer .cm-header-1 {
+    font-size: 2em !important;
+    font-weight: 700 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-header-2 {
+    font-size: 1.5em !important;
+    font-weight: 600 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-header-3 {
+    font-size: 1.3em !important;
+    font-weight: 600 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-strong {
+    font-weight: 700 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-em {
+    font-style: italic !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-quote {
+    color: var(--vscode-editor-foreground) !important;
+    font-style: italic !important;
+}
+
+.EasyMDEContainer .cm-inline-code {
+    background-color: rgba(120, 120, 120, 0.2);
+    color: var(--vscode-editor-foreground) !important;
+    border-radius: 6px;
+    padding: 0 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.EasyMDEContainer .cm-link,
+.EasyMDEContainer .cm-url {
+    color: var(--vscode-textLink-foreground) !important;
+}
+
+.EasyMDEContainer .cm-inactive-line .cm-url,
+.EasyMDEContainer .cm-inactive-line .cm-formatting-link,
+.EasyMDEContainer .cm-inactive-line .cm-formatting-link-string,
+.EasyMDEContainer .cm-inactive-line .cm-string.cm-url {
+    display: none !important;
+}
+
+.EasyMDEContainer .cm-inactive-line .cm-formatting-header {
+    display: none !important;
+}
+
+/* Blockquote / 引用 */
+.EasyMDEContainer .cm-blockquote-line {
+    position: relative;
+    padding-left: 12px !important;
+    background-color: rgba(128, 128, 128, 0.08);
+}
+
+.EasyMDEContainer .cm-blockquote-line::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: rgba(128, 128, 128, 0.45);
+    border-radius: 16px;
+}
+
+/* Code Block / コードブロック */
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line {
+    background-color: rgba(120, 120, 120, 0.12);
+    padding: 0 20px !important;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-fence-line {
+    color: var(--vscode-descriptionForeground) !important;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-start {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-end {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* List Bullets / リスト */
+.cm-list-bullet {
+    color: var(--vscode-descriptionForeground);
+    display: inline-block;
+    min-width: 17px;
+    margin-right: 6px;
+    font-size: 16px;
+    line-height: 1;
+    vertical-align: middle;
+    opacity: 80%;
+}
+
+.EasyMDEContainer .cm-variable-2,
+.EasyMDEContainer .cm-variable-3 {
+    color: var(--vscode-editor-foreground) !important;
+    display: inline !important;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-list-indent {
+    position: relative;
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-list-indent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: calc(var(--list-indent-level, 0) * 16px);
+    background-image: repeating-linear-gradient(to right,
+        transparent 0,
+        transparent 12px,
+        var(--vscode-editorIndentGuide-background, rgba(255, 255, 255, 0.2)) 12px,
+        var(--vscode-editorIndentGuide-background, rgba(255, 255, 255, 0.2)) 13px);
+    pointer-events: none;
+}
+
+/* Task Checkbox / タスクチェックボックス */
+.cm-task-checkbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--vscode-descriptionForeground);
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-right: 8px;
+    position: relative;
+    top: -1px;
+    opacity: 0.8;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.cm-task-checkbox:hover {
+    opacity: 1;
+    border-color: var(--vscode-editor-foreground);
+    box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
+}
+
+.cm-task-checkbox.checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid #ffffff;
+    border-top: 0;
+    border-left: 0;
+    transform: rotate(45deg);
+}
+
+.cm-task-checkbox.checked {
+    background-color: var(--vscode-button-background);
+    border-color: var(--vscode-button-background);
+}
+
+.cm-task-checkbox.checked:hover {
+    border-color: var(--vscode-button-hoverBackground);
+    background-color: var(--vscode-button-hoverBackground);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
+.EasyMDEContainer .cm-task-checked-line {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground) !important;
+    opacity: 0.75;
+}
+
+.EasyMDEContainer .cm-task-checked-line .cm-task-checkbox {
+    text-decoration: none;
+}
+
+/* Horizontal Rule / 水平線 */
+.EasyMDEContainer .cm-hr-line {
+    position: relative;
+    height: 18px;
+}
+
+.EasyMDEContainer .cm-hr-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0.5px;
+    background-color: rgba(128, 128, 128, 0.45);
+}
+
+.EasyMDEContainer .CodeMirror-activeline.cm-hr-line::after {
+    display: none;
+}
