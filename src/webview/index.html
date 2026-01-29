@@ -5,64 +5,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BunNote</title>
-    <link rel="stylesheet" href="{{CSS_URI}}">
+    <script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css">
     <link rel="stylesheet" type="text/css"
         href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
     <link rel="stylesheet" type="text/css"
         href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+    <style>
+        body.loading .container {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading_overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--vscode-editor-background, #1e1e1e);
+            color: var(--vscode-editor-foreground, #ffffff);
+            z-index: 9999;
+        }
+
+        .loading_spinner {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: rgba(255, 255, 255, 0.85);
+            animation: loadingSpin 0.8s linear infinite;
+        }
+
+        @keyframes loadingSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{CSS_URI}}">
 </head>
 
-<body>
+<body class="loading">
+    <div class="loading_overlay" id="appLoading" aria-label="Loading">
+        <div class="loading_spinner" role="status" aria-live="polite"></div>
+    </div>
     <div class="container">
         <div class="sidebar">
-
             <div class="sidebar_header">
                 <h3>Vault</h3>
-                <button class="btn_icon" title="Settings">
+                <button class="btn_icon" title="Settings" onclick="setVault()">
                     <i class="ph ph-gear"></i>
                 </button>
-                <button class="btn_icon" title="New Note">
+                <button class="btn_icon" title="New Note" onclick="createNewNote()">
                     <i class="ph ph-file-plus"></i>
                 </button>
-                <button class="btn_icon" title="New Folder">
+                <button class="btn_icon" title="New Folder" onclick="createNewFolder()">
                     <i class="ph ph-folder-plus"></i>
+                </button>
+                <button class="btn_icon" title="Refresh" onclick="refreshFiles()">
+                    <i class="ph ph-arrows-clockwise"></i>
                 </button>
             </div>
 
             <div class="files_list" id="filesList">
                 <div class="empty_state">
-                    <div class="empt_state_icon"><i class="ph ph-folder-open"></i></div>
+                    <div class="empty_state_icon"><i class="ph ph-folder-open"></i></div>
                     <div class="empty_state_text">Set your vault folder to get started</div>
                 </div>
             </div>
+        </div>
 
-
-            <div class="editor_area">
-                <div class="editor_tabs" id="editorTabs">
-                    <div class="editor_tab"><span class="tab_title">New Note</span><span class="tab_close">x</span>
-                    </div>
-                </div>
-
-                <div class="editor_header">
-                    <div class="editor_title_wrapper">
-                        <div class="editor_title" id="editorTitle">No Note Open</div>
-                        <input class="editor_title_input" id="editorTitleInput" type="text" autocomplete="off" />
-                    </div>
-                </div>
-                <div class="editor_container">
-                    <textarea class="markdown_editor" id="editor" placeholder="Start writing your note..."></textarea>
+        <div class="editor_area">
+            <div class="editor_tabs" id="editorTabs"></div>
+            <div class="editor_header">
+                <div class="editor_title_wrapper">
+                    <div class="editor_title" id="editorTitle">No note open</div>
+                    <input class="editor_title_input" id="editorTitleInput" type="text" autocomplete="off" />
                 </div>
             </div>
-
-
+            <div class="editor_container">
+                <textarea class="markdown_editor" id="editor"></textarea>
+            </div>
         </div>
     </div>
 
+    <div class="context_menu" id="fileContextMenu" role="menu" aria-hidden="true">
+        <button class="context_menu_item" id="editTitleAction" role="menuitem">
+            <i class="ph ph-pencil-simple"></i>
+            Edit title
+        </button>
+        <button class="context_menu_item" id="duplicateFileAction" role="menuitem">
+            <i class="ph ph-copy"></i>
+            Duplicate note
+        </button>
+        <div class="context_menu_separator" role="separator"></div>
+        <button class="context_menu_item destructive" id="deleteFileAction" role="menuitem">
+            <i class="ph ph-trash"></i>
+            Delete note
+        </button>
+    </div>
 
+    <div class="context_menu" id="folderContextMenu" role="menu" aria-hidden="true">
+        <button class="context_menu_item" id="createSubfolderAction" role="menuitem">
+            <i class="ph ph-folder-plus"></i>
+            New folder
+        </button>
+        <div class="context_menu_separator" role="separator"></div>
+        <button class="context_menu_item" id="renameFolderAction" role="menuitem">
+            <i class="ph ph-pencil-simple"></i>
+            Rename folder
+        </button>
+        <div class="context_menu_separator" role="separator"></div>
+        <button class="context_menu_item destructive" id="deleteFolderAction" role="menuitem">
+            <i class="ph ph-trash"></i>
+            Delete folder
+        </button>
+    </div>
 
+    <div class="context_menu" id="listContextMenu" role="menu" aria-hidden="true">
+        <button class="context_menu_item" id="createFolderAction" role="menuitem">
+            <i class="ph ph-folder-plus"></i>
+            New folder
+        </button>
+    </div>
+
+    <div class="context_menu" id="editorContextMenu" role="menu" aria-hidden="true">
+        <button class="context_menu_item" id="editorBoldAction" role="menuitem">
+            <i class="ph ph-text-bolder"></i>
+            Bold
+        </button>
+        <button class="context_menu_item" id="editorItalicAction" role="menuitem">
+            <i class="ph ph-text-italic"></i>
+            Italic
+        </button>
+        <button class="context_menu_item" id="editorStrikeAction" role="menuitem">
+            <i class="ph ph-text-strikethrough"></i>
+            Strikethrough
+        </button>
+        <div class="context_menu_separator" role="separator"></div>
+        <button class="context_menu_item" id="editorBulletListAction" role="menuitem">
+            <i class="ph ph-list-bullets"></i>
+            Bulleted list
+        </button>
+        <button class="context_menu_item" id="editorNumberListAction" role="menuitem">
+            <i class="ph ph-list-numbers"></i>
+            Numbered list
+        </button>
+        <button class="context_menu_item" id="editorTaskListAction" role="menuitem">
+            <i class="ph ph-check-square"></i>
+            Task list
+        </button>
+        <div class="context_menu_separator" role="separator"></div>
+        <button class="context_menu_item" id="editorQuoteAction" role="menuitem">
+            <i class="ph ph-quotes"></i>
+            Blockquote
+        </button>
+        <button class="context_menu_item" id="editorCodeBlockAction" role="menuitem">
+            <i class="ph ph-code-block"></i>
+            Code block
+        </button>
+        <button class="context_menu_item" id="editorInlineCodeAction" role="menuitem">
+            <i class="ph ph-code"></i>
+            Inline code
+        </button>
+    </div>
 
     <script src="{{UTILS_URI}}"></script>
+    <script src="{{EDITOR_URI}}"></script>
     <script src="{{FILES_URI}}"></script>
+    <script src="{{TABS_URI}}"></script>
+    <script src="{{EVENTS_URI}}"></script>
+    <script src="{{MAIN_URI}}"></script>
 </body>
 
 </html>
