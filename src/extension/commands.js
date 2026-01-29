@@ -1,6 +1,11 @@
+// ============================================
+// Command Registration / コマンド登録
+// ============================================
+
 const vscode = require("vscode");
 
 function registerCommands(context, state, provider) {
+  // Set vault folder / Vaultフォルダを設定
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.setVault", async () => {
       const folder = await vscode.window.showOpenDialog({
@@ -19,6 +24,7 @@ function registerCommands(context, state, provider) {
     })
   );
 
+  // Create new note / 新しいノートを作成
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.createNote", async () => {
       if (!state.vaultPath) {
@@ -39,18 +45,21 @@ function registerCommands(context, state, provider) {
     })
   );
 
+  // Refresh file list / ファイルリストを更新
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.refreshFiles", () => {
       provider.refresh();
     })
   );
 
+  // Open settings / 設定を開く
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.openSettings", () => {
       vscode.commands.executeCommand("workbench.action.openSettings", "bunnote");
     })
   );
 
+  // Open file in editor / エディターでファイルを開く
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.openFile", (fileName, isNew = false) => {
       if (provider.view) {
