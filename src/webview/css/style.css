@@ -331,11 +331,11 @@ body {
 }
 
 .context_menu_item.destructive {
-    color: #ff6b6b;
+    color: var(--vscode-errorForeground);
 }
 
 .context_menu_item.destructive i {
-    color: #ff6b6b;
+    color: var(--vscode-errorForeground);
 }
 
 /* Drag and Drop / ドラッグアンドドロップ */
