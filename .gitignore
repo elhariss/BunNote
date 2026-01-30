@@ -1,5 +1,10 @@
 node_modules
-note
 .vscode-test/
 *.vsix
 .env
+.DS_Store
+*.log
+npm-debug.log*
+.vscode-test.*
+out/
+dist/
