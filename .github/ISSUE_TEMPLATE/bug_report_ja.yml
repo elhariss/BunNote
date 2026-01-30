@@ -1,4 +1,4 @@
-name: バグ報告 (Bug Report - 日本語)
+name: バグ報告
 description: BunNoteのバグや問題を報告する
 labels: ["bug"]
 body:
@@ -54,13 +54,33 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: dropdown
     id: platform
     attributes:
       label: 使用しているプラットフォームは何ですか？
-      placeholder: "例：Windows 11、macOS 14、Ubuntu 22.04"
+      description: オペレーティングシステムを選択してください
+      multiple: false
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (Ubuntu)
+        - Linux (Debian)
+        - Linux (Fedora)
+        - Linux (Arch)
+        - Linux (その他)
+        - その他
     validations:
       required: true
+
+  - type: checkboxes
+    id: multiple-platforms
+    attributes:
+      label: この問題は複数のプラットフォームで発生しますか？
+      description: 他のプラットフォームでテストした場合はチェックしてください
+      options:
+        - label: 複数のプラットフォームでテストし、問題が継続することを確認しました
 
   - type: textarea
     id: logs
