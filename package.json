@@ -3,6 +3,11 @@
   "displayName": "BunNote",
   "description": "Write and manage notes directly from VS Code with full markdown support",
   "version": "0.0.1",
+  "publisher": "elharis",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elhariss/BunNote"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
