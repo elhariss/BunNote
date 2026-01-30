@@ -431,6 +431,10 @@ class ViewProvider {
         } catch (err) {
           vscode.window.showErrorMessage("Failed to duplicate file: " + err.message);
         }
+      } else if (msg.command === "renameFile") {
+        const safeOldName = sanitizeFileName(msg.oldName);
+        const safeNewName = sanitizeFileName(msg.newName);
+        await performRename(safeOldName, safeNewName, msg.source);
       } else if (msg.command === "requestRename") {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
