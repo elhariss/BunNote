@@ -13,19 +13,16 @@ function updateEditor() {
 }
 
 function updateEditorTitle() {
-  if (editorTitleElement) {
-    editorTitleElement.textContent = formatTitleFromFile(currentFile);
+  if (editorTitleInput) {
+    editorTitleInput.value = formatTitleFromFile(currentFile);
   }
 }
 
 function startTitleEditing() {
-  if (!currentFile || isTitleEditing || !editorTitleElement || !editorTitleInput) {
+  if (!currentFile || isTitleEditing || !editorTitleInput) {
     return;
   }
   isTitleEditing = true;
-  editorTitleInput.value = formatTitleFromFile(currentFile);
-  editorTitleElement.style.display = 'none';
-  editorTitleInput.style.display = 'block';
   editorTitleInput.focus();
   const len = editorTitleInput.value.length;
   try {
@@ -38,10 +35,6 @@ function finishTitleEditing(save) {
     return;
   }
   isTitleEditing = false;
-  editorTitleInput.style.display = 'none';
-  if (editorTitleElement) {
-    editorTitleElement.style.display = '';
-  }
   if (save && currentFile) {
     const candidate = buildNewRelativeName(editorTitleInput.value);
     if (candidate && candidate !== currentFile) {
@@ -187,3 +180,14 @@ function saveFile(isAutoSave = false) {
     lastSavedContent[currentFile] = content;
   }
 }
+
+// Expose functions to global scope
+window.updateEditor = updateEditor;
+window.updateEditorTitle = updateEditorTitle;
+window.startTitleEditing = startTitleEditing;
+window.finishTitleEditing = finishTitleEditing;
+window.handleRenameResult = handleRenameResult;
+window.handleFolderMoveResult = handleFolderMoveResult;
+window.renderTabs = renderTabs;
+window.closeTab = closeTab;
+window.saveFile = saveFile;
