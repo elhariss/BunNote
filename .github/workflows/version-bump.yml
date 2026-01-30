@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_type:
-        description: 'Version bump type'
+        description: Version bump type
         required: true
         type: choice
         options:
@@ -15,19 +15,15 @@ on:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: write
-    
     steps:
       - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
           
       - name: Configure Git
         run: |
@@ -35,20 +31,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: Bump version
-        run: npm version ${{ github.event.inputs.version_type }} -m "chore: bump version to %s"
-        
-      - name: Get new version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "NEW_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        run: npm version ${{ github.event.inputs.version_type }} -m "chore bump version to %s"
         
       - name: Push changes
         run: |
           git push
           git push --tags
-        
-      - name: Create release notes
-        run: |
-          echo "Version ${{ steps.version.outputs.NEW_VERSION }} has been created!"
-          echo "A release will be automatically created when the tag is pushed."
