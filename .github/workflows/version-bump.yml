@@ -40,7 +40,9 @@ jobs:
       
     - name: Get new version
       id: version
-      run: echo "NEW_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        echo "NEW_VERSION=$VERSION" >> $GITHUB_OUTPUT
       
     - name: Push changes
       run: |
