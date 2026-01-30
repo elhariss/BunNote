@@ -6,8 +6,19 @@
  */
 function updateEditor() {
   if (currentFile && openTabs[currentFile]) {
-    try { clearHiddenMarks(); } catch (e) { /* ignore */ }
-    easyMDE.value(openTabs[currentFile].content);
+    const currentContent = easyMDE.value();
+    const newContent = openTabs[currentFile].content;
+    
+    if (currentContent !== newContent) {
+      const cursor = easyMDE.codemirror.getCursor();
+      const scrollInfo = easyMDE.codemirror.getScrollInfo();
+      
+      try { clearHiddenMarks(); } catch (e) { /* ignore */ }
+      easyMDE.value(newContent);
+      
+      easyMDE.codemirror.setCursor(cursor);
+      easyMDE.codemirror.scrollTo(scrollInfo.left, scrollInfo.top);
+    }
   } else {
     easyMDE.value('');
   }

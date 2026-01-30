@@ -116,7 +116,6 @@ function initEvents() {
 
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       hiddenUpdateTimer = setTimeout(() => {
-        try { cmInstance.refresh(); } catch (e) { }
         try { updateHiddenSyntax(false); } catch (e) { }
       }, 50);
 
@@ -132,7 +131,6 @@ function initEvents() {
     });
 
     cm.on("cursorActivity", function () {
-      try { cm.refresh(); } catch (e) { }
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       hiddenUpdateTimer = setTimeout(() => {
         try { updateHiddenSyntax(false); } catch (e) { }
@@ -310,6 +308,11 @@ function initEvents() {
       const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
       
       if (isCustomEditorMode) {
+        return;
+      }
+      
+      const timeSinceLastTyping = Date.now() - (lastTypingAt || 0);
+      if (timeSinceLastTyping < 2000) {
         return;
       }
       
