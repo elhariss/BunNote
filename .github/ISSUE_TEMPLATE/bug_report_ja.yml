@@ -1,64 +1,58 @@
 name: バグ報告
-description: BunNoteのバグや問題を報告する
+description: BunNoteのバグや問題を報告
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        ご協力ありがとうございます！以下のフォームに記入して、問題の理解と修正にご協力ください。
-
+        バグ報告ありがとうございます！以下のフォームにご記入いただき、問題の把握と修正にご協力ください。
   - type: textarea
     id: issue-description
     attributes:
-      label: 何が起こりましたか？
-      description: 発生した問題と期待していた動作を説明してください。
-      placeholder: 問題の詳細な説明を記入してください。
+      label: 発生した問題
+      description: どのような問題が発生したか、本来どう動作すべきかを説明してください。
+      placeholder: 問題の詳細を記入してください。
     validations:
       required: true
-
   - type: textarea
     id: steps-to-reproduce
     attributes:
       label: 再現手順
-      description: この問題をどのように再現できますか？
+      description: この問題を再現するにはどうすればよいですか？
       placeholder: |
         1. '...'に移動
         2. '...'をクリック
         3. エラーが表示される
     validations:
       required: true
-
   - type: checkboxes
     id: reproducible
     attributes:
-      label: この問題は再現可能ですか？
-      description: 問題を一貫して再現できますか？
+      label: 再現性の確認
+      description: 問題を安定して再現できますか？
       options:
-        - label: 問題が再現可能であることを確認し、再現できました。
-
+        - label: 同じ手順で問題を再現できることを確認しました
   - type: input
     id: extension-version
     attributes:
       label: BunNoteのバージョン
-      description: 使用しているBunNoteのバージョンは何ですか？
+      description: 使用中のBunNoteのバージョンを記入してください。
       placeholder: 例：1.0.0
     validations:
       required: true
-
   - type: input
     id: vscode-version
     attributes:
       label: VS Codeのバージョン
-      description: 使用しているVS Codeのバージョンは何ですか？
+      description: 使用中のVS Codeのバージョンを記入してください。
       placeholder: 例：1.95.0
     validations:
       required: true
-
   - type: dropdown
     id: platform
     attributes:
-      label: 使用しているプラットフォームは何ですか？
-      description: オペレーティングシステムを選択してください
+      label: 使用環境
+      description: お使いのOSを選択してください
       multiple: false
       options:
         - Windows 11
@@ -73,26 +67,23 @@ body:
         - その他
     validations:
       required: true
-
   - type: checkboxes
     id: multiple-platforms
     attributes:
-      label: この問題は複数のプラットフォームで発生しますか？
-      description: 他のプラットフォームでテストした場合はチェックしてください
+      label: 複数環境での確認
+      description: 他の環境でも動作確認を行った場合はチェックしてください
       options:
-        - label: 複数のプラットフォームでテストし、問題が継続することを確認しました
-
+        - label: 複数の環境でテストし、同様の問題が発生することを確認しました
   - type: textarea
     id: logs
     attributes:
-      label: 関連するログ出力
-      description: 開発者コンソール（ヘルプ > 開発者ツールの切り替え）から関連するログやエラーを提供してください。
-      placeholder: 該当する場合はログ出力をここに貼り付けてください。
+      label: ログ・エラー出力
+      description: 開発者コンソール（ヘルプ > 開発者ツールの切り替え）から関連するログやエラーメッセージを貼り付けてください。
+      placeholder: ログやエラーメッセージがあれば貼り付けてください。
       render: shell
-
   - type: textarea
     id: additional-context
     attributes:
-      label: 追加情報
-      description: 問題に関するその他のコンテキスト、スクリーンショット、または情報を追加してください。
-      placeholder: 問題の理解に役立つその他の情報。
+      label: 補足情報
+      description: その他、参考になる情報・スクリーンショットなどがあれば追加してください。
+      placeholder: 問題の理解に役立つ情報があれば記入してください。
