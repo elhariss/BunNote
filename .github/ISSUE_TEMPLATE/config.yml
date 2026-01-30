@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/elhariss/BunNote#readme
+    about: Read the documentation for help and usage information
+  - name: 💬 Discussions
+    url: https://github.com/elhariss/BunNote/discussions
+    about: Ask questions and discuss ideas with the community

@@ -1,0 +1,78 @@
+name: Bug Report
+description: Report a bug or issue with BunNote
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your contribution! Please fill out the form below to help us understand and fix the issue.
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: What happened?
+      description: Describe what happened and what you expected to happen.
+      placeholder: Provide a detailed explanation of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: reproducible
+    attributes:
+      label: Is this issue reproducible?
+      description: Can the issue be consistently reproduced?
+      options:
+        - label: I have checked if the issue is reproducible and can replicate it.
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: BunNote Version
+      description: What version of BunNote are you using?
+      placeholder: e.g., 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code Version
+      description: What version of VS Code are you using?
+      placeholder: e.g., 1.95.0
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: What platform are you using?
+      placeholder: "e.g., Windows 11, macOS 14, Ubuntu 22.04"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output
+      description: Please provide any relevant logs or errors from the Developer Console (Help > Toggle Developer Tools).
+      placeholder: Paste log output here if applicable.
+      render: shell
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or information about the problem.
+      placeholder: Any other information that might help us understand the issue.
