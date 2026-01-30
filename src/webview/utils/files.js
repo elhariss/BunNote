@@ -349,7 +349,7 @@ function handleDropOnFolder(event, targetFolder) {
   hideDragIndicator();
   let payload = null;
   try {
-    const raw = event.dataTransfer.getData('application-bunnote-item');
+    const raw = event.dataTransfer.getData('application/bunnote-item');
     payload = raw ? JSON.parse(raw) : null;
   } catch (e) {
     payload = dragPayload;
@@ -645,3 +645,12 @@ window.addEventListener('message', event => {
       break;
   }
 });
+
+
+// Expose drag and drop functions to global scope / グローバルスコープに公開
+window.handleDragStart = handleDragStart;
+window.handleDragOver = handleDragOver;
+window.handleDragEnd = handleDragEnd;
+window.handleDropOnFolder = handleDropOnFolder;
+window.handleFolderDragEnter = handleFolderDragEnter;
+window.handleFolderDragLeave = handleFolderDragLeave;
