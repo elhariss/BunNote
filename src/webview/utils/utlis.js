@@ -22,12 +22,12 @@ function getCurrentDirectory(fileName) {
 
 function formatTitleFromFile(fileName) {
   if (!fileName) {
-    return 'No note open';
+    return 'Untitled';
   }
   const parts = fileName.split(/[\\/]/);
   const base = parts[parts.length - 1] || fileName;
   const withoutExt = base.replace(/\.md$/i, '');
-  return withoutExt || 'Untitled note';
+  return withoutExt || 'Untitled';
 }
 
 function buildNewRelativeName(rawTitle, targetFile = currentFile) {
