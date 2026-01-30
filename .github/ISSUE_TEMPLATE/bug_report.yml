@@ -54,13 +54,33 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: dropdown
     id: platform
     attributes:
       label: What platform are you using?
-      placeholder: "e.g., Windows 11, macOS 14, Ubuntu 22.04"
+      description: Select your operating system
+      multiple: false
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (Ubuntu)
+        - Linux (Debian)
+        - Linux (Fedora)
+        - Linux (Arch)
+        - Linux (Other)
+        - Other
     validations:
       required: true
+
+  - type: checkboxes
+    id: multiple-platforms
+    attributes:
+      label: Does this issue occur on multiple platforms?
+      description: Check if you've tested on other platforms
+      options:
+        - label: I have tested this on multiple platforms and the issue persists
 
   - type: textarea
     id: logs
