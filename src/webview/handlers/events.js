@@ -1,10 +1,7 @@
-// ============================================
-// Event Handlers / イベントハンドラー
-// Auto-save and markdown formatting events
-// 自動保存とマークダウンフォーマットイベント
-// ============================================
-
-// Queue auto-save after typing / 入力後に自動保存をキューに入れる
+/**
+ * Queue auto-save after typing
+ * 入力後に自動保存をキューに入れる
+ */
 function queueAutoSave() {
   if (!currentFile || !openTabs[currentFile]) {
     return;
@@ -29,22 +26,21 @@ function queueAutoSave() {
   }, autoSaveDelay);
 }
 
-// Initialize editor events / エディターイベントを初期化
+/**
+ * Initialize editor events and message handlers
+ * エディターイベントとメッセージハンドラーを初期化
+ */
 function initEvents() {
   if (cm) {
-    // Handle markdown syntax hiding / マークダウン構文の非表示を処理
     cm.on("beforeChange", function (cmInstance, change) {
-      // Check if user typed space
       if (change.origin === "+input" && change.text[0] === " ") {
         const cursor = cmInstance.getCursor();
         const lineNumber = cursor.line;
         const lineText = cmInstance.getLine(lineNumber) || "";
         const beforeCursor = lineText.slice(0, cursor.ch);
 
-        // Mark this line so we know to hide syntax after space is typed
         lastLineWithFormatting = lineNumber;
 
-        // If the space is typed right after a list marker, persist list state
         const listMatch = lineText.match(/^(\s*)([-+*])(?!-)$/);
         if (listMatch && cursor.ch === listMatch[1].length + 1) {
           const handle = cmInstance.getLineHandle(lineNumber);
@@ -53,7 +49,6 @@ function initEvents() {
           }
         }
 
-        // Double-space after list or task marker inserts a nested list item
         const listMarkerMatch = beforeCursor.match(/^(\s*)([-+*]|\d+[.)])\s$/);
         const taskMarkerMatch = beforeCursor.match(/^(\s*)([-+*]|\d+[.)])\s+\[[ xX]\]\s$/);
         const listContentMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+(.+)$/);
@@ -72,7 +67,6 @@ function initEvents() {
         }
       }
 
-      // Auto-pair asterisks for bold/italic
       if (change.origin === "+input" && change.text[0] === "*") {
         const cursor = cmInstance.getCursor();
         const line = cmInstance.getLine(cursor.line);
@@ -86,7 +80,6 @@ function initEvents() {
         }
       }
 
-      // Auto-pair backticks for inline code
       if (change.origin === "+input" && change.text[0] === "`") {
         const cursor = cmInstance.getCursor();
         const line = cmInstance.getLine(cursor.line) || "";
@@ -98,7 +91,6 @@ function initEvents() {
         }
       }
 
-      // Auto-pair brackets for links/tasks
       if (change.origin === "+input" && change.text[0] === "[") {
         const cursor = cmInstance.getCursor();
         const line = cmInstance.getLine(cursor.line) || "";
@@ -112,11 +104,8 @@ function initEvents() {
       }
     });
 
-    // After change, refresh to update syntax visibility. Debounce updates so
-    // typing remains smooth but hiding stays responsive.
     cm.on("change", function (cmInstance, change) {
       lastTypingAt = Date.now();
-      // Update list flags for affected lines so bullets persist on blur.
       const lineCount = cmInstance.lineCount();
       const from = Math.max(0, change.from.line - 1);
       const to = Math.min(lineCount - 1, change.to.line + 1);
@@ -135,7 +124,6 @@ function initEvents() {
         lastLineWithFormatting = null;
       }
 
-      // Update tab content
       if (currentFile && openTabs[currentFile]) {
         openTabs[currentFile].content = easyMDE.value();
       }
@@ -143,7 +131,6 @@ function initEvents() {
       queueAutoSave();
     });
 
-    // Refresh display when cursor moves
     cm.on("cursorActivity", function () {
       try { cm.refresh(); } catch (e) { }
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
@@ -152,7 +139,6 @@ function initEvents() {
       }, 25);
     });
 
-    // Toggle task checkbox on click
     cm.on("mousedown", function (cmInstance, event) {
       const target = event.target;
       if (!target || !target.classList || !target.classList.contains('cm-task-checkbox')) {
@@ -186,7 +172,6 @@ function initEvents() {
       }
     });
 
-    // Indent/outdent list items with Tab / Shift+Tab
     cm.on("keydown", function (cmInstance, event) {
       if (event.key !== "Tab") return;
 
@@ -219,6 +204,10 @@ function initEvents() {
       }
     });
 
+    /**
+     * Get next number for ordered list at given indent level
+     * 指定されたインデントレベルの順序付きリストの次の番号を取得
+     */
     const getNextNumberAtIndent = (cmInstance, startLine, targetIndentLen) => {
       for (let i = startLine; i >= 0; i--) {
         const text = cmInstance.getLine(i) || "";
@@ -283,12 +272,58 @@ function initEvents() {
       }
     });
 
-    // Ensure syntax hiding runs initially for loaded content
     setTimeout(() => updateHiddenSyntax(), 0);
   }
 
   window.addEventListener('message', (e) => {
     const msg = e.data;
+
+    if (msg.command === 'initialize') {
+      const fileName = msg.fileName || 'Untitled.md';
+      openTabs[fileName] = {
+        name: fileName,
+        content: msg.content || ''
+      };
+      if (lastSavedContent) {
+        lastSavedContent[fileName] = msg.content || '';
+      }
+      currentFile = fileName;
+      
+      if (easyMDE) {
+        easyMDE.value(msg.content || '');
+      }
+      
+      updateEditor();
+      try { updateHiddenSyntax(false); } catch (e) { /* ignore if not ready */ }
+      renderTabs();
+      
+      if (cm) {
+        setTimeout(() => {
+          try {
+            cm.refresh();
+            cm.focus();
+          } catch (e) { /* ignore */ }
+        }, 100);
+      }
+      return;
+    } else if (msg.command === 'updateContent') {
+      const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+      
+      if (isCustomEditorMode) {
+        return;
+      }
+      
+      if (currentFile && openTabs[currentFile]) {
+        const currentContent = easyMDE.value();
+        if (currentContent !== msg.content) {
+          openTabs[currentFile].content = msg.content;
+          lastSavedContent[currentFile] = msg.content;
+          easyMDE.value(msg.content);
+          try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+        }
+      }
+      return;
+    }
 
     if (msg.command === 'vaultStatus') {
       files = msg.files || [];
@@ -313,8 +348,6 @@ function initEvents() {
       }
       currentFile = msg.fileName;
       updateEditor();
-      // After loading content into the editor, update hidden syntax for the
-      // active line so markers hide immediately if appropriate.
       try { updateHiddenSyntax(false); } catch (e) { /* ignore if not ready */ }
       renderTabs();
       if (pendingTitleEditFile && pendingTitleEditFile === msg.fileName) {

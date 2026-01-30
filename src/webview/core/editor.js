@@ -1,12 +1,10 @@
-// ============================================
-// EasyMDE Editor Initialization
-// EasyMDEエディターの初期化
-// ============================================
-
+/**
+ * Initialize EasyMDE editor with custom configuration
+ * カスタム設定でEasyMDEエディターを初期化
+ */
 function initEditor() {
   const editorElement = document.getElementById('editor');
 
-  // Initialize EasyMDE with custom config / カスタム設定でEasyMDEを初期化
   easyMDE = new EasyMDE({
     element: editorElement,
     spellChecker: false,
@@ -51,7 +49,6 @@ function initEditor() {
 
   updateEditorTitle();
 
-  // Enable markdown formatting highlighting (crucial for hiding syntax)
   easyMDE.codemirror.setOption("mode", {
     name: "gfm",
     highlightFormatting: true
@@ -106,17 +103,15 @@ function initEditor() {
     }
   });
 
-  // Marks used to hide syntax characters (e.g. '#', '-', '>') after the
-  // user types a separating space. We keep references so we can clear them
-  // when lines change or tabs switch.
   hiddenMarks = [];
-  // Track code block line classes so we can clean them up on refresh.
   codeLineHandles = [];
-  // Remember lines that have been confirmed as list items (e.g. after typing "- ")
-  // so bullets persist even if trailing spaces are trimmed on non-active lines.
   listLineFlags = new WeakMap();
 }
 
+/**
+ * Initialize editor context menu
+ * エディターコンテキストメニューを初期化
+ */
 function initEditorContextMenu() {
   const menu = document.getElementById('editorContextMenu');
   if (!menu || !cm) return;
@@ -345,7 +340,10 @@ function updateListLineFlag(lineIndex) {
   }
 }
 
-// Hide inline bold/italic markers on the given line index using tokens.
+/**
+ * Hide inline bold/italic markers using tokens
+ * トークンを使用してインラインの太字/斜体マーカーを非表示
+ */
 function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -381,7 +379,10 @@ function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'c
   }
 }
 
-// Hide markdown link syntax on non-active lines: [text](url)
+/**
+ * Hide markdown link syntax on non-active lines: [text](url)
+ * 非アクティブ行のマークダウンリンク構文を非表示: [text](url)
+ */
 function hideLinkSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -426,14 +427,16 @@ function hideLinkSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidd
       }
     }
 
-    // Avoid infinite loops on zero-length matches
     if (linkRegex.lastIndex === start) {
       linkRegex.lastIndex = end;
     }
   }
 }
 
-// Hide inline code span markers on non-active lines: `code` or ``code``
+/**
+ * Hide inline code span markers on non-active lines: `code` or ``code``
+ * 非アクティブ行のインラインコードスパンマーカーを非表示
+ */
 function hideInlineCodeSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -561,8 +564,10 @@ function getInlineCursorMarkerRanges(text, cursorCh) {
   return ranges;
 }
 
-// Hide markers on NON-active lines and keep markers visible on the active line.
-// Inline hiding on the active line is disabled so you can see syntax while editing.
+/**
+ * Update hidden syntax markers for markdown formatting
+ * マークダウンフォーマットの非表示構文マーカーを更新
+ */
 function updateHiddenSyntax(includeActiveInline = false) {
   clearHiddenMarks();
 
@@ -573,7 +578,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
   let fenceChar = null;
   let cursorInCodeBlock = false;
 
-  // Prepass: determine if the cursor is inside a fenced code block.
   for (let i = 0; i <= cursor.line && i < lines; i++) {
     const lineText = cm.getLine(i) || "";
     const fenceMatch = lineText.match(/^\s*([\x60~]{3,})/);
@@ -604,7 +608,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
     const isTyping = i === cursor.line && (now - lastTypingAt < typingGraceMs || now - lastCheckboxToggleAt < checkboxGraceMs);
     const suppressMarkers = i === cursor.line && now < suppressMarkersUntil;
 
-    // Fenced code blocks (3 backticks or 3 tildes)
     const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
     if (fenceMatch) {
       const fence = fenceMatch[1][0];
@@ -650,9 +653,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    // Unordered lists: '-', '*', '+' at line start (space required)
     const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
-    // Ordered lists: number + '.' or ')' (space required)
     const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
 
     if (unordered || ordered) {
@@ -692,7 +693,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
           const bullet = document.createElement('span');
           bullet.textContent = '•';
           bullet.className = 'cm-list-bullet';
-          // Replace only the marker character with a bullet.
           hiddenMarks.push(cm.markText(
             { line: i, ch: start },
             { line: i, ch: start + 1 },
@@ -745,7 +745,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
       }
     }
 
-    // Headings: one to six '#' followed by a space
     const heading = text.match(/^(\s*)(#{1,6})(\s+)/);
     if (heading && heading[2]) {
       const start = heading[1].length;
@@ -757,7 +756,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    // Horizontal rule: --- or *** or ___ (3+ with optional spaces)
     const hr = text.match(/^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/);
     if (hr) {
       if (i !== cursor.line) {
@@ -782,7 +780,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    // Blockquote: '>'
     const quote = text.match(/^(\s*)(>)(\s*)/);
     if (quote) {
       const start = quote[1].length;
@@ -799,7 +796,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
       }
     }
 
-    // Special inline command: '#file:'
     const fileCmd = text.match(/^(\s*)(#file:)(\S*)/i);
     if (fileCmd) {
       const start = fileCmd[1].length;
@@ -814,13 +810,11 @@ function updateHiddenSyntax(includeActiveInline = false) {
       }
     }
 
-    // Inline bold/italic markers on non-active lines
     hideInlineFormatting(text, i, listIgnoreRanges, 'cm-hidden-syntax-inline');
     hideLinkSyntax(text, i, [], 'cm-hidden-syntax-inline');
     hideInlineCodeSyntax(text, i, [], 'cm-hidden-syntax-inline');
   }
 
-  // Optionally hide inline markers on the active line (currently disabled by callers).
   if (includeActiveInline) {
     const activeText = cm.getLine(cursor.line) || "";
     hideInlineFormatting(activeText, cursor.line);

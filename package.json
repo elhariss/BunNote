@@ -51,6 +51,38 @@
       {
         "command": "bunnote.openSettings",
         "title": "BunNote: Open Settings"
+      },
+      {
+        "command": "bunnote.openInEditor",
+        "title": "Open in Editor"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "bunnote.openInEditor",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "bunnote.openInEditor",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ]
+    },
+    "customEditors": [
+      {
+        "viewType": "bunnote.markdownEditor",
+        "displayName": "BunNote Markdown Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
       }
     ],
     "configuration": {

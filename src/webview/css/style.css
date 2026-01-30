@@ -500,3 +500,49 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
+
+/* Custom Editor Mode / カスタムエディターモード */
+body[data-editor-mode="custom"] .sidebar {
+    display: none !important;
+}
+
+body[data-editor-mode="custom"] .container {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-editor-mode="custom"] .editor_area {
+    width: 100% !important;
+    height: 100vh !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+body[data-editor-mode="custom"] .editor_container {
+    margin-left: 0 !important;
+    width: 100% !important;
+    flex: 1 !important;
+    overflow: auto !important;
+}
+
+body[data-editor-mode="custom"] .editor_tabs {
+    display: none !important;
+}
+
+body[data-editor-mode="custom"] .editor_header {
+    display: none !important;
+}
+
+body[data-editor-mode="custom"] .EasyMDEContainer {
+    height: 100% !important;
+}
+
+body[data-editor-mode="custom"] .CodeMirror {
+    height: 100% !important;
+}
+
+body[data-editor-mode="custom"] .CodeMirror-scroll {
+    padding-top: 0 !important;
+}

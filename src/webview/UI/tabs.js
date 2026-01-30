@@ -1,9 +1,11 @@
 // @ts-nocheck
 
-
+/**
+ * Update editor content from current tab
+ * エディターコンテンツを現在のタブから更新
+ */
 function updateEditor() {
   if (currentFile && openTabs[currentFile]) {
-    // Clear any existing marks (they belong to the previous buffer state)
     try { clearHiddenMarks(); } catch (e) { /* ignore */ }
     easyMDE.value(openTabs[currentFile].content);
   } else {
@@ -42,7 +44,8 @@ function finishTitleEditing(save) {
         command: 'renameFile',
         oldName: currentFile,
         newName: candidate,
-        source: 'editorTitle'
+        source: 'editorTitle',
+        isCustomEditor: false
       });
       return;
     }
@@ -64,12 +67,16 @@ function handleRenameResult(msg) {
       currentFile = msg.newName;
       updateEditor();
       renderTabs();
+      renderFilesList();
     } else if (openTabs[msg.newName]) {
       renderTabs();
     }
-    renderFilesList();
   } else {
-    window.alert(msg.error || 'Failed to rename note');
+    vscode.postMessage({
+      command: 'showError',
+      message: msg.error || 'Failed to rename note'
+    });
+    
     if (msg.source === 'editorTitle') {
       startTitleEditing();
     }
@@ -78,7 +85,10 @@ function handleRenameResult(msg) {
 
 function handleFolderMoveResult(msg) {
   if (!msg || !msg.success) {
-    window.alert((msg && msg.error) || 'Failed to move folder');
+    vscode.postMessage({
+      command: 'showError',
+      message: (msg && msg.error) || 'Failed to move folder'
+    });
     return;
   }
 
@@ -159,19 +169,31 @@ function closeTab(e, fileName) {
   renderTabs();
 }
 
+/**
+ * Save current file content
+ * 現在のファイルコンテンツを保存
+ */
 function saveFile(isAutoSave = false) {
   if (!currentFile) {
     return;
   }
 
   const content = easyMDE.value();
+  const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
 
-  vscode.postMessage({
-    command: 'saveFile',
-    fileName: currentFile,
-    content: content,
-    isAutoSave: isAutoSave
-  });
+  if (isCustomEditorMode) {
+    vscode.postMessage({
+      command: 'saveContent',
+      content: content
+    });
+  } else {
+    vscode.postMessage({
+      command: 'saveFile',
+      fileName: currentFile,
+      content: content,
+      isAutoSave: isAutoSave
+    });
+  }
 
   if (openTabs[currentFile]) {
     openTabs[currentFile].content = content;
@@ -181,7 +203,6 @@ function saveFile(isAutoSave = false) {
   }
 }
 
-// Expose functions to global scope
 window.updateEditor = updateEditor;
 window.updateEditorTitle = updateEditorTitle;
 window.startTitleEditing = startTitleEditing;

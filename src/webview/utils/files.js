@@ -1,7 +1,3 @@
-// ============================================
-// File Operations / ファイル操作
-// ============================================
-
 function createNewFolder() {
   vscode.postMessage({
     command: 'requestCreateFolder',
@@ -23,7 +19,6 @@ function refreshFiles() {
   vscode.postMessage({ command: 'getVault' });
 }
 
-// Context menu state / コンテキストメニュー状態
 let contextMenuFile = null;
 let contextMenuFolder = null;
 let contextMenuListParent = null;
@@ -31,15 +26,12 @@ let dragPayload = null;
 let dragIndicator = null;
 let activeDropTarget = null;
 
-// ============================================
-// Context Menu / コンテキストメニュー
-// ============================================
-
 function initContextMenu() {
   const menu = document.getElementById('fileContextMenu');
   const editTitleBtn = document.getElementById('editTitleAction');
   const deleteBtn = document.getElementById('deleteFileAction');
   const duplicateBtn = document.getElementById('duplicateFileAction');
+  const openInEditorBtn = document.getElementById('openInEditorAction');
   if (!menu || !deleteBtn) return;
 
   deleteBtn.addEventListener('click', (e) => {
@@ -69,6 +61,19 @@ function initContextMenu() {
       e.stopPropagation();
       if (contextMenuFile) {
         vscode.postMessage({ command: 'duplicateFile', fileName: contextMenuFile });
+      }
+      hideAllContextMenus();
+    });
+  }
+
+  if (openInEditorBtn) {
+    openInEditorBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (contextMenuFile) {
+        vscode.postMessage({ 
+          command: 'openInCustomEditor', 
+          fileName: contextMenuFile 
+        });
       }
       hideAllContextMenus();
     });
@@ -267,10 +272,6 @@ function showListContextMenu(event, parentFolder) {
   menu.style.top = `${Math.max(8, top)}px`;
 }
 
-// ============================================
-// Drag and Drop / ドラッグアンドドロップ
-// ============================================
-
 const lastPointer = { x: 0, y: 0 };
 
 function handleDragStart(event, itemType, itemPath) {
@@ -342,7 +343,6 @@ function clearDropTarget() {
   activeDropTarget = null;
 }
 
-// Drop item on folder / フォルダにドロップ
 function handleDropOnFolder(event, targetFolder) {
   event.preventDefault();
   clearDropTarget();
@@ -438,10 +438,6 @@ function initDragAndDrop() {
     showListContextMenu(event, '');
   });
 }
-
-// ============================================
-// File Tree / ファイルツリー
-// ============================================
 
 function renderFilesList() {
   const filesList = document.getElementById('filesList');
@@ -580,9 +576,6 @@ function initGlobalContextMenuListeners() {
   });
 }
 
-// ============================================
-// Initialization / 初期化
-// ============================================
 (function() {
   function initialize() {
     initContextMenu();
@@ -599,7 +592,6 @@ function initGlobalContextMenuListeners() {
   }
 })();
 
-// Message handler / メッセージハンドラー
 window.addEventListener('message', event => {
   const message = event.data;
   switch (message.command) {
@@ -635,7 +627,6 @@ window.addEventListener('message', event => {
       vscode.postMessage({ command: 'getVault' });
       break;
     case 'fileChanged':
-      // Reload file if it's currently open
       if (message.fileName && openTabs[message.fileName]) {
         vscode.postMessage({ 
           command: 'loadFile', 
@@ -646,8 +637,6 @@ window.addEventListener('message', event => {
   }
 });
 
-
-// Expose drag and drop functions to global scope / グローバルスコープに公開
 window.handleDragStart = handleDragStart;
 window.handleDragOver = handleDragOver;
 window.handleDragEnd = handleDragEnd;

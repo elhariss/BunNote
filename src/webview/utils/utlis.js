@@ -1,7 +1,6 @@
-// ============================================
-// Utilities / ユーティリティ
-// ============================================
-
+/**
+ * Escape HTML special characters / HTML特殊文字をエスケープ
+ */
 function escapeHtml(text) {
   const map = {
     '&': '&amp;',
@@ -20,6 +19,9 @@ function getCurrentDirectory(fileName) {
   return idx === -1 ? '' : fileName.slice(0, idx + 1);
 }
 
+/**
+ * Format file name to display title / ファイル名を表示用タイトルにフォーマット
+ */
 function formatTitleFromFile(fileName) {
   if (!fileName) {
     return 'Untitled';
@@ -30,6 +32,9 @@ function formatTitleFromFile(fileName) {
   return withoutExt || 'Untitled';
 }
 
+/**
+ * Build new relative file name from title / タイトルから新しい相対ファイル名を構築
+ */
 function buildNewRelativeName(rawTitle, targetFile = currentFile) {
   if (!targetFile) {
     return null;

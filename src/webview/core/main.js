@@ -1,10 +1,5 @@
-// ============================================
-// Global State / グローバル状態
-// ============================================
-
 const vscode = acquireVsCodeApi();
 
-// File and editor state / ファイルとエディターの状態
 let currentFile = null;
 let openTabs = {};
 let files = [];
@@ -16,29 +11,52 @@ let editorTitleInput = null;
 let isTitleEditing = false;
 let pendingTitleEditFile = null;
 
-// Auto-save state / 自動保存の状態
 let autoSaveTimer = null;
 let autoSaveDelay = 750;
 let lastSavedContent = {};
 
-// Markdown syntax hiding state / マークダウン構文非表示の状態
 let lastTypingAt = 0;
 let typingGraceMs = 500;
 let lastCheckboxToggleAt = 0;
 let checkboxGraceMs = 1500;
 let suppressMarkersUntil = 0;
 
-// CodeMirror markers / CodeMirrorマーカー
 let hiddenMarks = [];
 let codeLineHandles = [];
 let listLineFlags = new WeakMap();
 let lastLineWithFormatting = null;
 let hiddenUpdateTimer = null;
 
+const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+
 document.addEventListener('DOMContentLoaded', () => {
   initEditor();
   initEvents();
-  vscode.postMessage({ command: 'getVault' });
+  
+  if (isCustomEditorMode) {
+    const sidebar = document.querySelector('.sidebar');
+    const editorArea = document.querySelector('.editor_area');
+    const editorTabs = document.querySelector('.editor_tabs');
+    const editorHeader = document.querySelector('.editor_header');
+    const editorContainer = document.querySelector('.editor_container');
+    
+    if (sidebar) sidebar.style.display = 'none';
+    if (editorTabs) editorTabs.style.display = 'none';
+    if (editorHeader) editorHeader.style.display = 'none';
+    if (editorArea) {
+      editorArea.style.width = '100%';
+      editorArea.style.height = '100vh';
+      editorArea.style.flex = '1';
+    }
+    if (editorContainer) {
+      editorContainer.style.width = '100%';
+      editorContainer.style.height = '100%';
+    }
+    
+    vscode.postMessage({ command: 'ready' });
+  } else {
+    vscode.postMessage({ command: 'getVault' });
+  }
 });
 
 window.addEventListener('load', () => {
@@ -46,12 +64,6 @@ window.addEventListener('load', () => {
   if (loading) loading.style.display = 'none';
   document.body.classList.remove('loading');
 });
-
-
-
-// ============================================
-// Vault Collapse / Vaultの折りたたみ
-// ============================================
 
 function toggleVaultCollapse() {
   const sidebar = document.querySelector('.sidebar');

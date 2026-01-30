@@ -1,9 +1,3 @@
-// ============================================
-// Webview Provider / Webviewプロバイダー
-// Handles file operations and webview communication
-// ファイル操作とWebview通信を処理
-// ============================================
-
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
@@ -21,9 +15,11 @@ class ViewProvider {
     this.setupFileWatcher();
   }
 
-  // Setup file watcher for external changes / 外部変更用のファイルウォッチャーを設定
+  /** 
+   * Setup file system watcher to detect external changes to markdown files
+   * マークダウンファイルの外部変更を検出するファイルシステムウォッチャーを設定
+   */
   setupFileWatcher() {
-    // Dispose existing watcher if any
     if (this.fileWatcher) {
       this.fileWatcher.dispose();
       this.fileWatcher = null;
@@ -31,21 +27,17 @@ class ViewProvider {
 
     const vaultPath = this.getVaultPath();
     if (vaultPath && fs.existsSync(vaultPath)) {
-      // Watch for changes in the vault directory
       const pattern = new vscode.RelativePattern(vaultPath, "**/*.md");
       this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
-      // File created
       this.fileWatcher.onDidCreate(() => {
         this.refresh();
       });
 
-      // File changed
       this.fileWatcher.onDidChange((uri) => {
         if (this.view) {
           const vaultPath = this.getVaultPath();
           const relativePath = path.relative(vaultPath, uri.fsPath).split(path.sep).join("/");
-          // Notify webview to reload the file if it's open
           this.view.webview.postMessage({ 
             command: "fileChanged", 
             fileName: relativePath 
@@ -53,7 +45,6 @@ class ViewProvider {
         }
       });
 
-      // File deleted
       this.fileWatcher.onDidDelete(() => {
         this.refresh();
       });
@@ -62,16 +53,17 @@ class ViewProvider {
     }
   }
 
-  // Refresh webview / Webviewを更新
   refresh() {
     if (this.view) {
       this.view.webview.postMessage({ command: "refresh" });
     }
-    // Update file watcher when vault changes
     this.setupFileWatcher();
   }
 
-  // Scan vault for markdown files / Vault内のマークダウンファイルをスキャン
+  /** 
+   * Recursively scan vault directory for markdown files and folders
+   * Vaultディレクトリを再帰的にスキャンしてマークダウンファイルとフォルダを取得
+   */
   async getMarkdownFiles() {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -131,7 +123,10 @@ class ViewProvider {
     return result;
   }
 
-  // Initialize webview / Webviewを初期化
+  /** 
+   * Initialize webview and setup message handlers for file operations
+   * Webviewを初期化してファイル操作用のメッセージハンドラーを設定
+   */
   resolveWebviewView(view) {
     this.view = view;
     view.webview.options = {
@@ -142,9 +137,11 @@ class ViewProvider {
     };
     view.webview.html = this.getHtml();
 
-    // Handle messages from webview / Webviewからのメッセージを処理
     view.webview.onDidReceiveMessage(async (msg) => {
-      // Sanitize file names for security / セキュリティのためファイル名をサニタイズ
+      /** 
+       * Sanitize file names to prevent path traversal and security issues
+       * パストラバーサルやセキュリティ問題を防ぐためにファイル名をサニタイズ
+       */
       const sanitizeFileName = (name) => {
         if (!name || typeof name !== 'string') return name;
         let n = name.trim();
@@ -165,6 +162,10 @@ class ViewProvider {
 
       const vaultPath = this.getVaultPath();
 
+      /** 
+       * Handle file rename with custom editor tab management
+       * カスタムエディタタブ管理を含むファイル名変更を処理
+       */
       const performRename = async (safeOldName, safeNewName, source) => {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -201,8 +202,28 @@ class ViewProvider {
         }
 
         try {
+          const oldUri = vscode.Uri.file(oldPath);
+          const newUri = vscode.Uri.file(newPath);
+          
+          const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs);
+          const customEditorTabs = tabs.filter(tab => {
+            if (tab.input instanceof vscode.TabInputCustom) {
+              return tab.input.uri.toString() === oldUri.toString();
+            }
+            return false;
+          });
+          
           fs.renameSync(oldPath, newPath);
           vscode.window.showInformationMessage("Note renamed to: " + safeNewName);
+          
+          for (const tab of customEditorTabs) {
+            await vscode.window.tabGroups.close(tab);
+          }
+          
+          if (customEditorTabs.length > 0) {
+            await vscode.commands.executeCommand("vscode.openWith", newUri, "bunnote.markdownEditor");
+          }
+          
           view.webview.postMessage({
             command: "renameResult",
             success: true,
@@ -254,6 +275,10 @@ class ViewProvider {
         const rawTitle = (msg.title || "").trim();
         const displayTitle = rawTitle || "Untitled";
 
+        /** 
+         * Generate unique file name by appending counter if name exists
+         * 名前が存在する場合はカウンターを追加してユニークなファイル名を生成
+         */
         const makeUniqueName = (baseTitle) => {
           const base = baseTitle.trim() || "Untitled";
           let candidate = base;
@@ -721,6 +746,28 @@ class ViewProvider {
             error: err.message
           });
         }
+      } else if (msg.command === "openInCustomEditor") {
+        if (!vaultPath) {
+          vscode.window.showErrorMessage("Please set BunNote vault first");
+          return;
+        }
+
+        const safeFileName = sanitizeFileName(msg.fileName);
+        if (!safeFileName) {
+          vscode.window.showErrorMessage("Invalid file name");
+          return;
+        }
+
+        const filePath = path.join(vaultPath, safeFileName);
+        if (!fs.existsSync(filePath)) {
+          vscode.window.showErrorMessage("File not found: " + msg.fileName);
+          return;
+        }
+
+        const fileUri = vscode.Uri.file(filePath);
+        vscode.commands.executeCommand("vscode.openWith", fileUri, "bunnote.markdownEditor");
+      } else if (msg.command === "showError") {
+        vscode.window.showErrorMessage(msg.message || "An error occurred");
       }
     });
 

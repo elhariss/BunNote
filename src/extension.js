@@ -6,8 +6,8 @@
 const vscode = require("vscode");
 const { registerCommands } = require("./extension/commands");
 const { ViewProvider } = require("./extension/viewProvider");
+const { EditorProvider } = require("./extension/editorProvider");
 
-// Extension activation / 拡張機能の有効化
 function activate(context) {
   const config = vscode.workspace.getConfiguration("bunnote");
   let vaultPath = config.get("vaultPath");
@@ -18,14 +18,24 @@ function activate(context) {
     vaultPath = defaultVaultPath;
   }
 
-  // Initialize state and provider / 状態とプロバイダーを初期化
   const state = { vaultPath };
   const provider = new ViewProvider(context, () => state.vaultPath);
   registerCommands(context, state, provider);
   
-  // Register webview provider / Webviewプロバイダーを登録
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("bunNoteView", provider)
+  );
+
+  context.subscriptions.push(
+    EditorProvider.register(context)
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("bunnote.openInEditor", async (uri) => {
+      if (uri && uri.fsPath) {
+        await vscode.commands.executeCommand("vscode.openWith", uri, "bunnote.markdownEditor");
+      }
+    })
   );
 }
 
