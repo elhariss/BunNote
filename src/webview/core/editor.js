@@ -35,14 +35,10 @@ function initEditor() {
     }
   });
 
-  editorTitleElement = document.getElementById('editorTitle');
   editorTitleInput = document.getElementById('editorTitleInput');
 
-  if (editorTitleElement) {
-    editorTitleElement.addEventListener('click', () => startTitleEditing());
-  }
-
   if (editorTitleInput) {
+    editorTitleInput.addEventListener('click', () => startTitleEditing());
     editorTitleInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         finishTitleEditing(true);
