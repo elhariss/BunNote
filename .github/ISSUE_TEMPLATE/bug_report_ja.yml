@@ -1,0 +1,78 @@
+name: バグ報告 (Bug Report - 日本語)
+description: BunNoteのバグや問題を報告する
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ご協力ありがとうございます！以下のフォームに記入して、問題の理解と修正にご協力ください。
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: 何が起こりましたか？
+      description: 発生した問題と期待していた動作を説明してください。
+      placeholder: 問題の詳細な説明を記入してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: 再現手順
+      description: この問題をどのように再現できますか？
+      placeholder: |
+        1. '...'に移動
+        2. '...'をクリック
+        3. エラーが表示される
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: reproducible
+    attributes:
+      label: この問題は再現可能ですか？
+      description: 問題を一貫して再現できますか？
+      options:
+        - label: 問題が再現可能であることを確認し、再現できました。
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: BunNoteのバージョン
+      description: 使用しているBunNoteのバージョンは何ですか？
+      placeholder: 例：1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Codeのバージョン
+      description: 使用しているVS Codeのバージョンは何ですか？
+      placeholder: 例：1.95.0
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: 使用しているプラットフォームは何ですか？
+      placeholder: "例：Windows 11、macOS 14、Ubuntu 22.04"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 関連するログ出力
+      description: 開発者コンソール（ヘルプ > 開発者ツールの切り替え）から関連するログやエラーを提供してください。
+      placeholder: 該当する場合はログ出力をここに貼り付けてください。
+      render: shell
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 追加情報
+      description: 問題に関するその他のコンテキスト、スクリーンショット、または情報を追加してください。
+      placeholder: 問題の理解に役立つその他の情報。

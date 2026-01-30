@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 📖 Documentation
+  - name: 📖 Documentation / ドキュメント
     url: https://github.com/elhariss/BunNote#readme
-    about: Read the documentation for help and usage information
-  - name: 💬 Discussions
+    about: Read the documentation for help and usage information / ヘルプと使用方法についてはドキュメントをお読みください
+  - name: 💬 Discussions / ディスカッション
     url: https://github.com/elhariss/BunNote/discussions
-    about: Ask questions and discuss ideas with the community
+    about: Ask questions and discuss ideas with the community / コミュニティで質問やアイデアを議論する

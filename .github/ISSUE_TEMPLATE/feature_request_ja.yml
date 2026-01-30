@@ -1,0 +1,56 @@
+name: 機能リクエスト (Feature Request - 日本語)
+description: BunNoteの新機能を提案する
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能の提案ありがとうございます！以下のフォームに記入して、リクエストの理解にご協力ください。
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: 機能の説明
+      description: 実装してほしい機能の明確な説明。
+      placeholder: 機能を詳しく説明してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: ユースケース
+      description: この機能がなぜ有用で、どのような問題を解決するかを説明してください。
+      placeholder: ユースケースとメリットを説明してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 提案する解決策
+      description: この機能をどのように実装できると思いますか？
+      placeholder: 提案する解決策やアプローチを説明してください。
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案
+      description: 代替の解決策や回避策を検討しましたか？
+      placeholder: 検討した代替案を説明してください。
+
+  - type: checkboxes
+    id: existing-check
+    attributes:
+      label: 既存のIssueを確認しましたか？
+      description: この機能が既にリクエストされていないか確認してください。
+      options:
+        - label: 既存のIssueを検索し、この機能がまだリクエストされていないことを確認しました。
+          required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 追加情報
+      description: 機能リクエストに関するその他のコンテキスト、モックアップ、またはスクリーンショットを追加してください。
+      placeholder: リクエストの理解に役立つその他の情報。
