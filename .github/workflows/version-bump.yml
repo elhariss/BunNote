@@ -20,36 +20,35 @@ jobs:
       contents: write
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Bump version
+        run: npm version ${{ github.event.inputs.version_type }} -m "chore: bump version to %s"
         
-    - name: Configure Git
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-    
-    - name: Bump version
-      run: npm version ${{ github.event.inputs.version_type }} -m "chore: bump version to %s"
-      
-    - name: Get new version
-      id: version
-      run: |
-        VERSION=$(node -p "require('./package.json').version")
-        echo "NEW_VERSION=$VERSION" >> $GITHUB_OUTPUT
-      
-    - name: Push changes
-      run: |
-        git push
-        git push --tags
-      
-    - name: Create release notes
-      run: |
-        echo "Version ${{ steps.version.outputs.NEW_VERSION }} has been created!"
-        echo "A release will be automatically created when the tag is pushed."
+      - name: Get new version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "NEW_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        
+      - name: Push changes
+        run: |
+          git push
+          git push --tags
+        
+      - name: Create release notes
+        run: |
+          echo "Version ${{ steps.version.outputs.NEW_VERSION }} has been created!"
+          echo "A release will be automatically created when the tag is pushed."
