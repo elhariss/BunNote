@@ -12,7 +12,6 @@ let folders = [];
 let expandedFolders = new Set();
 let easyMDE = null;
 let cm = null;
-let editorTitleElement = null;
 let editorTitleInput = null;
 let isTitleEditing = false;
 let pendingTitleEditFile = null;
