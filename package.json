@@ -2,7 +2,7 @@
   "name": "bunnote",
   "displayName": "BunNote",
   "description": "Write and manage notes directly from VS Code with full markdown support",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "elharis",
   "repository": {
     "type": "git",
@@ -20,16 +20,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id":"bunNote",
+          "id": "bunNote",
           "title": "BunNote",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "bunNote":[
+      "bunNote": [
         {
-          "id":"bunNoteView",
+          "id": "bunNoteView",
           "name": "Vault",
           "type": "webview",
           "icon": "media/icon.png"
