@@ -268,54 +268,6 @@ body {
     max-width: 400px;
 }
 
-.empty_state_actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.empty_state_btn {
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.empty_state_btn i {
-    font-size: 16px;
-}
-
-.empty_state_btn.primary {
-    color: var(--vscode-foreground);
-    background-color: color-mix(in srgb,
-            var(--vscode-button-background) 20%,
-            transparent);
-    border: 1.5px solid var(--vscode-inputOption-activeBorder);
-}
-
-
-.empty_state_btn.primary:hover {
-    background-color: color-mix(in srgb,
-            var(--vscode-button-background) 30%,
-            transparent);  
-}
-
-.empty_state_btn.secondary {
-    background-color: transparent;
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
-}
-
-.empty_state_btn.secondary:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-}
-
 /* Editor Area / エディター */
 
 .editor_area {
