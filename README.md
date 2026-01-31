@@ -1,3 +1,8 @@
+<div align="center">
+
+
+![BunNote Preview 1](media/icon.png)
+
 # 文ノート (BunNote)
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/elharis.bunnote)](https://marketplace.visualstudio.com/items?itemName=elharis.bunnote)
@@ -7,14 +12,17 @@
 
 [English](#english) | [日本語](#japanese)
 
-## Screenshots
-
-![BunNote Preview 1](screenshots/preview_1.png)
-
-![BunNote Preview 2](screenshots/preview_2.png)
+</div>
 
 
 文ノート（BunNote）は、VS Code上でマークダウンノートを作成・管理できる無料のオープンソース拡張機能です。Obsidianなどの外部マークダウンエディタと同一のVaultを利用でき、スムーズに連携できます。
+<div align="center">
+
+![BunNote Preview 1](screenshots/preview_1.png)
+---
+![BunNote Preview 2](screenshots/preview_2.png)
+
+</div>
 
 ### ダウンロード
 
@@ -171,7 +179,7 @@ GitHubのIssuesページにて、バグ報告や機能リクエストを受け�
 
 ### ライセンス
 
-本プロジェクトはMITライセンスの下で公開されています。
+本プロジェクトは [MIT](https://github.com/elhariss/BunNote/blob/main/LICENSE)ライセンスの下で公開されています。
 
 ### コントリビューション
 
@@ -179,6 +187,6 @@ GitHubのIssuesページにて、バグ報告や機能リクエストを受け�
 
 ### サポート
 
-- 🐛 [バグ報告](https://github.com/elhariss/BunNote/issues/new?template=bug_report.md)
-- 💡 [機能リクエスト](https://github.com/elhariss/BunNote/issues/new?template=feature_request.md)
+- 🐛 [バグ報告](https://github.com/elhariss/BunNote/issues/new?template=bug_report_ja.yml)
+- 💡 [機能リクエスト](https://github.com/elhariss/BunNote/issues/new?template=feature_request_ja.yml)
 - ⭐ このプロジェクトが役に立ったら、GitHubでスターをお願いします！
