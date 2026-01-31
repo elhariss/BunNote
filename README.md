@@ -7,7 +7,12 @@
 
 [English](#english) | [日本語](#japanese)
 
-## Japanese
+## Screenshots
+
+![BunNote Preview 1](screenshots/preview_1.png)
+
+![BunNote Preview 2](screenshots/preview_2.png)
+
 
 文ノート（BunNote）は、VS Code上でマークダウンノートを作成・管理できる無料のオープンソース拡張機能です。Obsidianなどの外部マークダウンエディタと同一のVaultを利用でき、スムーズに連携できます。
 
