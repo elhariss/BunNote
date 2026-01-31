@@ -83,7 +83,7 @@ body {
 
 .btn_collapse {
     margin-right: 4px;
-    font-size:16px;
+    font-size: 16px;
 }
 
 .btn_icon:hover {
@@ -148,52 +148,44 @@ body {
 .folder_item[data-depth="2"]::before {
     width: calc(16px * 2 + 1px);
     left: 12px;
-    background: repeating-linear-gradient(
-        to right,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
-        transparent 1px,
-        transparent 16px
-    );
+    background: repeating-linear-gradient(to right,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+            transparent 1px,
+            transparent 16px);
 }
 
 .file_item[data-depth="3"]::before,
 .folder_item[data-depth="3"]::before {
     width: calc(16px * 3 + 1px);
     left: 12px;
-    background: repeating-linear-gradient(
-        to right,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
-        transparent 1px,
-        transparent 16px
-    );
+    background: repeating-linear-gradient(to right,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+            transparent 1px,
+            transparent 16px);
 }
 
 .file_item[data-depth="4"]::before,
 .folder_item[data-depth="4"]::before {
     width: calc(16px * 4 + 1px);
     left: 12px;
-    background: repeating-linear-gradient(
-        to right,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
-        transparent 1px,
-        transparent 16px
-    );
+    background: repeating-linear-gradient(to right,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+            transparent 1px,
+            transparent 16px);
 }
 
 .file_item[data-depth="5"]::before,
 .folder_item[data-depth="5"]::before {
     width: calc(16px * 5 + 1px);
     left: 12px;
-    background: repeating-linear-gradient(
-        to right,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
-        var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
-        transparent 1px,
-        transparent 16px
-    );
+    background: repeating-linear-gradient(to right,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 0px,
+            var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3)) 1px,
+            transparent 1px,
+            transparent 16px);
 }
 
 /* Folder Item / フォルダ */
@@ -252,17 +244,76 @@ body {
     color: var(--vscode-descriptionForeground);
     text-align: center;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px;
+    padding: 40px 20px;
 }
 
 .empty_state_icon {
-    font-size: 48px;
-    opacity: 0.5;
+    font-size: 25px;
+    color: var(--vscode-accent);
+}
+
+.empty_state_title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--vscode-accent);
+    line-height: 1.3;
 }
 
 .empty_state_text {
-    font-size: 14px;
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.85;
+    font-weight: 400;
+    line-height: 1.5;
+    max-width: 400px;
+}
+
+.empty_state_actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.empty_state_btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.empty_state_btn i {
+    font-size: 16px;
+}
+
+.empty_state_btn.primary {
+    color: var(--vscode-foreground);
+    background-color: color-mix(in srgb,
+            var(--vscode-button-background) 20%,
+            transparent);
+    border: 1.5px solid var(--vscode-inputOption-activeBorder);
+}
+
+
+.empty_state_btn.primary:hover {
+    background-color: color-mix(in srgb,
+            var(--vscode-button-background) 30%,
+            transparent);  
+}
+
+.empty_state_btn.secondary {
+    background-color: transparent;
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+}
+
+.empty_state_btn.secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
 }
 
 /* Editor Area / エディター */
@@ -345,44 +396,90 @@ body {
 .editor_tabs {
     display: flex;
     gap: 0;
-    border-bottom: 1px solid var(--vscode-sideBar-border);
-    background-color: var(--vscode-tab-inactiveBackground);
+    padding: 0;
+    background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+    border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder, #2b2b2b);
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+}
+
+.editor_tabs:hover {
+    scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+}
+
+.editor_tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.editor_tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.editor_tabs::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.editor_tabs:hover::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+.editor_tabs::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 
 .editor_tab {
-    padding: 8px 16px;
+    padding: 10px 16px;
     cursor: pointer;
-    border-right: 1px solid var(--vscode-sideBar-border);
-    font-size: 12px;
+    font-size: 13px;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    background-color: var(--vscode-tab-inactiveBackground, #2d2d2d);
+    border: none;
+    border-right: 1px solid var(--vscode-editorGroupHeader-tabsBorder, #2b2b2b);
+    border-radius: 0;
     transition: all 0.2s;
+    min-width: 0;
+    max-width: 200px;
+    flex-shrink: 0;
+    color: var(--vscode-tab-inactiveForeground, #969696);
 }
 
 .editor_tab:hover {
-    background-color: var(--vscode-tab-activeBackground);
+    background-color: var(--vscode-tab-hoverBackground, #323232);
 }
 
 .editor_tab.active {
-    background-color: var(--vscode-tab-activeBackground);
-    border-bottom: 2px solid var(--vscode-tab-activeBorder);
+    background-color: var(--vscode-tab-activeBackground, #1e1e1e);
+    color: var(--vscode-tab-activeForeground, #ffffff);
+    border-bottom: 2px solid var(--vscode-tab-activeBorder, transparent);
 }
 
 .tab_title {
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .tab_close {
     cursor: pointer;
-    font-size: 14px;
-    padding: 2px 4px;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.6;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
 }
 
 .tab_close:hover {
-    color: var(--vscode-errorForeground);
+    opacity: 1;
 }
 
 .editor_container {

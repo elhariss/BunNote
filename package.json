@@ -31,7 +31,8 @@
         {
           "id":"bunNoteView",
           "name": "Vault",
-          "type": "webview"
+          "type": "webview",
+          "icon": "media/icon.png"
         }
       ]
     },

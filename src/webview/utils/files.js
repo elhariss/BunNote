@@ -444,7 +444,7 @@ function renderFilesList() {
   if (!filesList) return;
 
   if (files.length === 0 && folders.length === 0) {
-    filesList.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ph ph-file-text"></i></div><div class="empty-state-text">No markdown files found</div></div>';
+    filesList.innerHTML = '<div class="empty_state"><div class="empty_state_icon"><i class="ph ph-folder-dashed"></i></div><h1 class="empty_state_title">No files found</h1><div class="empty_state_text">Set your vault folder to get started</div></div>';
     return;
   }
 

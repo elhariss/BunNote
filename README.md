@@ -1,65 +1,179 @@
-# bunnote README
+# 文ノート (BunNote)
 
-This is the README for your extension "bunnote". After writing up a brief description, we recommend including the following sections.
+[![Version](https://img.shields.io/visual-studio-marketplace/v/elharis.bunnote)](https://marketplace.visualstudio.com/items?itemName=elharis.bunnote)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/elharis.bunnote)](https://marketplace.visualstudio.com/items?itemName=elharis.bunnote)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/elharis.bunnote)](https://marketplace.visualstudio.com/items?itemName=elharis.bunnote)
+[![License](https://img.shields.io/github/license/elhariss/BunNote)](https://github.com/elhariss/BunNote/blob/main/LICENSE)
 
-## Features
+[English](#english) | [日本語](#japanese)
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Japanese
 
-For example if there is an image subfolder under your extension project workspace:
+文ノート（BunNote）は、VS Code上でマークダウンノートを作成・管理できる無料のオープンソース拡張機能です。Obsidianなどの外部マークダウンエディタと同一のVaultを利用でき、スムーズに連携できます。
 
-\!\[feature X\]\(images/feature-x.png\)
+### ダウンロード
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+VS Code拡張機能マーケットプレイスより「BunNote」をインストールできます。
 
-## Requirements
+### ドキュメント
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+#### クイックリンク
 
-## Extension Settings
+- [インストール](#インストール)
+- [使い方](#使い方)
+- [設定](#設定)
+- [マークダウン記法](#マークダウン機能)
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### 主な機能
 
-For example:
+- 階層構造のフォルダでノートを整理
+- リッチなWYSIWYGマークダウンエディタ（表・画像・数式に対応）
+- シンタックスハイライト機能付きコードブロック
+- ノート間の高速検索とナビゲーション
+- タブ機能による複数ノートの同時編集
+- Obsidianなど外部アプリケーションとのリアルタイム同期
+- ファイル・フォルダのドラッグ&ドロップ移動
+- タスクリスト（チェックボックス）機能
+- VS Codeテーマとの完全統合
+- 自動保存
+- コンテキストメニューによる快適な編集
+- インデントガイドで階層を視覚的に表示
 
-This extension contributes the following settings:
+### インストール
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+#### VS Code拡張機能マーケットプレイスからインストール
 
-## Known Issues
+1. VS Codeを起動
+2. 拡張機能ビュー（`Ctrl+Shift+X`）を開く
+3. 「BunNote」で検索
+4. 「インストール」をクリック
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+#### 手動インストール
 
-## Release Notes
+1. 最新リリースから`.vsix`ファイルをダウンロード
+2. VS Codeで`Ctrl+Shift+P`を押してコマンドパレットを開く
+3. 「Extensions: Install from VSIX...」を選択
+4. ダウンロードした`.vsix`ファイルを選択
 
-Users appreciate release notes as you update your extension.
+### 使い方
 
-### 1.0.0
+#### 初期設定
 
-Initial release of ...
+1. アクティビティバーのBunNoteアイコンをクリック
+2. 設定アイコンをクリックしてVS Codeの設定画面を開く
+3. `bunnote.vaultPath`にVaultフォルダのパスを指定
+4. または、コマンドパレット（`Ctrl+Shift+P`）で「BunNote: Set Vault Folder」を実行
 
-### 1.0.1
+#### ノートの作成と管理
 
-Fixed issue #.
+**新規ノート作成**
+- ツールバーの「New Note」アイコンをクリック
+- コマンドパレットから「BunNote: Create New Note」を実行
 
-### 1.1.0
+**新規フォルダ作成**
+- ツールバーの「New Folder」アイコンをクリック
+- フォルダを右クリックして「New folder」を選択
 
-Added features X, Y, and Z.
+**ノートの編集**
+- ファイル一覧からノートをクリックして開く
+- マークダウンファイルを右クリックして「Open in Editor」を選択すると、VS Codeのメインエディタエリアで開く
+- マークダウン記法で自由に編集
+- 変更内容は自動的に保存されます
 
----
+**エディタモード**
+- サイドバーエディタ: デフォルトのBunNoteサイドバー内でノートを編集
+- カスタムエディタ: VS Codeのメインエディタエリアでノートを編集（右クリック→「Open in Editor」）
+- どちらのモードでも同じマークダウンレンダリングとシンタックス非表示機能を使用できます
 
-## Working with Markdown
+**ファイル操作**
+- 右クリックでコンテキストメニューを表示
+- ドラッグ&ドロップでファイルやフォルダを自由に移動
+- ファイル名の変更・複製・削除が可能
 
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+#### マークダウン機能
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
+BunNoteは標準的なマークダウン記法に対応しています：
 
-## For more information
+- 見出し: `#`, `##`, `###`
+- 太字: `**テキスト**`
+- 斜体: `*テキスト*`
+- 取り消し線: `~~テキスト~~`
+- 箇条書き: `-` または `*`
+- 番号付きリスト: `1.`, `2.`, `3.`
+- タスクリスト: `- [ ]` または `- [x]`
+- 引用: `>`
+- コードブロック: ` ``` `
+- インラインコード: `` `コード` ``
+- 水平線: `---`
+- リンク: `[テキスト](URL)`
+- 画像: `![代替テキスト](URL)`
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+#### 外部アプリケーションとの連携
 
-**Enjoy!**
+BunNoteは、Obsidianなど他のマークダウンエディタと同じVaultフォルダを共有できます。
+
+- 外部アプリでファイルを変更すると、BunNoteが自動的に検出して反映
+- ファイルの作成・削除も自動的に同期
+- 手動更新する場合は、ツールバーの「Refresh」アイコンをクリック
+
+### 設定
+
+VS Codeの設定（`settings.json`）で以下の項目をカスタマイズできます：
+
+**bunnote.vaultPath**
+- 型: `string`
+- デフォルト: `""`
+- 説明: 現在のワークスペースで使用するVaultフォルダのパス
+
+**bunnote.defaultVaultPath**
+- 型: `string`
+- デフォルト: `""`
+- 説明: デフォルトで使用するVaultフォルダのパス
+
+**bunnote.autoUseDefaultVault**
+- 型: `boolean`
+- デフォルト: `true`
+- 説明: ワークスペースでVaultが未設定の場合、デフォルトVaultを自動的に使用する
+
+設定画面を開くには、BunNoteパネルの設定アイコンをクリックしてください。
+
+### コマンド一覧
+
+コマンドパレット（`Ctrl+Shift+P`）から以下のコマンドを実行できます：
+
+- `BunNote: Set Vault Folder` - Vaultフォルダを設定
+- `BunNote: Create New Note` - 新規ノートを作成
+- `BunNote: Refresh Files` - ファイル一覧を更新
+- `BunNote: Open Settings` - BunNote設定画面を開く
+
+### 開発に参加する
+
+#### コードの貢献
+
+リポジトリをクローンして、依存関係をインストール後、開発サーバーを起動：
+
+```bash
+git clone https://github.com/elhariss/BunNote
+cd bunnote
+npm install
+```
+
+VS Codeで`F5`を押すと、拡張機能開発ホストが起動します。
+
+#### バグ報告・機能リクエスト
+
+GitHubのIssuesページにて、バグ報告や機能リクエストを受け付けています。
+
+### ライセンス
+
+本プロジェクトはMITライセンスの下で公開されています。
+
+### コントリビューション
+
+バグ報告、機能リクエスト、プルリクエストを歓迎します！詳細は[CONTRIBUTING.md](CONTRIBUTING.md)をご覧ください。
+
+### サポート
+
+- 🐛 [バグ報告](https://github.com/elhariss/BunNote/issues/new?template=bug_report.md)
+- 💡 [機能リクエスト](https://github.com/elhariss/BunNote/issues/new?template=feature_request.md)
+- ⭐ このプロジェクトが役に立ったら、GitHubでスターをお願いします！
