@@ -1,25 +1,125 @@
-name: CI
+name: CI Pipeline
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
+  check_changes:
+    name: Check Changes
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+    outputs:
+      has_changes: ${{ steps.filter.outputs.has_changes }}
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        
-    - name: Install dependencies
-      run: npm ci
+      - uses: actions/checkout@v4
       
-    - name: Run linter
-      run: npm run lint
+      - name: Check for relevant changes
+        id: filter
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          else
+            FILES=$(git diff --name-only HEAD^ HEAD)
+          fi
+          
+          # Filter out documentation and config files
+          RELEVANT_FILES=$(echo "$FILES" | grep -vE '\.(md|txt)$|^\.gitignore$|^\.gitattributes$|^\.vscode/|^\.env\.example$' || true)
+          
+          if [ -z "$RELEVANT_FILES" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No relevant code changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Relevant changes detected:"
+            echo "$RELEVANT_FILES"
+          fi
+
+  setup:
+    name: Setup Dependencies
+    needs: [check_changes]
+    if: ${{ needs.check_changes.outputs.has_changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check if node_modules cache exists
+        id: check-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          lookup-only: true
+      
+      - name: Setup Node.js
+        if: steps.check-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        if: steps.check-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+  quality_checks:
+    name: ${{ matrix.name }}
+    needs: [setup]
+    if: ${{ needs.check_changes.outputs.has_changes == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            check: lint
+          - name: Test
+            check: test
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Restore node_modules cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-modules-
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      
+      - name: Run ${{ matrix.name }}
+        run: npm run ${{ matrix.check }}
+
+  verify:
+    name: Verify
+    needs: [check_changes, quality_checks]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Set Result
+        run: |
+          if [[ "${{ needs.check_changes.outputs.has_changes }}" != "true" ]]; then
+            echo "✅ No relevant changes detected - pipeline passed"
+            exit 0
+          elif [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "❌ Pipeline failed - some jobs failed or were cancelled"
+            exit 1
+          else
+            echo "✅ All jobs completed successfully"
+            exit 0
+          fi
