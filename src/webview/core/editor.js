@@ -103,6 +103,18 @@ function initEditor() {
     }
   });
 
+  // Add copy buttons to code blocks
+  cm.on("update", () => {
+    setTimeout(() => addCopyButtonsToCodeBlocks(), 100);
+  });
+
+  // Update button positions on scroll (reuse scroller from above)
+  if (scroller) {
+    scroller.addEventListener('scroll', () => {
+      updateCopyButtonPositions();
+    }, { passive: true });
+  }
+
   hiddenMarks = [];
   codeLineHandles = [];
   listLineFlags = new WeakMap();
@@ -820,4 +832,156 @@ function updateHiddenSyntax(includeActiveInline = false) {
     hideInlineFormatting(activeText, cursor.line);
     hideInlineCodeSyntax(activeText, cursor.line);
   }
+}
+
+/**
+ * Add copy buttons to code blocks
+ * コードブロックにコピーボタンを追加
+ */
+function addCopyButtonsToCodeBlocks() {
+  if (!cm) return;
+
+  const wrapper = cm.getWrapperElement();
+  if (!wrapper) return;
+
+  // Remove existing copy buttons
+  const existingButtons = wrapper.querySelectorAll('.cm-code-copy-btn');
+  existingButtons.forEach(btn => btn.remove());
+
+  const lines = cm.lineCount();
+  let inCodeBlock = false;
+  let codeBlockStart = -1;
+  let fenceChar = null;
+
+  for (let i = 0; i < lines; i++) {
+    const lineText = cm.getLine(i) || "";
+    const fenceMatch = lineText.match(/^\s*([\x60~]{3,})/);
+
+    if (fenceMatch) {
+      const fence = fenceMatch[1][0];
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        codeBlockStart = i;
+        fenceChar = fence;
+      } else if (fenceChar === fence) {
+        // End of code block - add copy button
+        addCopyButtonToBlock(codeBlockStart, i);
+        inCodeBlock = false;
+        codeBlockStart = -1;
+        fenceChar = null;
+      }
+    }
+  }
+}
+
+/**
+ * Add copy button to a specific code block
+ * 特定のコードブロックにコピーボタンを追加
+ */
+function addCopyButtonToBlock(startLine, endLine) {
+  if (!cm) return;
+
+  const wrapper = cm.getWrapperElement();
+  if (!wrapper) return;
+
+  // Create copy button
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'cm-code-copy-btn';
+  copyBtn.innerHTML = '<i class="ph ph-copy"></i>';
+  copyBtn.title = 'Copy code';
+  copyBtn.setAttribute('aria-label', 'Copy code to clipboard');
+  copyBtn.setAttribute('type', 'button');
+  copyBtn.dataset.startLine = startLine;
+  copyBtn.dataset.endLine = endLine;
+
+  // Position button using CodeMirror coordinates relative to the page
+  const startCoords = cm.charCoords({ line: startLine, ch: 0 }, 'page');
+  const wrapperRect = wrapper.getBoundingClientRect();
+  
+  copyBtn.style.position = 'absolute';
+  copyBtn.style.right = '55px';
+  copyBtn.style.top = `${startCoords.top - wrapperRect.top + 8}px`;
+  copyBtn.style.zIndex = '10';
+
+  // Add click handler
+  copyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    copyCodeBlock(startLine, endLine, copyBtn);
+  });
+
+  // Append to wrapper
+  wrapper.appendChild(copyBtn);
+}
+
+/**
+ * Copy code block content to clipboard
+ * コードブロックの内容をクリップボードにコピー
+ */
+function copyCodeBlock(startLine, endLine, button) {
+  if (!cm) return;
+
+  // Extract code content (excluding fence lines)
+  const lines = [];
+  for (let i = startLine + 1; i < endLine; i++) {
+    lines.push(cm.getLine(i) || "");
+  }
+  const code = lines.join('\n');
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(code).then(() => {
+    // Show VSCode message
+    vscode.postMessage({
+      command: 'showMessage',
+      type: 'info',
+      message: 'Copied to your clipboard'
+    });
+  }).catch(err => {
+    console.error('Failed to copy code:', err);
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      vscode.postMessage({
+        command: 'showMessage',
+        type: 'info',
+        message: 'Copied to your clipboard'
+      });
+    } catch (e) {
+      console.error('Fallback copy failed:', e);
+      vscode.postMessage({
+        command: 'showMessage',
+        type: 'error',
+        message: 'Failed to copy code'
+      });
+    }
+    document.body.removeChild(textarea);
+  });
+}
+
+/**
+ * Update copy button positions on scroll
+ * スクロール時にコピーボタンの位置を更新
+ */
+function updateCopyButtonPositions() {
+  if (!cm) return;
+
+  const wrapper = cm.getWrapperElement();
+  if (!wrapper) return;
+
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const buttons = wrapper.querySelectorAll('.cm-code-copy-btn');
+  
+  buttons.forEach(btn => {
+    const startLine = parseInt(btn.dataset.startLine);
+    if (isNaN(startLine)) return;
+
+    const startCoords = cm.charCoords({ line: startLine, ch: 0 }, 'page');
+    btn.style.top = `${startCoords.top - wrapperRect.top + 8}px`;
+  });
 }

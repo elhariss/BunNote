@@ -2,16 +2,36 @@
   "name": "bunnote",
   "displayName": "BunNote",
   "description": "Write and manage notes directly from VS Code with full markdown support",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "elharis",
   "repository": {
     "type": "git",
     "url": "https://github.com/elhariss/BunNote"
   },
+  "bugs": {
+    "url": "https://github.com/elhariss/BunNote/issues"
+  },
+  "homepage": "https://github.com/elhariss/BunNote#readme",
+  "license": "MIT",
+  "keywords": [
+    "notes",
+    "markdown",
+    "note-taking",
+    "vault",
+    "bunnote",
+    "notebook",
+    "editor"
+  ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
+    "Notebooks",
     "Other"
   ],
   "activationEvents": [],

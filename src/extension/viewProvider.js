@@ -768,6 +768,15 @@ class ViewProvider {
         vscode.commands.executeCommand("vscode.openWith", fileUri, "bunnote.markdownEditor");
       } else if (msg.command === "showError") {
         vscode.window.showErrorMessage(msg.message || "An error occurred");
+      } else if (msg.command === "showMessage") {
+        const message = msg.message || "Operation completed";
+        if (msg.type === "error") {
+          vscode.window.showErrorMessage(message);
+        } else if (msg.type === "warning") {
+          vscode.window.showWarningMessage(message);
+        } else {
+          vscode.window.showInformationMessage(message);
+        }
       }
     });
 

@@ -109,7 +109,7 @@
 }
 
 .EasyMDEContainer .cm-inline-code {
-    background-color: rgba(120, 120, 120, 0.2);
+    background-color: var(--vscode-textCodeBlock-background);
     color: var(--vscode-editor-foreground) !important;
     border-radius: 6px;
     padding: 0 6px;
@@ -136,7 +136,7 @@
 .EasyMDEContainer .cm-blockquote-line {
     position: relative;
     padding-left: 12px !important;
-    background-color: rgba(128, 128, 128, 0.08);
+    background-color: var(--vscode-textBlockQuote-background);
 }
 
 .EasyMDEContainer .cm-blockquote-line::before {
@@ -146,13 +146,13 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background-color: rgba(128, 128, 128, 0.45);
+    background-color: var(--vscode-textBlockQuote-border);
     border-radius: 16px;
 }
 
 /* Code Block / コードブロック */
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line {
-    background-color: rgba(120, 120, 120, 0.12);
+    background-color: var(--vscode-textCodeBlock-background);
     padding: 0 20px !important;
 }
 
@@ -226,7 +226,7 @@
 .cm-task-checkbox:hover {
     opacity: 1;
     border-color: var(--vscode-editor-foreground);
-    box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
 }
 
 .cm-task-checkbox.checked::after {
@@ -250,7 +250,7 @@
 .cm-task-checkbox.checked:hover {
     border-color: var(--vscode-button-hoverBackground);
     background-color: var(--vscode-button-hoverBackground);
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-task-checked-line {
@@ -283,9 +283,51 @@
     right: 0;
     top: 50%;
     height: 0.5px;
-    background-color: rgba(128, 128, 128, 0.45);
+    background-color: var(--vscode-editorRuler-foreground);
 }
 
 .EasyMDEContainer .CodeMirror-activeline.cm-hr-line::after {
     display: none;
+}
+
+/* Code Block Copy Button / コードブロックコピーボタン */
+.cm-code-copy-btn {
+    position: absolute;
+    right: 55px;
+    z-index: 10;
+    background-color: var(--vscode-button-secondaryBackground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--vscode-button-secondaryForeground);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    min-width: 32px;
+    min-height: 28px;
+}
+
+.cm-code-copy-btn:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-button-border, transparent);
+}
+
+.cm-code-copy-btn:active {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    transform: scale(0.95);
+}
+
+.cm-code-copy-btn i {
+    font-size: 16px;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* Fallback if icon doesn't load */
+.cm-code-copy-btn:empty::before {
+    content: "Copy";
+    font-size: 12px;
 }
