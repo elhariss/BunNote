@@ -111,7 +111,12 @@ jobs:
         run: npm ci
       
       - name: Run ${{ matrix.name }}
-        run: npm run ${{ matrix.check }}
+        run: |
+          if [ "${{ matrix.check }}" = "test" ]; then
+            xvfb-run -a npm run test
+          else
+            npm run ${{ matrix.check }}
+          fi
 
   verify:
     name: Verify
