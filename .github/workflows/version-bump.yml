@@ -18,12 +18,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           
       - name: Configure Git
         run: |
@@ -31,9 +33,39 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: Bump version
-        run: npm version ${{ github.event.inputs.version_type }} -m "chore bump version to %s"
+        id: version
+        run: |
+          npm version ${{ github.event.inputs.version_type }} -m "chore: bump version to %s"
+          echo "new_version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
         
       - name: Push changes
         run: |
           git push
           git push --tags
+      
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          echo "Extracting changelog for version $VERSION"
+          
+          # Extract changelog section for this version
+          CHANGELOG=$(awk "/## \[${VERSION}\]/,/## \[/" CHANGELOG.md | sed '$d' | tail -n +2)
+          
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="Release version ${VERSION}"
+          fi
+          
+          # Save to file for multiline support
+          echo "$CHANGELOG" > /tmp/changelog.txt
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          release_name: v${{ steps.version.outputs.new_version }}
+          body_path: /tmp/changelog.txt
+          draft: false
+          prerelease: false
