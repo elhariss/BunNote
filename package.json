@@ -2,7 +2,7 @@
   "name": "bunnote",
   "displayName": "BunNote",
   "description": "Write and manage notes directly from VS Code with full markdown support",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "elharis",
   "repository": {
     "type": "git",
