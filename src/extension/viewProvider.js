@@ -2,6 +2,22 @@ const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 
+const imageExtensions = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".webp",
+  ".bmp",
+  ".ico"
+]);
+
+const isImageFile = (name) => {
+  const ext = path.extname(name || "").toLowerCase();
+  return imageExtensions.has(ext);
+};
+
 class ViewProvider {
   constructor(context, getVaultPath) {
     this.context = context;
@@ -27,7 +43,7 @@ class ViewProvider {
 
     const vaultPath = this.getVaultPath();
     if (vaultPath && fs.existsSync(vaultPath)) {
-      const pattern = new vscode.RelativePattern(vaultPath, "**/*.md");
+      const pattern = new vscode.RelativePattern(vaultPath, "**/*.{md,png,jpg,jpeg,gif,svg,webp,bmp,ico}");
       this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
       this.fileWatcher.onDidCreate(() => {
@@ -90,12 +106,18 @@ class ViewProvider {
               await yieldToEventLoop();
             }
             await walkDir(fullPath);
-          } else if (item.isFile() && item.name.endsWith(".md")) {
+          } else if (item.isFile()) {
+            const isMarkdown = item.name.toLowerCase().endsWith(".md");
+            const isImage = isImageFile(item.name);
+            if (!isMarkdown && !isImage) {
+              continue;
+            }
             const relativePath = path.relative(vaultPath, fullPath).split(path.sep).join("/");
             files.push({
               name: item.name,
               path: relativePath,
-              fullPath: fullPath
+              fullPath: fullPath,
+              type: isImage ? "image" : "note"
             });
             if (files.length % 200 === 0) {
               await yieldToEventLoop();
@@ -129,11 +151,15 @@ class ViewProvider {
    */
   resolveWebviewView(view) {
     this.view = view;
+    const webviewRoot = vscode.Uri.file(path.join(this.context.extensionPath, "src", "webview"));
+    const initialVaultPath = this.getVaultPath();
+    const initialRoots = [webviewRoot];
+    if (initialVaultPath) {
+      initialRoots.push(vscode.Uri.file(initialVaultPath));
+    }
     view.webview.options = {
       enableScripts: true,
-      localResourceRoots: [
-        vscode.Uri.file(path.join(this.context.extensionPath, "src", "webview"))
-      ]
+      localResourceRoots: initialRoots
     };
     view.webview.html = this.getHtml();
 
@@ -238,6 +264,12 @@ class ViewProvider {
       };
 
       if (msg.command === "getVault") {
+        if (vaultPath) {
+          view.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [webviewRoot, vscode.Uri.file(vaultPath)]
+          };
+        }
         const cached = this.cache;
         if (cached && cached.vaultPath === vaultPath) {
           view.webview.postMessage({
@@ -266,6 +298,51 @@ class ViewProvider {
         }
       } else if (msg.command === "setVault") {
         vscode.commands.executeCommand("bunnote.setVault");
+      } else if (msg.command === "resolveImage") {
+        const requestId = msg.requestId;
+        const imagePath = typeof msg.imagePath === 'string' ? msg.imagePath.trim() : '';
+        const safeFileName = sanitizeFileName(msg.fileName || '');
+
+        const respond = (uri) => view.webview.postMessage({
+          command: "resolvedImage",
+          requestId,
+          uri: uri || null
+        });
+
+        if (!requestId || !imagePath || !vaultPath) {
+          respond(null);
+          return;
+        }
+
+        const isRemote = /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(imagePath);
+        if (isRemote) {
+          respond(imagePath);
+          return;
+        }
+
+        const cleanedPath = imagePath.replace(/^file:\/*/i, '').replace(/\\/g, '/');
+        const baseDir = safeFileName
+          ? path.dirname(path.join(vaultPath, safeFileName))
+          : vaultPath;
+        const resolvedPath = path.isAbsolute(cleanedPath)
+          ? cleanedPath
+          : path.resolve(baseDir, cleanedPath);
+
+        const normalizedVault = path.resolve(vaultPath);
+        const normalizedTarget = path.resolve(resolvedPath);
+        const relative = path.relative(normalizedVault, normalizedTarget);
+        if (relative.startsWith('..') || path.isAbsolute(relative)) {
+          respond(null);
+          return;
+        }
+
+        if (!fs.existsSync(normalizedTarget)) {
+          respond(null);
+          return;
+        }
+
+        const uri = view.webview.asWebviewUri(vscode.Uri.file(normalizedTarget)).toString();
+        respond(uri);
       } else if (msg.command === "createNote") {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -394,7 +471,7 @@ class ViewProvider {
         }
 
         const confirm = await vscode.window.showWarningMessage(
-          `Delete note "${msg.fileName}"?`,
+          `Delete file "${msg.fileName}"?`,
           { modal: true },
           "Delete"
         );
@@ -406,7 +483,7 @@ class ViewProvider {
         const filePath = path.join(vaultPath, safeName);
         try {
           fs.unlinkSync(filePath);
-          vscode.window.showInformationMessage("Note deleted: " + msg.fileName);
+          vscode.window.showInformationMessage("File deleted: " + msg.fileName);
           this.refresh();
         } catch (err) {
           vscode.window.showErrorMessage("Failed to delete file: " + err.message);
@@ -433,6 +510,7 @@ class ViewProvider {
         const dir = path.dirname(safeName);
         const base = path.basename(safeName, path.extname(safeName));
         const ext = path.extname(safeName) || ".md";
+        const isMarkdown = safeName.toLowerCase().endsWith(".md");
 
         let copyName = `${base} copy${ext}`;
         let counter = 2;
@@ -444,18 +522,42 @@ class ViewProvider {
         }
 
         try {
-          const content = fs.readFileSync(sourcePath, "utf-8");
           const targetPath = path.join(vaultPath, targetRelative);
           const targetDir = path.dirname(targetPath);
           if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
           }
-          fs.writeFileSync(targetPath, content, "utf-8");
-          vscode.window.showInformationMessage("Note duplicated: " + targetRelative);
+          if (isMarkdown) {
+            const content = fs.readFileSync(sourcePath, "utf-8");
+            fs.writeFileSync(targetPath, content, "utf-8");
+          } else {
+            fs.copyFileSync(sourcePath, targetPath);
+          }
+          vscode.window.showInformationMessage("File duplicated: " + targetRelative);
           this.refresh();
         } catch (err) {
           vscode.window.showErrorMessage("Failed to duplicate file: " + err.message);
         }
+      } else if (msg.command === "openAsset") {
+        if (!vaultPath) {
+          vscode.window.showErrorMessage("Please set BunNote vault first");
+          return;
+        }
+
+        const safeName = sanitizeFileName(msg.fileName);
+        if (!safeName) {
+          vscode.window.showErrorMessage("Invalid file name");
+          return;
+        }
+
+        const filePath = path.join(vaultPath, safeName);
+        if (!fs.existsSync(filePath)) {
+          vscode.window.showErrorMessage("File not found: " + msg.fileName);
+          return;
+        }
+
+        const fileUri = vscode.Uri.file(filePath);
+        vscode.commands.executeCommand("vscode.open", fileUri);
       } else if (msg.command === "renameFile") {
         const safeOldName = sanitizeFileName(msg.oldName);
         const safeNewName = sanitizeFileName(msg.newName);

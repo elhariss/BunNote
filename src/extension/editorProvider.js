@@ -27,11 +27,16 @@ class EditorProvider {
   }
 
   async resolveCustomTextEditor(document, webviewPanel, _token) {
+    const webviewRoot = vscode.Uri.file(path.join(this.context.extensionPath, "src", "webview"));
+    const docDir = vscode.Uri.file(path.dirname(document.uri.fsPath));
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    const roots = [webviewRoot, docDir];
+    if (workspaceFolder) {
+      roots.push(workspaceFolder.uri);
+    }
     webviewPanel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [
-        vscode.Uri.file(path.join(this.context.extensionPath, "src", "webview"))
-      ]
+      localResourceRoots: roots
     };
 
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
@@ -54,11 +59,56 @@ class EditorProvider {
           msg.content
         );
         await vscode.workspace.applyEdit(edit);
+      } else if (msg.command === "resolveImage") {
+        const requestId = msg.requestId;
+        const imagePath = typeof msg.imagePath === 'string' ? msg.imagePath.trim() : '';
+
+        const respond = (uri) => webviewPanel.webview.postMessage({
+          command: "resolvedImage",
+          requestId,
+          uri: uri || null
+        });
+
+        if (!requestId || !imagePath) {
+          respond(null);
+          return;
+        }
+
+        const isRemote = /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(imagePath);
+        if (isRemote) {
+          respond(imagePath);
+          return;
+        }
+
+        const cleanedPath = imagePath.replace(/^file:\/*/i, '').replace(/\\/g, '/');
+        const baseDir = path.dirname(document.uri.fsPath);
+        const resolvedPath = path.isAbsolute(cleanedPath)
+          ? cleanedPath
+          : path.resolve(baseDir, cleanedPath);
+
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+        const allowedRoot = workspaceFolder ? workspaceFolder.uri.fsPath : baseDir;
+        const normalizedRoot = path.resolve(allowedRoot);
+        const normalizedTarget = path.resolve(resolvedPath);
+        const relative = path.relative(normalizedRoot, normalizedTarget);
+        if (relative.startsWith('..') || path.isAbsolute(relative)) {
+          respond(null);
+          return;
+        }
+
+        if (!fs.existsSync(normalizedTarget)) {
+          respond(null);
+          return;
+        }
+
+        const uri = webviewPanel.webview.asWebviewUri(vscode.Uri.file(normalizedTarget)).toString();
+        respond(uri);
       } else if (msg.command === "ready") {
         webviewPanel.webview.postMessage({
           command: "initialize",
           content: document.getText(),
-          fileName: path.basename(document.uri.fsPath)
+          fileName: path.basename(document.uri.fsPath),
+          filePath: document.uri.fsPath
         });
       }
     });

@@ -20,6 +20,7 @@ function refreshFiles() {
 }
 
 let contextMenuFile = null;
+let contextMenuFileType = null;
 let contextMenuFolder = null;
 let contextMenuListParent = null;
 let dragPayload = null;
@@ -45,6 +46,10 @@ function initContextMenu() {
   if (editTitleBtn) {
     editTitleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (contextMenuFileType === 'image') {
+        hideAllContextMenus();
+        return;
+      }
       if (contextMenuFile) {
         vscode.postMessage({
           command: 'requestRename',
@@ -59,6 +64,10 @@ function initContextMenu() {
   if (duplicateBtn) {
     duplicateBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (contextMenuFileType === 'image') {
+        hideAllContextMenus();
+        return;
+      }
       if (contextMenuFile) {
         vscode.postMessage({ command: 'duplicateFile', fileName: contextMenuFile });
       }
@@ -70,9 +79,10 @@ function initContextMenu() {
     openInEditorBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (contextMenuFile) {
-        vscode.postMessage({ 
-          command: 'openInCustomEditor', 
-          fileName: contextMenuFile 
+        const command = contextMenuFileType === 'image' ? 'openAsset' : 'openInCustomEditor';
+        vscode.postMessage({
+          command,
+          fileName: contextMenuFile
         });
       }
       hideAllContextMenus();
@@ -152,6 +162,7 @@ function hideAllContextMenus() {
     fileMenu.classList.remove('visible');
     fileMenu.setAttribute('aria-hidden', 'true');
     contextMenuFile = null;
+    contextMenuFileType = null;
   }
   if (folderMenu) {
     folderMenu.classList.remove('visible');
@@ -169,13 +180,14 @@ function hideAllContextMenus() {
   }
 }
 
-function showFileContextMenu(event, fileName) {
+function showFileContextMenu(event, fileName, fileType) {
   event.preventDefault();
   const menu = document.getElementById('fileContextMenu');
   const folderMenu = document.getElementById('folderContextMenu');
   if (!menu) return;
 
   contextMenuFile = fileName;
+  contextMenuFileType = fileType || 'note';
   if (folderMenu) {
     folderMenu.classList.remove('visible');
     folderMenu.setAttribute('aria-hidden', 'true');
@@ -480,7 +492,8 @@ function buildFileTree(fileList, folderList) {
     const folderNode = ensureFolder(parts);
     folderNode.files.push({
       name: file.name || fileName,
-      path: file.path
+      path: file.path,
+      type: file.type || 'note'
     });
   });
 
@@ -508,9 +521,13 @@ function renderTree(node, depth = 0) {
   });
 
   fileEntries.forEach(file => {
-    const displayName = file.name.replace(/\.md$/i, '');
-    html += "<div class=\"file_item " + (currentFile === file.path ? "active" : "") + "\" data-depth=\"" + depth + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"openFile('" + escapeHtml(file.path) + "')\" oncontextmenu=\"showFileContextMenu(event, '" + escapeHtml(file.path) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'file', '" + escapeHtml(file.path) + "')\" ondragend=\"handleDragEnd()\">" +
-      "<span class=\"file_icon\"><i class=\"ph ph-file-text\"></i></span>" +
+    const fileType = file.type || 'note';
+    const isNote = fileType === 'note';
+    const displayName = isNote ? file.name.replace(/\.md$/i, '') : file.name;
+    const iconClass = fileType === 'image' ? 'ph-file-image' : 'ph-file-text';
+    const isActive = isNote && currentFile === file.path;
+    html += "<div class=\"file_item " + (isActive ? "active" : "") + "\" data-depth=\"" + depth + "\" style=\"padding-left:" + (12 + indent) + "px\" onclick=\"openFile('" + escapeHtml(file.path) + "', '" + escapeHtml(fileType) + "')\" oncontextmenu=\"showFileContextMenu(event, '" + escapeHtml(file.path) + "', '" + escapeHtml(fileType) + "')\" draggable=\"true\" ondragstart=\"handleDragStart(event, 'file', '" + escapeHtml(file.path) + "')\" ondragend=\"handleDragEnd()\">" +
+      "<span class=\"file_icon\"><i class=\"ph " + iconClass + "\"></i></span>" +
       "<span class=\"file_name\" title=\"" + escapeHtml(file.path) + "\">" + escapeHtml(displayName) + "</span>" +
       "</div>";
   });
@@ -528,8 +545,16 @@ function toggleFolder(folderPath) {
   renderFilesList();
 }
 
-function openFile(fileName) {
+function openFile(fileName, fileType) {
   if (!fileName) return;
+
+  if (fileType === 'image') {
+    vscode.postMessage({
+      command: 'openAsset',
+      fileName: fileName
+    });
+    return;
+  }
 
   if (openTabs[fileName]) {
     currentFile = fileName;

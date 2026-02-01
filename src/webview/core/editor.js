@@ -165,7 +165,7 @@ function initEditorContextMenu() {
   };
 
   wrapper.addEventListener('contextmenu', showMenu);
-  
+
   // Get the CodeMirror scroller element and add scroll listener
   const scroller = cm.getScrollerElement ? cm.getScrollerElement() : null;
   if (scroller) {
@@ -443,6 +443,101 @@ function hideLinkSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidd
       linkRegex.lastIndex = end;
     }
   }
+}
+
+const pendingImageRequests = new Map();
+let imageRequestId = 0;
+const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+function isRemoteImageUrl(url) {
+  return /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(url);
+}
+
+function requestResolvedImage(url, img) {
+  if (!img || typeof vscode === 'undefined' || !vscode || !vscode.postMessage) {
+    return;
+  }
+  const requestId = ++imageRequestId;
+  pendingImageRequests.set(requestId, img);
+  vscode.postMessage({
+    command: 'resolveImage',
+    requestId,
+    imagePath: url,
+    fileName: currentFile,
+    filePath: currentFilePath
+  });
+}
+
+function handleResolvedImageResponse(requestId, uri) {
+  if (!requestId) return;
+  const img = pendingImageRequests.get(requestId);
+  if (!img) return;
+  pendingImageRequests.delete(requestId);
+  if (uri) {
+    img.src = uri;
+    img.dataset.resolvedSrc = uri;
+  } else {
+    img.classList.add('cm-image-preview-missing');
+  }
+}
+
+/**
+ * Render markdown images on non-active lines: ![alt](url)
+ * 非アクティブ行のマークダウン画像をレンダリング: ![alt](url)
+ */
+function renderImageSyntax(text, lineIndex, ignoreRanges = []) {
+  const overlapsIgnore = (start, end) =>
+    ignoreRanges.some(r => start < r.end && end > r.start);
+
+  const imageRegex = /!\[([^\]]*)\]\(([^\)]+)\)/g;
+  let match;
+  const ranges = [];
+
+  while ((match = imageRegex.exec(text))) {
+    const full = match[0];
+    const alt = (match[1] || '').trim();
+    const rawUrl = (match[2] || '').trim();
+    const start = match.index;
+    const end = start + full.length;
+
+    if (overlapsIgnore(start, end)) continue;
+
+    const urlMatch = rawUrl.match(/^([^\s]+)(?:\s+"[^"]*")?\s*$/);
+    const url = urlMatch ? urlMatch[1] : rawUrl;
+    if (!url) continue;
+
+    const wrapper = document.createElement('span');
+    wrapper.className = 'cm-image-preview';
+
+    const img = document.createElement('img');
+    img.className = 'cm-image-preview-img';
+    img.alt = alt || 'Image';
+    img.loading = 'lazy';
+
+    if (isRemoteImageUrl(url)) {
+      img.src = url;
+    } else {
+      img.src = transparentPixel;
+      img.dataset.pendingSrc = url;
+      requestResolvedImage(url, img);
+    }
+
+    wrapper.appendChild(img);
+
+    hiddenMarks.push(cm.markText(
+      { line: lineIndex, ch: start },
+      { line: lineIndex, ch: end },
+      { replacedWith: wrapper }
+    ));
+
+    ranges.push({ start, end });
+
+    if (imageRegex.lastIndex === start) {
+      imageRegex.lastIndex = end;
+    }
+  }
+
+  return ranges;
 }
 
 /**
@@ -798,9 +893,10 @@ function updateHiddenSyntax(includeActiveInline = false) {
       const end = start + 1 + (quote[3] ? quote[3].length : 0);
       if (i !== cursor.line) {
         hiddenMarks.push(cm.markText({ line: i, ch: start }, { line: i, ch: end }, { className: 'cm-hidden-syntax' }));
-        hideInlineFormatting(text, i, [], 'cm-hidden-syntax-inline');
-        hideLinkSyntax(text, i, [], 'cm-hidden-syntax-inline');
-        hideInlineCodeSyntax(text, i, [], 'cm-hidden-syntax-inline');
+        const imageRanges = renderImageSyntax(text, i, []);
+        hideInlineFormatting(text, i, imageRanges, 'cm-hidden-syntax-inline');
+        hideLinkSyntax(text, i, imageRanges, 'cm-hidden-syntax-inline');
+        hideInlineCodeSyntax(text, i, imageRanges, 'cm-hidden-syntax-inline');
         continue;
       }
       if (!isCursorNearRange(start, end)) {
@@ -822,9 +918,11 @@ function updateHiddenSyntax(includeActiveInline = false) {
       }
     }
 
-    hideInlineFormatting(text, i, listIgnoreRanges, 'cm-hidden-syntax-inline');
-    hideLinkSyntax(text, i, [], 'cm-hidden-syntax-inline');
-    hideInlineCodeSyntax(text, i, [], 'cm-hidden-syntax-inline');
+    const imageRanges = renderImageSyntax(text, i, listIgnoreRanges);
+    const combinedIgnoreRanges = listIgnoreRanges.concat(imageRanges);
+    hideInlineFormatting(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
+    hideLinkSyntax(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
+    hideInlineCodeSyntax(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
   }
 
   if (includeActiveInline) {
@@ -897,7 +995,7 @@ function addCopyButtonToBlock(startLine, endLine) {
   // Position button using CodeMirror coordinates relative to the page
   const startCoords = cm.charCoords({ line: startLine, ch: 0 }, 'page');
   const wrapperRect = wrapper.getBoundingClientRect();
-  
+
   copyBtn.style.position = 'absolute';
   copyBtn.style.right = '55px';
   copyBtn.style.top = `${startCoords.top - wrapperRect.top + 8}px`;
@@ -976,7 +1074,7 @@ function updateCopyButtonPositions() {
 
   const wrapperRect = wrapper.getBoundingClientRect();
   const buttons = wrapper.querySelectorAll('.cm-code-copy-btn');
-  
+
   buttons.forEach(btn => {
     const startLine = parseInt(btn.dataset.startLine);
     if (isNaN(startLine)) return;

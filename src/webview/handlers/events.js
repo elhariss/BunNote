@@ -276,8 +276,14 @@ function initEvents() {
   window.addEventListener('message', (e) => {
     const msg = e.data;
 
+    if (msg.command === 'resolvedImage') {
+      handleResolvedImageResponse(msg.requestId, msg.uri);
+      return;
+    }
+
     if (msg.command === 'initialize') {
       const fileName = msg.fileName || 'Untitled.md';
+      currentFilePath = msg.filePath || null;
       openTabs[fileName] = {
         name: fileName,
         content: msg.content || ''
@@ -329,6 +335,7 @@ function initEvents() {
     }
 
     if (msg.command === 'vaultStatus') {
+      vaultPath = msg.vaultPath || null;
       files = msg.files || [];
       folders = msg.folders || [];
       if (expandedFolders.size === 0) {
@@ -350,6 +357,7 @@ function initEvents() {
         lastSavedContent[msg.fileName] = msg.content || '';
       }
       currentFile = msg.fileName;
+      currentFilePath = msg.filePath || null;
       updateEditor();
       try { updateHiddenSyntax(false); } catch (e) { /* ignore if not ready */ }
       renderTabs();
@@ -366,6 +374,7 @@ function initEvents() {
         lastSavedContent[msg.fileName] = msg.content || '';
       }
       currentFile = msg.fileName;
+      currentFilePath = msg.filePath || null;
       updateEditor();
       renderTabs();
       renderFilesList();

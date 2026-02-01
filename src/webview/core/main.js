@@ -1,6 +1,8 @@
 const vscode = acquireVsCodeApi();
 
 let currentFile = null;
+let currentFilePath = null;
+let vaultPath = null;
 let openTabs = {};
 let files = [];
 let folders = [];
