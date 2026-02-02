@@ -49,8 +49,13 @@
     "views": {
       "bunNote": [
         {
-          "id": "bunNoteView",
+          "id": "bunNoteVault",
           "name": "Vault",
+          "icon": "media/icon.png"
+        },
+        {
+          "id": "bunNoteEditor",
+          "name": "Editor",
           "type": "webview",
           "icon": "media/icon.png"
         }
@@ -59,15 +64,52 @@
     "commands": [
       {
         "command": "bunnote.setVault",
-        "title": "BunNote: Set Vault Folder"
+        "title": "BunNote: Set Vault Folder",
+        "icon": "$(gear)"
       },
       {
         "command": "bunnote.createNote",
-        "title": "BunNote: Create New Note"
+        "title": "BunNote: Create New Note",
+        "icon": "$(add)"
+      },
+      {
+        "command": "bunnote.createFolder",
+        "title": "BunNote: Create New Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "bunnote.openFile",
+        "title": "BunNote: Open Note"
+      },
+      {
+        "command": "bunnote.openInMainEditor",
+        "title": "BunNote: Open in Main Editor",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "bunnote.renameFile",
+        "title": "BunNote: Rename File",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "bunnote.deleteFile",
+        "title": "BunNote: Delete File",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "bunnote.renameFolder",
+        "title": "BunNote: Rename Folder",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "bunnote.deleteFolder",
+        "title": "BunNote: Delete Folder",
+        "icon": "$(trash)"
       },
       {
         "command": "bunnote.refreshFiles",
-        "title": "BunNote: Refresh Files"
+        "title": "BunNote: Refresh Files",
+        "icon": "$(refresh)"
       },
       {
         "command": "bunnote.openSettings",
@@ -86,10 +128,59 @@
           "group": "navigation"
         }
       ],
+      "view/title": [
+        {
+          "command": "bunnote.createFolder",
+          "when": "view == bunNoteVault",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.createNote",
+          "when": "view == bunNoteVault",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.refreshFiles",
+          "when": "view == bunNoteVault",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.setVault",
+          "when": "view == bunNoteVault",
+          "group": "navigation"
+        }
+      ],
       "editor/title/context": [
         {
           "command": "bunnote.openInEditor",
           "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "bunnote.openInMainEditor",
+          "when": "view == bunNoteVault && viewItem == bunnoteFile",
+          "group": "inline"
+        },
+        {
+          "command": "bunnote.renameFile",
+          "when": "view == bunNoteVault && viewItem == bunnoteFile",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.deleteFile",
+          "when": "view == bunNoteVault && viewItem == bunnoteFile",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.renameFolder",
+          "when": "view == bunNoteVault && viewItem == bunnoteFolder",
+          "group": "navigation"
+        },
+        {
+          "command": "bunnote.deleteFolder",
+          "when": "view == bunNoteVault && viewItem == bunnoteFolder",
           "group": "navigation"
         }
       ]
