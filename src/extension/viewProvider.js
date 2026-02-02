@@ -13,6 +13,24 @@ const imageExtensions = new Set([
   ".ico"
 ]);
 
+const sanitizeFileName = (name) => {
+  if (!name || typeof name !== "string") return name;
+  let n = name.trim();
+
+  if (n.toLowerCase().startsWith("file:")) {
+    n = n.replace(/^file:\/\/*/i, "");
+  }
+
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(n)) {
+    n = n.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "");
+  }
+
+  n = n.replace(/[\u0000-\u001F\u007F]/g, "");
+  n = n.replace(/\\/g, "/");
+
+  return n;
+};
+
 const isImageFile = (name) => {
   const ext = path.extname(name || "").toLowerCase();
   return imageExtensions.has(ext);
@@ -23,12 +41,108 @@ class ViewProvider {
     this.context = context;
     this.getVaultPath = getVaultPath;
     this.view = null;
+    this.pendingOpenFile = null;
     this._onDidChangeTreeData = new vscode.EventEmitter();
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     this.cacheKey = "bunnote.cachedIndex";
     this.cache = this.context.globalState.get(this.cacheKey, null);
     this.fileWatcher = null;
     this.setupFileWatcher();
+  }
+
+  async openFile(fileName, createIfMissing = false) {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath) {
+      vscode.window.showErrorMessage("Please set BunNote vault first");
+      return;
+    }
+
+    const safeName = sanitizeFileName(fileName);
+    if (!safeName) {
+      vscode.window.showErrorMessage("Invalid file name");
+      return;
+    }
+
+    const normalized = safeName.toLowerCase().endsWith(".md")
+      ? safeName
+      : `${safeName}.md`;
+
+    const filePath = path.join(vaultPath, normalized);
+    if (!fs.existsSync(filePath)) {
+      if (!createIfMissing) {
+        vscode.window.showErrorMessage("File not found: " + normalized);
+        return;
+      }
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      try {
+        fs.writeFileSync(filePath, "", "utf-8");
+        this.refresh();
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to create file: " + err.message);
+        return;
+      }
+    }
+
+    if (!this.view) {
+      this.pendingOpenFile = normalized.replace(/\\/g, "/");
+      await vscode.commands.executeCommand("workbench.view.extension.bunNote");
+      await vscode.commands.executeCommand("bunNoteEditor.focus");
+      return;
+    }
+
+    this.view.webview.postMessage({
+      command: "openFile",
+      fileName: normalized.replace(/\\/g, "/")
+    });
+  }
+
+  async createFolder(parentFolder = "") {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath) {
+      vscode.window.showErrorMessage("Please set BunNote vault first");
+      return;
+    }
+
+    const safeParent = sanitizeFileName(parentFolder || "");
+    const input = await vscode.window.showInputBox({
+      prompt: "New folder name",
+      placeHolder: "Folder name"
+    });
+
+    if (typeof input !== "string") {
+      return;
+    }
+
+    const trimmed = input.trim();
+    const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
+    if (!cleaned) {
+      vscode.window.showErrorMessage("Invalid folder name");
+      return;
+    }
+
+    const relative = safeParent ? path.join(safeParent, cleaned) : cleaned;
+    const safeFolder = sanitizeFileName(relative);
+    if (!safeFolder) {
+      vscode.window.showErrorMessage("Invalid folder name");
+      return;
+    }
+
+    const folderPath = path.join(vaultPath, safeFolder);
+    if (fs.existsSync(folderPath)) {
+      vscode.window.showErrorMessage("A folder with that name already exists");
+      return;
+    }
+
+    try {
+      fs.mkdirSync(folderPath, { recursive: true });
+      vscode.window.showInformationMessage("Folder created: " + safeFolder);
+      this.refresh();
+    } catch (err) {
+      vscode.window.showErrorMessage("Failed to create folder: " + err.message);
+    }
   }
 
   /** 
@@ -163,29 +277,19 @@ class ViewProvider {
     };
     view.webview.html = this.getHtml();
 
+    if (this.pendingOpenFile) {
+      view.webview.postMessage({
+        command: "openFile",
+        fileName: this.pendingOpenFile
+      });
+      this.pendingOpenFile = null;
+    }
+
     view.webview.onDidReceiveMessage(async (msg) => {
       /** 
        * Sanitize file names to prevent path traversal and security issues
        * パストラバーサルやセキュリティ問題を防ぐためにファイル名をサニタイズ
        */
-      const sanitizeFileName = (name) => {
-        if (!name || typeof name !== 'string') return name;
-        let n = name.trim();
-
-        if (n.toLowerCase().startsWith('file:')) {
-          n = n.replace(/^file:\/\/*/i, '');
-        }
-
-        if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(n)) {
-          n = n.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, '');
-        }
-
-        n = n.replace(/[\u0000-\u001F\u007F]/g, '');
-        n = n.replace(/\\/g, "/");
-
-        return n;
-      };
-
       const vaultPath = this.getVaultPath();
 
       /** 
@@ -667,48 +771,7 @@ class ViewProvider {
           vscode.window.showErrorMessage("Failed to rename folder: " + err.message);
         }
       } else if (msg.command === "requestCreateFolder") {
-        if (!vaultPath) {
-          vscode.window.showErrorMessage("Please set BunNote vault first");
-          return;
-        }
-
-        const safeParent = sanitizeFileName(msg.parentFolder || "");
-        const input = await vscode.window.showInputBox({
-          prompt: "New folder name",
-          placeHolder: "Folder name"
-        });
-
-        if (typeof input !== "string") {
-          return;
-        }
-
-        const trimmed = input.trim();
-        const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
-        if (!cleaned) {
-          vscode.window.showErrorMessage("Invalid folder name");
-          return;
-        }
-
-        const relative = safeParent ? path.join(safeParent, cleaned) : cleaned;
-        const safeFolder = sanitizeFileName(relative);
-        if (!safeFolder) {
-          vscode.window.showErrorMessage("Invalid folder name");
-          return;
-        }
-
-        const folderPath = path.join(vaultPath, safeFolder);
-        if (fs.existsSync(folderPath)) {
-          vscode.window.showErrorMessage("A folder with that name already exists");
-          return;
-        }
-
-        try {
-          fs.mkdirSync(folderPath, { recursive: true });
-          vscode.window.showInformationMessage("Folder created: " + safeFolder);
-          this.refresh();
-        } catch (err) {
-          vscode.window.showErrorMessage("Failed to create folder: " + err.message);
-        }
+        await this.createFolder(msg.parentFolder || "");
       } else if (msg.command === "deleteFolder") {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -921,7 +984,8 @@ class ViewProvider {
         .replace("{{EDITOR_URI}}", editorUri)
         .replace("{{TABS_URI}}", tabsUri)
         .replace("{{EVENTS_URI}}", eventsUri)
-        .replace("{{MAIN_URI}}", mainUri);
+        .replace("{{MAIN_URI}}", mainUri)
+        .replace("{{EDITOR_MODE}}", "sidebar");
     } catch (err) {
       console.error("Failed to load webview HTML:", err);
       return "<html><body><h3>Failed to load BunNote view.</h3></body></html>";

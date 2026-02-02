@@ -1,0 +1,234 @@
+const vscode = require("vscode");
+const fs = require("fs");
+const path = require("path");
+
+const imageExtensions = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".webp",
+  ".bmp",
+  ".ico"
+]);
+
+const isImageFile = (name) => {
+  const ext = path.extname(name || "").toLowerCase();
+  return imageExtensions.has(ext);
+};
+
+class VaultItem extends vscode.TreeItem {
+  constructor({ label, uri, isFolder, isNote }) {
+    super(label, isFolder ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+    this.resourceUri = uri;
+    this.contextValue = isFolder ? "bunnoteFolder" : "bunnoteFile";
+    this.iconPath = isFolder
+      ? new vscode.ThemeIcon("folder")
+      : new vscode.ThemeIcon(isNote ? "note" : "file-media");
+
+    if (!isFolder) {
+      this.command = {
+        command: "bunnote.openFile",
+        title: "Open",
+        arguments: [uri]
+      };
+    }
+  }
+}
+
+class VaultTreeProvider {
+  constructor(getVaultPath) {
+    this.getVaultPath = getVaultPath;
+    this._onDidChangeTreeData = new vscode.EventEmitter();
+    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    this.fileWatcher = null;
+    this.setupWatcher();
+
+    this.dragAndDropController = {
+      dropMimeTypes: ["text/uri-list"],
+      dragMimeTypes: ["text/uri-list"],
+      handleDrag: (source, dataTransfer) => {
+        const uris = source
+          .map(item => item.resourceUri)
+          .filter(Boolean)
+          .map(uri => uri.toString());
+        if (!uris.length) {
+          return;
+        }
+        dataTransfer.set("text/uri-list", new vscode.DataTransferItem(uris.join("\n")));
+      },
+      handleDrop: async (target, dataTransfer) => {
+        await this.handleDrop(target, dataTransfer);
+      }
+    };
+  }
+
+  refresh() {
+    this._onDidChangeTreeData.fire();
+    this.setupWatcher();
+  }
+
+  setupWatcher() {
+    if (this.fileWatcher) {
+      this.fileWatcher.dispose();
+      this.fileWatcher = null;
+    }
+
+    const vaultPath = this.getVaultPath();
+    if (vaultPath && fs.existsSync(vaultPath)) {
+      const pattern = new vscode.RelativePattern(vaultPath, "**/*");
+      this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+      this.fileWatcher.onDidCreate(() => this.refresh());
+      this.fileWatcher.onDidDelete(() => this.refresh());
+      this.fileWatcher.onDidChange(() => this.refresh());
+    }
+  }
+
+  getTreeItem(element) {
+    return element;
+  }
+
+  async getChildren(element) {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath || !fs.existsSync(vaultPath)) {
+      if (!element) {
+        const item = new vscode.TreeItem("Set vault to view notes", vscode.TreeItemCollapsibleState.None);
+        item.iconPath = new vscode.ThemeIcon("info");
+        item.contextValue = "bunnoteInfo";
+        return [item];
+      }
+      return [];
+    }
+
+    const dirPath = element && element.resourceUri ? element.resourceUri.fsPath : vaultPath;
+
+    let entries = [];
+    try {
+      entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    } catch (err) {
+      return [];
+    }
+
+    const folders = [];
+    const files = [];
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) {
+        continue;
+      }
+
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        folders.push(
+          new VaultItem({
+            label: entry.name,
+            uri: vscode.Uri.file(fullPath),
+            isFolder: true,
+            isNote: false
+          })
+        );
+      } else if (entry.isFile()) {
+        const isMarkdown = entry.name.toLowerCase().endsWith(".md");
+        const isImage = isImageFile(entry.name);
+        if (!isMarkdown && !isImage) {
+          continue;
+        }
+
+        const label = isMarkdown ? entry.name.replace(/\.md$/i, "") : entry.name;
+        files.push(
+          new VaultItem({
+            label,
+            uri: vscode.Uri.file(fullPath),
+            isFolder: false,
+            isNote: isMarkdown
+          })
+        );
+      }
+    }
+
+    folders.sort((a, b) => a.label.localeCompare(b.label));
+    files.sort((a, b) => a.label.localeCompare(b.label));
+
+    return [...folders, ...files];
+  }
+
+  async handleDrop(target, dataTransfer) {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath || !fs.existsSync(vaultPath)) {
+      return;
+    }
+
+    const transferItem = dataTransfer.get("text/uri-list");
+    if (!transferItem) {
+      return;
+    }
+
+    let uriList = "";
+    try {
+      uriList = await transferItem.asString();
+    } catch (err) {
+      return;
+    }
+
+    const uris = uriList
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => vscode.Uri.parse(line));
+
+    if (!uris.length) {
+      return;
+    }
+
+    const targetPath = target && target.resourceUri ? target.resourceUri.fsPath : vaultPath;
+    const isTargetFolder = target && target.contextValue === "bunnoteFolder";
+    const targetDir = isTargetFolder ? targetPath : path.dirname(targetPath);
+
+    const normalizedVault = path.resolve(vaultPath);
+
+    for (const uri of uris) {
+      const sourcePath = uri.fsPath;
+      if (!sourcePath) {
+        continue;
+      }
+
+      const normalizedSource = path.resolve(sourcePath);
+      const relative = path.relative(normalizedVault, normalizedSource);
+      if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+        vscode.window.showErrorMessage("Only vault items can be moved");
+        continue;
+      }
+
+      const baseName = path.basename(sourcePath);
+      const destination = path.join(targetDir, baseName);
+      const normalizedDestination = path.resolve(destination);
+
+      if (normalizedSource === normalizedDestination) {
+        continue;
+      }
+
+      if (normalizedDestination.startsWith(normalizedSource + path.sep)) {
+        vscode.window.showErrorMessage("Cannot move a folder into itself");
+        continue;
+      }
+
+      if (fs.existsSync(destination)) {
+        vscode.window.showErrorMessage("A file or folder with that name already exists");
+        continue;
+      }
+
+      try {
+        fs.renameSync(sourcePath, destination);
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to move item: " + err.message);
+      }
+    }
+
+    this.refresh();
+  }
+}
+
+module.exports = {
+  VaultTreeProvider
+};

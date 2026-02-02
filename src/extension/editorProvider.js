@@ -160,12 +160,8 @@ class EditorProvider {
         .replace("{{EDITOR_URI}}", editorUri)
         .replace("{{TABS_URI}}", tabsUri)
         .replace("{{EVENTS_URI}}", eventsUri)
-        .replace("{{MAIN_URI}}", mainUri);
-
-      html = html.replace(
-        '<body class="loading">',
-        '<body class="loading" data-editor-mode="custom">'
-      );
+        .replace("{{MAIN_URI}}", mainUri)
+        .replace("{{EDITOR_MODE}}", "custom");
 
       return html;
     } catch (err) {

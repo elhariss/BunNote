@@ -1,5 +1,6 @@
 const vscode = require("vscode");
 const { registerCommands } = require("./extension/commands");
+const { VaultTreeProvider } = require("./extension/vaultTreeProvider");
 const { ViewProvider } = require("./extension/viewProvider");
 const { EditorProvider } = require("./extension/editorProvider");
 
@@ -17,11 +18,18 @@ function activate(context) {
   }
 
   const state = { vaultPath };
-  const provider = new ViewProvider(context, () => state.vaultPath);
-  registerCommands(context, state, provider);
-  
+  const vaultProvider = new VaultTreeProvider(() => state.vaultPath);
+  const editorProvider = new ViewProvider(context, () => state.vaultPath);
+  registerCommands(context, state, { vaultProvider, editorProvider });
+
+  const vaultTreeView = vscode.window.createTreeView("bunNoteVault", {
+    treeDataProvider: vaultProvider,
+    dragAndDropController: vaultProvider.dragAndDropController
+  });
+  context.subscriptions.push(vaultTreeView);
+
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("bunNoteView", provider)
+    vscode.window.registerWebviewViewProvider("bunNoteEditor", editorProvider)
   );
 
   context.subscriptions.push(
@@ -48,7 +56,7 @@ function activate(context) {
         "bunnote.autoUseDefaultVault"
       ];
 
-      const requiresReload = settingsThatRequireReload.some(setting => 
+      const requiresReload = settingsThatRequireReload.some(setting =>
         event.affectsConfiguration(setting)
       );
 
