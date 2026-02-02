@@ -47,7 +47,7 @@
     <link rel="stylesheet" href="{{EDITOR_CSS_URI}}">
 </head>
 
-<body class="loading">
+<body class="loading" data-editor-mode="{{EDITOR_MODE}}">
     <div class="loading_overlay" id="appLoading" aria-label="Loading">
         <div class="loading_spinner" role="status" aria-live="polite"></div>
     </div>
@@ -68,7 +68,7 @@
                     <button class="btn_icon" title="Refresh" onclick="refreshFiles()">
                         <i class="ph ph-arrows-clockwise"></i>
                     </button>
-                       <button class="btn_icon" title="Settings" onclick="setVault()">
+                    <button class="btn_icon" title="Settings" onclick="setVault()">
                         <i class="ph ph-gear"></i>
                     </button>
                 </div>
@@ -83,7 +83,8 @@
             <div class="editor_tabs" id="editorTabs"></div>
             <div class="editor_header">
                 <div class="editor_title_wrapper">
-                    <textarea class="editor_title_input" id="editorTitleInput" rows="1" autocomplete="off" placeholder="Untitled"></textarea>
+                    <textarea class="editor_title_input" id="editorTitleInput" rows="1" autocomplete="off"
+                        placeholder="Untitled"></textarea>
                 </div>
             </div>
             <div class="editor_container">
