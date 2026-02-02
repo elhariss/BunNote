@@ -17,7 +17,39 @@
 }
 
 .EasyMDEContainer .CodeMirror-scroll {
-    padding: 20px !important;
+    padding: 20px 0 80px !important;
+    overflow-x: hidden !important;
+}
+
+.EasyMDEContainer .CodeMirror-scroll::-webkit-scrollbar:horizontal {
+    height: 0;
+}
+
+.EasyMDEContainer .CodeMirror-hscrollbar {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-scrollbar-filler,
+.EasyMDEContainer .CodeMirror-gutter-filler {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-sizer {
+    max-width: 900px;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+}
+
+.EasyMDEContainer .CodeMirror-spacer {
+    height: 240px !important;
+}
+
+.EasyMDEContainer .CodeMirror-wrap pre {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
 }
 
 .EasyMDEContainer .editor-toolbar {
@@ -147,13 +179,6 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
-.cm-image-preview-img.cm-image-preview-missing {
-    min-width: 120px;
-    min-height: 60px;
-    border: 1px dashed var(--vscode-editor-foreground, #888);
-    background: var(--vscode-editor-background, #1e1e1e);
-    box-shadow: none;
-}
 
 /* Blockquote / 引用 */
 .EasyMDEContainer .cm-blockquote-line {
@@ -315,13 +340,12 @@
 
 /* Code Block Copy Button / コードブロックコピーボタン */
 .cm-code-copy-btn {
-    position: absolute;
-    right: 55px;
+    position: relative;
     z-index: 10;
     background-color: var(--vscode-button-secondaryBackground);
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: 6px;
-    padding: 6px 8px;
+    padding: 0;
     color: var(--vscode-button-secondaryForeground);
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
@@ -329,8 +353,9 @@
     align-items: center;
     justify-content: center;
     font-size: 14px;
-    min-width: 32px;
-    min-height: 28px;
+    width: 28px;
+    height: 28px;
+    box-sizing: border-box;
 }
 
 .cm-code-copy-btn:hover {
