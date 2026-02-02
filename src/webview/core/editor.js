@@ -11,6 +11,7 @@ function initEditor() {
     toolbar: false,
     status: false,
     autofocus: true,
+    lineWrapping: true,
     placeholder: "# Start writing...\n\nType markdown and see it render live!\n\n## Examples:\n**bold text**\n*italic text*\n- bullet point\n> blockquote",
     renderingConfig: {
       singleLineBreaks: false,
@@ -105,7 +106,7 @@ function initEditor() {
 
   // Add copy buttons to code blocks
   cm.on("update", () => {
-    setTimeout(() => addCopyButtonsToCodeBlocks(), 100);
+    scheduleCopyButtonsUpdate();
   });
 
   // Update button positions on scroll (reuse scroller from above)
@@ -115,9 +116,19 @@ function initEditor() {
     }, { passive: true });
   }
 
+  let resizeRaf = null;
+  window.addEventListener('resize', () => {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = null;
+      updateCopyButtonPositions();
+    });
+  });
+
   hiddenMarks = [];
   codeLineHandles = [];
   listLineFlags = new WeakMap();
+  listMarkerMarks = new Map();
 }
 
 /**
@@ -327,6 +338,14 @@ function insertCodeBlock() {
 }
 
 function clearHiddenMarks() {
+  if (listMarkerMarks) {
+    listMarkerMarks.forEach(marks => {
+      marks.forEach(m => {
+        try { m.clear(); } catch (e) { /* ignore */ }
+      });
+    });
+    listMarkerMarks.clear();
+  }
   while (hiddenMarks.length) {
     const m = hiddenMarks.pop();
     try { m.clear(); } catch (e) { /* ignore */ }
@@ -337,6 +356,92 @@ function clearHiddenMarks() {
       cm.removeLineClass(h, "text", "cm-code-block-line");
       cm.removeLineClass(h, "text", "cm-code-fence-line");
     } catch (e) { /* ignore */ }
+  }
+}
+
+function recordListMark(lineIndex, mark) {
+  hiddenMarks.push(mark);
+  if (!listMarkerMarks) return;
+  let marks = listMarkerMarks.get(lineIndex);
+  if (!marks) {
+    marks = [];
+    listMarkerMarks.set(lineIndex, marks);
+  }
+  marks.push(mark);
+}
+
+function clearListMarkersForLine(lineIndex) {
+  if (!listMarkerMarks) return;
+  const marks = listMarkerMarks.get(lineIndex);
+  if (!marks) return;
+  marks.forEach(m => {
+    try { m.clear(); } catch (e) { /* ignore */ }
+  });
+  listMarkerMarks.delete(lineIndex);
+}
+
+function applyListMarkersForLine(lineIndex) {
+  if (!cm) return;
+  const text = cm.getLine(lineIndex) || "";
+  clearListMarkersForLine(lineIndex);
+
+  const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
+  const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
+  if (!unordered && !ordered) return;
+
+  const taskMatch = text.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/);
+  const isTask = Boolean(taskMatch);
+
+  if (isTask) {
+    const bracketStart = text.indexOf('[', taskMatch[1].length);
+    const start = bracketStart >= 0 ? bracketStart : 0;
+    const end = start + 3;
+    const checkbox = document.createElement('span');
+    checkbox.className = 'cm-task-checkbox' + (taskMatch[3].toLowerCase() === 'x' ? ' checked' : '');
+    recordListMark(lineIndex, cm.markText(
+      { line: lineIndex, ch: start },
+      { line: lineIndex, ch: end },
+      { replacedWith: checkbox }
+    ));
+
+    if (unordered) {
+      const markerStart = taskMatch[1].length;
+      const hiddenMarker = document.createElement('span');
+      hiddenMarker.className = 'cm-hidden-syntax-inline';
+      hiddenMarker.style.display = 'none';
+      recordListMark(lineIndex, cm.markText(
+        { line: lineIndex, ch: markerStart },
+        { line: lineIndex, ch: markerStart + 2 },
+        { replacedWith: hiddenMarker }
+      ));
+    }
+    return;
+  }
+
+  if (unordered) {
+    const start = unordered[1].length;
+    const bullet = document.createElement('span');
+    bullet.textContent = '•';
+    bullet.className = 'cm-list-bullet';
+    recordListMark(lineIndex, cm.markText(
+      { line: lineIndex, ch: start },
+      { line: lineIndex, ch: start + 1 },
+      { replacedWith: bullet }
+    ));
+    return;
+  }
+
+  if (ordered) {
+    const start = ordered[1].length;
+    const markerText = ordered[2] + ordered[3];
+    const marker = document.createElement('span');
+    marker.textContent = markerText;
+    marker.className = 'cm-list-bullet';
+    recordListMark(lineIndex, cm.markText(
+      { line: lineIndex, ch: start },
+      { line: lineIndex, ch: start + markerText.length },
+      { replacedWith: marker }
+    ));
   }
 }
 
@@ -361,28 +466,32 @@ function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'c
     ignoreRanges.some(r => start < r.end && end > r.start);
 
   const markRuns = (startOffset, source) => {
-    const formattingRegex = /[*_]+/g;
+    const formattingRegex = /[*_]+|~{2,}/g;
     let match;
+    let found = false;
     while ((match = formattingRegex.exec(source))) {
       const start = startOffset + match.index;
       const end = start + match[0].length;
       if (overlapsIgnore(start, end)) continue;
-
+      found = true;
       hiddenMarks.push(cm.markText(
         { line: lineIndex, ch: start },
         { line: lineIndex, ch: end },
         { className }
       ));
     }
+    return found;
   };
 
   const tokens = cm.getLineTokens(lineIndex) || [];
   let foundFormatting = false;
   for (const token of tokens) {
     if (!token.string) continue;
-    if (token.type && /(formatting|strong|em)/.test(token.type)) {
-      foundFormatting = true;
-      markRuns(typeof token.start === 'number' ? token.start : 0, token.string);
+    if (token.type && /(formatting|strong|em|strikethrough|strike)/.test(token.type)) {
+      const matched = markRuns(typeof token.start === 'number' ? token.start : 0, token.string);
+      if (matched) {
+        foundFormatting = true;
+      }
     }
   }
 
@@ -447,10 +556,220 @@ function hideLinkSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidd
 
 const pendingImageRequests = new Map();
 let imageRequestId = 0;
-const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+let codeBlockDirty = true;
+let copyButtonsTimer = null;
+
+let imageUpdateTimer = null;
+let imageDirtyFrom = null;
+let imageDirtyTo = null;
+const imageLineCache = new Map();
+const imageLineMarks = new Map();
+let revealedImageLine = null;
+let imageUpdateDelay = 250;
 
 function isRemoteImageUrl(url) {
   return /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(url);
+}
+
+function scheduleImageMarksUpdate(fromLine, toLine) {
+  if (!cm) return;
+  const maxLine = cm.lineCount() - 1;
+  const start = Math.max(0, typeof fromLine === 'number' ? fromLine : 0);
+  const end = Math.min(maxLine, typeof toLine === 'number' ? toLine : maxLine);
+
+  if (imageDirtyFrom === null || start < imageDirtyFrom) {
+    imageDirtyFrom = start;
+  }
+  if (imageDirtyTo === null || end > imageDirtyTo) {
+    imageDirtyTo = end;
+  }
+
+  if (imageUpdateTimer) return;
+  imageUpdateTimer = setTimeout(() => {
+    imageUpdateTimer = null;
+    const runFrom = imageDirtyFrom === null ? 0 : imageDirtyFrom;
+    const runTo = imageDirtyTo === null ? maxLine : imageDirtyTo;
+    imageDirtyFrom = null;
+    imageDirtyTo = null;
+    updateImageMarks(runFrom, runTo);
+  }, imageUpdateDelay);
+}
+
+function revealImageMarkdown(lineIndex, start, end) {
+  if (!cm || typeof lineIndex !== 'number') return;
+  revealedImageLine = lineIndex;
+  clearImageMarksForLine(lineIndex);
+  try {
+    if (typeof start === 'number' && typeof end === 'number' && end > start) {
+      cm.setSelection({ line: lineIndex, ch: start }, { line: lineIndex, ch: end });
+    } else {
+      cm.setCursor({ line: lineIndex, ch: Math.max(0, start || 0) });
+    }
+  } catch (e) { /* ignore */ }
+  try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+}
+
+function clearRevealedImageLineIfNeeded() {
+  if (!cm) return;
+  if (revealedImageLine === null) return;
+  const cursor = cm.getCursor();
+  if (!cursor || cursor.line === revealedImageLine) return;
+  const lineToRestore = revealedImageLine;
+  revealedImageLine = null;
+  scheduleImageMarksUpdate(lineToRestore, lineToRestore);
+}
+
+function clearImageMarksForLine(lineIndex) {
+  const marks = imageLineMarks.get(lineIndex);
+  if (marks && marks.length) {
+    marks.forEach(m => {
+      try { m.clear(); } catch (e) { /* ignore */ }
+    });
+  }
+  imageLineMarks.delete(lineIndex);
+  imageLineCache.delete(lineIndex);
+}
+
+function parseImageSyntax(text) {
+  const imageRegex = /!\[([^\]]*)\]\(([^\)]+)\)/g;
+  const tokens = [];
+  let match;
+  while ((match = imageRegex.exec(text))) {
+    const full = match[0];
+    const alt = (match[1] || '').trim();
+    const rawUrl = (match[2] || '').trim();
+    const start = match.index;
+    const end = start + full.length;
+    const urlMatch = rawUrl.match(/^([^\s]+)(?:\s+"[^"]*")?\s*$/);
+    const url = urlMatch ? urlMatch[1] : rawUrl;
+    if (!url) continue;
+    tokens.push({ start, end, alt, url });
+    if (imageRegex.lastIndex === start) {
+      imageRegex.lastIndex = end;
+    }
+  }
+  return tokens;
+}
+
+function getImageRanges(text, ignoreRanges = []) {
+  const overlapsIgnore = (start, end) =>
+    ignoreRanges.some(r => start < r.end && end > r.start);
+
+  const tokens = parseImageSyntax(text);
+  return tokens
+    .filter(token => !overlapsIgnore(token.start, token.end))
+    .map(token => ({ start: token.start, end: token.end }));
+}
+
+function updateImageMarks(fromLine = 0, toLine = null) {
+  if (!cm) return;
+  const maxLine = cm.lineCount() - 1;
+  const endLine = typeof toLine === 'number' ? Math.min(toLine, maxLine) : maxLine;
+  const startLine = Math.max(0, fromLine);
+  const cursor = cm.getCursor();
+  const activeLine = cursor ? cursor.line : null;
+
+  let inCodeBlock = false;
+  let fenceChar = null;
+  for (let i = 0; i <= endLine; i++) {
+    const text = cm.getLine(i) || "";
+    const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
+    if (fenceMatch) {
+      const fence = fenceMatch[1][0];
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        fenceChar = fence;
+      } else if (fenceChar === fence) {
+        inCodeBlock = false;
+        fenceChar = null;
+      }
+    }
+
+    if (i < startLine) {
+      continue;
+    }
+
+    const cached = imageLineCache.get(i);
+    if (cached === text && imageLineMarks.has(i)) {
+      continue;
+    }
+
+    clearImageMarksForLine(i);
+
+    if (revealedImageLine === i || activeLine === i) {
+      imageLineCache.set(i, text);
+      continue;
+    }
+
+    if (inCodeBlock) {
+      imageLineCache.set(i, text);
+      continue;
+    }
+
+    const tokens = parseImageSyntax(text);
+    if (!tokens.length) {
+      imageLineCache.set(i, text);
+      continue;
+    }
+
+    const marks = [];
+    tokens.forEach(token => {
+      const wrapper = document.createElement('span');
+      wrapper.className = 'cm-image-preview';
+      wrapper.dataset.imageLine = String(i);
+      wrapper.dataset.imageStart = String(token.start);
+      wrapper.dataset.imageEnd = String(token.end);
+
+      const img = document.createElement('img');
+      img.className = 'cm-image-preview-img';
+      img.alt = token.alt || 'Image';
+      img.loading = 'lazy';
+
+      img.src = token.url;
+      if (!isRemoteImageUrl(token.url)) {
+        img.dataset.pendingSrc = token.url;
+        requestResolvedImage(token.url, img);
+      }
+
+      wrapper.appendChild(img);
+      wrapper.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const line = Number(wrapper.dataset.imageLine);
+        const start = Number(wrapper.dataset.imageStart);
+        const end = Number(wrapper.dataset.imageEnd);
+        revealImageMarkdown(line, start, end);
+      });
+
+      const mark = cm.markText(
+        { line: i, ch: token.start },
+        { line: i, ch: token.end },
+        { replacedWith: wrapper }
+      );
+      marks.push(mark);
+    });
+
+    if (marks.length) {
+      imageLineMarks.set(i, marks);
+    }
+    imageLineCache.set(i, text);
+  }
+}
+
+function scheduleCopyButtonsUpdate() {
+  if (!codeBlockDirty) return;
+  if (copyButtonsTimer) return;
+  copyButtonsTimer = setTimeout(() => {
+    copyButtonsTimer = null;
+    codeBlockDirty = false;
+    addCopyButtonsToCodeBlocks();
+  }, 300);
+}
+
+function markCodeBlockDirty() {
+  codeBlockDirty = true;
+  scheduleCopyButtonsUpdate();
 }
 
 function requestResolvedImage(url, img) {
@@ -476,8 +795,6 @@ function handleResolvedImageResponse(requestId, uri) {
   if (uri) {
     img.src = uri;
     img.dataset.resolvedSrc = uri;
-  } else {
-    img.classList.add('cm-image-preview-missing');
   }
 }
 
@@ -486,58 +803,7 @@ function handleResolvedImageResponse(requestId, uri) {
  * 非アクティブ行のマークダウン画像をレンダリング: ![alt](url)
  */
 function renderImageSyntax(text, lineIndex, ignoreRanges = []) {
-  const overlapsIgnore = (start, end) =>
-    ignoreRanges.some(r => start < r.end && end > r.start);
-
-  const imageRegex = /!\[([^\]]*)\]\(([^\)]+)\)/g;
-  let match;
-  const ranges = [];
-
-  while ((match = imageRegex.exec(text))) {
-    const full = match[0];
-    const alt = (match[1] || '').trim();
-    const rawUrl = (match[2] || '').trim();
-    const start = match.index;
-    const end = start + full.length;
-
-    if (overlapsIgnore(start, end)) continue;
-
-    const urlMatch = rawUrl.match(/^([^\s]+)(?:\s+"[^"]*")?\s*$/);
-    const url = urlMatch ? urlMatch[1] : rawUrl;
-    if (!url) continue;
-
-    const wrapper = document.createElement('span');
-    wrapper.className = 'cm-image-preview';
-
-    const img = document.createElement('img');
-    img.className = 'cm-image-preview-img';
-    img.alt = alt || 'Image';
-    img.loading = 'lazy';
-
-    if (isRemoteImageUrl(url)) {
-      img.src = url;
-    } else {
-      img.src = transparentPixel;
-      img.dataset.pendingSrc = url;
-      requestResolvedImage(url, img);
-    }
-
-    wrapper.appendChild(img);
-
-    hiddenMarks.push(cm.markText(
-      { line: lineIndex, ch: start },
-      { line: lineIndex, ch: end },
-      { replacedWith: wrapper }
-    ));
-
-    ranges.push({ start, end });
-
-    if (imageRegex.lastIndex === start) {
-      imageRegex.lastIndex = end;
-    }
-  }
-
-  return ranges;
+  return getImageRanges(text, ignoreRanges);
 }
 
 /**
@@ -612,6 +878,25 @@ function getInlineCursorMarkerRanges(text, cursorCh) {
     }
     if (match.index === emphasisRegex.lastIndex) {
       emphasisRegex.lastIndex++;
+    }
+  }
+
+  const strikeRegex = /(~~)(.+?)\1/g;
+  while ((match = strikeRegex.exec(text))) {
+    const marker = match[1];
+    const start = match.index;
+    const end = start + match[0].length;
+    const innerStart = start + marker.length;
+    const innerEnd = end - marker.length;
+    if ((cursorCh >= innerStart && cursorCh <= innerEnd) || isCursorNearRange(start, innerStart)) {
+      addRange(start, start + marker.length);
+      addRange(end - marker.length, end);
+    } else if (isCursorNearRange(innerEnd, end)) {
+      addRange(start, start + marker.length);
+      addRange(end - marker.length, end);
+    }
+    if (match.index === strikeRegex.lastIndex) {
+      strikeRegex.lastIndex++;
     }
   }
 
@@ -937,10 +1222,13 @@ function updateHiddenSyntax(includeActiveInline = false) {
  * コードブロックにコピーボタンを追加
  */
 function addCopyButtonsToCodeBlocks() {
-  if (!cm) return;
+  return;
 
   const wrapper = cm.getWrapperElement();
   if (!wrapper) return;
+  if (!wrapper.style.position) {
+    wrapper.style.position = 'relative';
+  }
 
   // Remove existing copy buttons
   const existingButtons = wrapper.querySelectorAll('.cm-code-copy-btn');
@@ -992,21 +1280,27 @@ function addCopyButtonToBlock(startLine, endLine) {
   copyBtn.dataset.startLine = startLine;
   copyBtn.dataset.endLine = endLine;
 
-  // Position button using CodeMirror coordinates relative to the page
-  const startCoords = cm.charCoords({ line: startLine, ch: 0 }, 'page');
-  const wrapperRect = wrapper.getBoundingClientRect();
-
-  copyBtn.style.position = 'absolute';
-  copyBtn.style.right = '55px';
-  copyBtn.style.top = `${startCoords.top - wrapperRect.top + 8}px`;
-  copyBtn.style.zIndex = '10';
-
   // Add click handler
   copyBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     copyCodeBlock(startLine, endLine, copyBtn);
   });
+
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const sizer = wrapper.querySelector('.CodeMirror-sizer');
+  const sizerRect = sizer ? sizer.getBoundingClientRect() : wrapperRect;
+  const buttonWidth = 28;
+  const contentPaddingRight = 20;
+  const inset = 8;
+  const targetLine = Math.min(endLine - 1, Math.max(startLine + 1, startLine));
+  const lineRect = getCodeLineRect(targetLine);
+  if (!lineRect) return;
+
+  copyBtn.style.position = 'absolute';
+  copyBtn.style.left = `${Math.max(8, sizerRect.right - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
+  copyBtn.style.top = `${lineRect.top - wrapperRect.top - 10}px`;
+  copyBtn.style.zIndex = '10';
 
   // Append to wrapper
   wrapper.appendChild(copyBtn);
@@ -1073,13 +1367,38 @@ function updateCopyButtonPositions() {
   if (!wrapper) return;
 
   const wrapperRect = wrapper.getBoundingClientRect();
+  const sizer = wrapper.querySelector('.CodeMirror-sizer');
+  const sizerRect = sizer ? sizer.getBoundingClientRect() : wrapperRect;
+  const buttonWidth = 28;
+  const contentPaddingRight = 20;
+  const inset = 8;
   const buttons = wrapper.querySelectorAll('.cm-code-copy-btn');
 
   buttons.forEach(btn => {
     const startLine = parseInt(btn.dataset.startLine);
-    if (isNaN(startLine)) return;
+    const endLine = parseInt(btn.dataset.endLine);
+    if (isNaN(startLine) || isNaN(endLine)) return;
 
-    const startCoords = cm.charCoords({ line: startLine, ch: 0 }, 'page');
-    btn.style.top = `${startCoords.top - wrapperRect.top + 8}px`;
+    const targetLine = Math.min(endLine - 1, Math.max(startLine + 1, startLine));
+    const lineRect = getCodeLineRect(targetLine);
+    if (!lineRect) return;
+
+    btn.style.left = `${Math.max(8, sizerRect.right - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
+    btn.style.top = `${lineRect.top - wrapperRect.top - 10}px`;
   });
+}
+
+function getCodeLineRect(lineNumber) {
+  if (!cm || typeof lineNumber !== 'number') return null;
+  const display = cm.display;
+  if (display && display.view && display.view.length) {
+    for (const view of display.view) {
+      if (view && view.line && typeof view.line.lineNo === 'function' && view.line.lineNo() === lineNumber) {
+        if (view.node && view.node.getBoundingClientRect) {
+          return view.node.getBoundingClientRect();
+        }
+      }
+    }
+  }
+  return null;
 }
