@@ -40,9 +40,15 @@ function initEditor() {
     editorTitleInput.addEventListener('click', () => startTitleEditing());
     editorTitleInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
+        event.preventDefault();
         finishTitleEditing(true);
       } else if (event.key === 'Escape') {
         finishTitleEditing(false);
+      }
+    });
+    editorTitleInput.addEventListener('input', () => {
+      if (typeof window.resizeTitleInput === 'function') {
+        window.resizeTitleInput();
       }
     });
     editorTitleInput.addEventListener('blur', () => finishTitleEditing(true));
