@@ -26,10 +26,67 @@ function queueAutoSave() {
   }, autoSaveDelay);
 }
 
+function runHiddenSyntaxUpdate(minIdleMs = 700) {
+  if (!cm) return;
+  const now = Date.now();
+  if (now - lastTypingAt < minIdleMs) {
+    return;
+  }
+
+  const selections = cm.listSelections();
+  const scrollInfo = cm.getScrollInfo();
+
+  cm.operation(() => {
+    try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+    try { if (selections && selections.length) cm.setSelections(selections, null, { scroll: false }); } catch (e) { /* ignore */ }
+  });
+
+  requestAnimationFrame(() => {
+    try { cm.scrollTo(scrollInfo.left, scrollInfo.top); } catch (e) { /* ignore */ }
+  });
+}
+
 /**
  * Initialize editor events and message handlers
  * エディターイベントとメッセージハンドラーを初期化
  */
+function scheduleDeferredRenderUpdate() {
+  const run = () => {
+    try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+    lastHiddenUpdateAt = Date.now();
+  };
+
+  const runImages = () => {
+    if (cm) {
+      scheduleImageMarksUpdate(0, cm.lineCount() - 1);
+    }
+  };
+
+  const contentLength = easyMDE ? easyMDE.value().length : 0;
+  const isHeavy = contentLength > 120000;
+
+  if (isCustomEditorMode) {
+    const syntaxDelay = isHeavy ? 600 : 350;
+    const imageDelay = isHeavy ? 1000 : 650;
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(run, { timeout: syntaxDelay });
+      window.requestIdleCallback(runImages, { timeout: imageDelay });
+    } else {
+      setTimeout(run, syntaxDelay);
+      setTimeout(runImages, imageDelay);
+    }
+    return;
+  }
+
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(run, { timeout: 350 });
+    window.requestIdleCallback(runImages, { timeout: 500 });
+  } else {
+    setTimeout(run, 150);
+    setTimeout(runImages, 300);
+  }
+}
+
 function initEvents() {
   if (cm) {
     cm.on("beforeChange", function (cmInstance, change) {
@@ -106,9 +163,15 @@ function initEvents() {
 
     cm.on("change", function (cmInstance, change) {
       lastTypingAt = Date.now();
+      const changedText = (change.text || []).join("\n");
+      const removedText = (change.removed || []).join("\n");
+      if (changedText.includes("```") || changedText.includes("~~~") || removedText.includes("```") || removedText.includes("~~~")) {
+        markCodeBlockDirty();
+      }
       const lineCount = cmInstance.lineCount();
       const from = Math.max(0, change.from.line - 1);
       const to = Math.min(lineCount - 1, change.to.line + 1);
+      scheduleImageMarksUpdate(from, to);
       for (let l = from; l <= to; l++) {
         updateListLineFlag(l);
       }
@@ -131,10 +194,28 @@ function initEvents() {
     });
 
     cm.on("cursorActivity", function () {
+      const cursor = cm.getCursor();
+      if (cursor) {
+        if (lastCursorLine !== null && lastCursorLine !== cursor.line) {
+          scheduleImageMarksUpdate(lastCursorLine, lastCursorLine);
+        }
+        scheduleImageMarksUpdate(cursor.line, cursor.line);
+        lastCursorLine = cursor.line;
+      }
+      clearRevealedImageLineIfNeeded();
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       hiddenUpdateTimer = setTimeout(() => {
         try { updateHiddenSyntax(false); } catch (e) { }
       }, 25);
+    });
+
+    cm.on("focus", function () {
+      editorFocused = true;
+    });
+
+    cm.on("blur", function () {
+      editorFocused = false;
+      runHiddenSyntaxUpdate(0);
     });
 
     cm.on("mousedown", function (cmInstance, event) {
@@ -270,7 +351,7 @@ function initEvents() {
       }
     });
 
-    setTimeout(() => updateHiddenSyntax(), 0);
+    scheduleDeferredRenderUpdate();
   }
 
   window.addEventListener('message', (e) => {
@@ -284,6 +365,7 @@ function initEvents() {
     if (msg.command === 'initialize') {
       const fileName = msg.fileName || 'Untitled.md';
       currentFilePath = msg.filePath || null;
+      fastLoadPending = true;
       openTabs[fileName] = {
         name: fileName,
         content: msg.content || ''
@@ -292,15 +374,15 @@ function initEvents() {
         lastSavedContent[fileName] = msg.content || '';
       }
       currentFile = fileName;
-      
+
       if (easyMDE) {
         easyMDE.value(msg.content || '');
       }
-      
+
       updateEditor();
-      try { updateHiddenSyntax(false); } catch (e) { /* ignore if not ready */ }
+      scheduleDeferredRenderUpdate();
       renderTabs();
-      
+
       if (cm) {
         setTimeout(() => {
           try {
@@ -312,23 +394,23 @@ function initEvents() {
       return;
     } else if (msg.command === 'updateContent') {
       const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
-      
+
       if (isCustomEditorMode) {
         return;
       }
-      
+
       const timeSinceLastTyping = Date.now() - (lastTypingAt || 0);
       if (timeSinceLastTyping < 2000) {
         return;
       }
-      
+
       if (currentFile && openTabs[currentFile]) {
         const currentContent = easyMDE.value();
         if (currentContent !== msg.content) {
           openTabs[currentFile].content = msg.content;
           lastSavedContent[currentFile] = msg.content;
           easyMDE.value(msg.content);
-          try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+          scheduleDeferredRenderUpdate();
         }
       }
       return;
@@ -358,8 +440,9 @@ function initEvents() {
       }
       currentFile = msg.fileName;
       currentFilePath = msg.filePath || null;
+      fastLoadPending = true;
       updateEditor();
-      try { updateHiddenSyntax(false); } catch (e) { /* ignore if not ready */ }
+      scheduleDeferredRenderUpdate();
       renderTabs();
       if (pendingTitleEditFile && pendingTitleEditFile === msg.fileName) {
         pendingTitleEditFile = null;
@@ -375,10 +458,12 @@ function initEvents() {
       }
       currentFile = msg.fileName;
       currentFilePath = msg.filePath || null;
+      fastLoadPending = true;
       updateEditor();
       renderTabs();
       renderFilesList();
       startTitleEditing();
+      scheduleDeferredRenderUpdate();
     } else if (msg.command === 'openFile') {
       vscode.postMessage({
         command: 'loadFile',

@@ -16,6 +16,9 @@ let pendingTitleEditFile = null;
 let autoSaveTimer = null;
 let autoSaveDelay = 750;
 let lastSavedContent = {};
+let lastLocalSaveAt = 0;
+let lastLocalSaveFile = null;
+let ignoreFileChangedMs = 1500;
 
 let lastTypingAt = 0;
 let typingGraceMs = 500;
@@ -26,22 +29,39 @@ let suppressMarkersUntil = 0;
 let hiddenMarks = [];
 let codeLineHandles = [];
 let listLineFlags = new WeakMap();
+let listMarkerMarks = new Map();
 let lastLineWithFormatting = null;
 let hiddenUpdateTimer = null;
+let lastHiddenUpdateAt = 0;
+let hiddenUpdateMinInterval = 50;
+let hiddenUpdateDebounceMs = 80;
+let hiddenCursorDebounceMs = 60;
+let fastLoadPending = false;
+let lastCursorLine = null;
+let editorFocused = false;
 
 const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+
+if (isCustomEditorMode) {
+  autoSaveDelay = 2000;
+  hiddenUpdateMinInterval = 90;
+  hiddenUpdateDebounceMs = 140;
+  hiddenCursorDebounceMs = 110;
+  imageUpdateDelay = 500;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initEditor();
   initEvents();
-  
+
+
   if (isCustomEditorMode) {
     const sidebar = document.querySelector('.sidebar');
     const editorArea = document.querySelector('.editor_area');
     const editorTabs = document.querySelector('.editor_tabs');
     const editorHeader = document.querySelector('.editor_header');
     const editorContainer = document.querySelector('.editor_container');
-    
+
     if (sidebar) sidebar.style.display = 'none';
     if (editorTabs) editorTabs.style.display = 'none';
     if (editorHeader) editorHeader.style.display = 'none';
@@ -54,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       editorContainer.style.width = '100%';
       editorContainer.style.height = '100%';
     }
-    
+
     vscode.postMessage({ command: 'ready' });
   } else {
     vscode.postMessage({ command: 'getVault' });
@@ -72,10 +92,10 @@ function toggleVaultCollapse() {
   const filesList = document.getElementById('filesList');
   const collapseBtn = document.getElementById('collapseBtn');
   const icon = collapseBtn.querySelector('i');
-  
+
   sidebar.classList.toggle('collapsed');
   filesList.classList.toggle('collapsed');
-  
+
   if (filesList.classList.contains('collapsed')) {
     icon.className = 'ph ph-caret-right';
     collapseBtn.title = 'Expand';
