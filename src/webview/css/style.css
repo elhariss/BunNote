@@ -280,7 +280,7 @@ body {
 }
 
 .editor_header {
-    padding: 26px 28px 12px;
+    padding: 26px 0 12px;
     background-color: var(--vscode-editor-background);
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
     color: var(--vscode-editor-foreground);
@@ -318,6 +318,10 @@ body {
     gap: 12px;
     min-width: 0;
     width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .editor_title_input {
@@ -578,6 +582,15 @@ body {
 /* Custom Editor Mode / カスタムエディターモード */
 body[data-editor-mode="custom"] .sidebar {
     display: none !important;
+}
+
+/* Sidebar Editor Mode / サイドバーエディターモード */
+body[data-editor-mode="sidebar"] .sidebar {
+    display: none !important;
+}
+
+body[data-editor-mode="sidebar"] .editor_area {
+    width: 100% !important;
 }
 
 body[data-editor-mode="custom"] .container {
