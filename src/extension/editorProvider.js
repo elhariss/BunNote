@@ -59,6 +59,15 @@ class EditorProvider {
           msg.content
         );
         await vscode.workspace.applyEdit(edit);
+      } else if (msg.command === "showMessage") {
+        const message = msg.message || "Operation completed";
+        if (msg.type === "error") {
+          vscode.window.showErrorMessage(message);
+        } else if (msg.type === "warning") {
+          vscode.window.showWarningMessage(message);
+        } else {
+          vscode.window.showInformationMessage(message);
+        }
       } else if (msg.command === "resolveImage") {
         const requestId = msg.requestId;
         const imagePath = typeof msg.imagePath === 'string' ? msg.imagePath.trim() : '';
