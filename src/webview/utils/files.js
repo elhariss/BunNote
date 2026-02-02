@@ -46,10 +46,6 @@ function initContextMenu() {
   if (editTitleBtn) {
     editTitleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (contextMenuFileType === 'image') {
-        hideAllContextMenus();
-        return;
-      }
       if (contextMenuFile) {
         vscode.postMessage({
           command: 'requestRename',
@@ -558,6 +554,9 @@ function openFile(fileName, fileType) {
 
   if (openTabs[fileName]) {
     currentFile = fileName;
+    if (typeof fastLoadPending !== 'undefined') {
+      fastLoadPending = true;
+    }
     updateEditor();
     renderTabs();
     renderFilesList();
@@ -579,16 +578,16 @@ function initGlobalContextMenuListeners() {
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target) return;
-    
+
     if (target.closest('.context_menu')) {
       return;
     }
-    
+
     hideAllContextMenus();
   });
 
   document.addEventListener('scroll', hideAllContextMenus, { capture: true, passive: true });
-  
+
   const filesList = document.getElementById('filesList');
   if (filesList) {
     filesList.addEventListener('scroll', hideAllContextMenus, { passive: true });
@@ -601,7 +600,7 @@ function initGlobalContextMenuListeners() {
   });
 }
 
-(function() {
+(function () {
   function initialize() {
     initContextMenu();
     initFolderContextMenu();
@@ -653,9 +652,16 @@ window.addEventListener('message', event => {
       break;
     case 'fileChanged':
       if (message.fileName && openTabs[message.fileName]) {
-        vscode.postMessage({ 
-          command: 'loadFile', 
-          fileName: message.fileName 
+        const now = Date.now();
+        const isSameFile = message.fileName === currentFile;
+        const recentLocalSave = isSameFile && typeof lastLocalSaveAt === 'number' &&
+          (now - lastLocalSaveAt) < (typeof ignoreFileChangedMs === 'number' ? ignoreFileChangedMs : 1500);
+        if (recentLocalSave) {
+          break;
+        }
+        vscode.postMessage({
+          command: 'loadFile',
+          fileName: message.fileName
         });
       }
       break;

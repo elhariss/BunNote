@@ -8,16 +8,26 @@ function updateEditor() {
   if (currentFile && openTabs[currentFile]) {
     const currentContent = easyMDE.value();
     const newContent = openTabs[currentFile].content;
-    
+
     if (currentContent !== newContent) {
-      const cursor = easyMDE.codemirror.getCursor();
-      const scrollInfo = easyMDE.codemirror.getScrollInfo();
-      
-      try { clearHiddenMarks(); } catch (e) { /* ignore */ }
-      easyMDE.value(newContent);
-      
-      easyMDE.codemirror.setCursor(cursor);
-      easyMDE.codemirror.scrollTo(scrollInfo.left, scrollInfo.top);
+      const isFastLoad = typeof fastLoadPending !== 'undefined' && fastLoadPending;
+      fastLoadPending = false;
+
+      if (isFastLoad) {
+        easyMDE.codemirror.operation(() => {
+          easyMDE.value(newContent);
+          easyMDE.codemirror.scrollTo(0, 0);
+        });
+      } else {
+        const cursor = easyMDE.codemirror.getCursor();
+        const scrollInfo = easyMDE.codemirror.getScrollInfo();
+
+        try { clearHiddenMarks(); } catch (e) { /* ignore */ }
+        easyMDE.value(newContent);
+
+        easyMDE.codemirror.setCursor(cursor);
+        easyMDE.codemirror.scrollTo(scrollInfo.left, scrollInfo.top);
+      }
     }
   } else {
     easyMDE.value('');
@@ -87,7 +97,7 @@ function handleRenameResult(msg) {
       command: 'showError',
       message: msg.error || 'Failed to rename note'
     });
-    
+
     if (msg.source === 'editorTitle') {
       startTitleEditing();
     }
@@ -191,6 +201,9 @@ function saveFile(isAutoSave = false) {
 
   const content = easyMDE.value();
   const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+
+  lastLocalSaveAt = Date.now();
+  lastLocalSaveFile = currentFile;
 
   if (isCustomEditorMode) {
     vscode.postMessage({

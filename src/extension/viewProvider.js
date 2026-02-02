@@ -54,9 +54,9 @@ class ViewProvider {
         if (this.view) {
           const vaultPath = this.getVaultPath();
           const relativePath = path.relative(vaultPath, uri.fsPath).split(path.sep).join("/");
-          this.view.webview.postMessage({ 
-            command: "fileChanged", 
-            fileName: relativePath 
+          this.view.webview.postMessage({
+            command: "fileChanged",
+            fileName: relativePath
           });
         }
       });
@@ -230,7 +230,7 @@ class ViewProvider {
         try {
           const oldUri = vscode.Uri.file(oldPath);
           const newUri = vscode.Uri.file(newPath);
-          
+
           const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs);
           const customEditorTabs = tabs.filter(tab => {
             if (tab.input instanceof vscode.TabInputCustom) {
@@ -238,18 +238,18 @@ class ViewProvider {
             }
             return false;
           });
-          
+
           fs.renameSync(oldPath, newPath);
           vscode.window.showInformationMessage("Note renamed to: " + safeNewName);
-          
+
           for (const tab of customEditorTabs) {
             await vscode.window.tabGroups.close(tab);
           }
-          
+
           if (customEditorTabs.length > 0) {
             await vscode.commands.executeCommand("vscode.openWith", newUri, "bunnote.markdownEditor");
           }
-          
+
           view.webview.postMessage({
             command: "renameResult",
             success: true,
@@ -414,10 +414,11 @@ class ViewProvider {
 
         const filePath = path.join(vaultPath, safeName);
         try {
-          const content = fs.readFileSync(filePath, "utf-8");
+          const content = await fs.promises.readFile(filePath, "utf-8");
           view.webview.postMessage({
             command: "fileLoaded",
             fileName: msg.fileName,
+            filePath: filePath,
             content: content
           });
         } catch (err) {
@@ -482,7 +483,7 @@ class ViewProvider {
 
         const filePath = path.join(vaultPath, safeName);
         try {
-          fs.unlinkSync(filePath);
+          await vscode.workspace.fs.delete(vscode.Uri.file(filePath), { useTrash: true });
           vscode.window.showInformationMessage("File deleted: " + msg.fileName);
           this.refresh();
         } catch (err) {
@@ -574,7 +575,8 @@ class ViewProvider {
           return;
         }
 
-        const baseName = path.basename(safeOldName, path.extname(safeOldName));
+        const oldExt = path.extname(safeOldName);
+        const baseName = path.basename(safeOldName, oldExt);
         const input = await vscode.window.showInputBox({
           prompt: "Edit note title",
           value: baseName
@@ -592,8 +594,9 @@ class ViewProvider {
         }
 
         let newBase = cleaned;
-        if (!newBase.toLowerCase().endsWith(".md")) {
-          newBase += ".md";
+        const hasExt = path.extname(newBase).length > 0;
+        if (!hasExt) {
+          newBase += oldExt || ".md";
         }
 
         const dir = path.dirname(safeOldName);
@@ -887,8 +890,8 @@ class ViewProvider {
 
   getHtml() {
     const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
-    const cssPath = path.join(this.context.extensionPath, "src", "webview", "css","style.css");
-    const editorCssPath = path.join(this.context.extensionPath, "src", "webview","css", "editor.css");
+    const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
+    const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
     const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
     const filesPath = path.join(this.context.extensionPath, "src", "webview", "utils", "files.js");
     const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
