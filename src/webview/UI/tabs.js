@@ -38,7 +38,16 @@ function updateEditor() {
 function updateEditorTitle() {
   if (editorTitleInput) {
     editorTitleInput.value = formatTitleFromFile(currentFile);
+    resizeTitleInput();
   }
+}
+
+function resizeTitleInput() {
+  if (!editorTitleInput) {
+    return;
+  }
+  editorTitleInput.style.height = 'auto';
+  editorTitleInput.style.height = `${editorTitleInput.scrollHeight}px`;
 }
 
 function startTitleEditing() {
@@ -51,6 +60,7 @@ function startTitleEditing() {
   try {
     editorTitleInput.setSelectionRange(len, len);
   } catch (e) { /* ignore */ }
+  resizeTitleInput();
 }
 
 function finishTitleEditing(save) {
@@ -229,6 +239,7 @@ function saveFile(isAutoSave = false) {
 
 window.updateEditor = updateEditor;
 window.updateEditorTitle = updateEditorTitle;
+window.resizeTitleInput = resizeTitleInput;
 window.startTitleEditing = startTitleEditing;
 window.finishTitleEditing = finishTitleEditing;
 window.handleRenameResult = handleRenameResult;
