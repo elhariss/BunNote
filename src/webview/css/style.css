@@ -120,31 +120,27 @@ body {
     position: relative;
 }
 
-/* Indent guides for files and folders */
-.file_item::before,
+/* Indent guides for folders only */
 .folder_item::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 0;
-    bottom: 0;
+    top: 2px;
+    bottom: -2px;
     pointer-events: none;
 }
 
 /* Generate indent guides based on depth */
-.file_item[data-depth="0"]::before,
 .folder_item[data-depth="0"]::before {
     background: none;
 }
 
-.file_item[data-depth="1"]::before,
 .folder_item[data-depth="1"]::before {
     width: 1px;
     left: 12px;
     background: var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.3));
 }
 
-.file_item[data-depth="2"]::before,
 .folder_item[data-depth="2"]::before {
     width: calc(16px * 2 + 1px);
     left: 12px;
@@ -155,7 +151,6 @@ body {
             transparent 16px);
 }
 
-.file_item[data-depth="3"]::before,
 .folder_item[data-depth="3"]::before {
     width: calc(16px * 3 + 1px);
     left: 12px;
@@ -166,7 +161,6 @@ body {
             transparent 16px);
 }
 
-.file_item[data-depth="4"]::before,
 .folder_item[data-depth="4"]::before {
     width: calc(16px * 4 + 1px);
     left: 12px;
@@ -177,7 +171,6 @@ body {
             transparent 16px);
 }
 
-.file_item[data-depth="5"]::before,
 .folder_item[data-depth="5"]::before {
     width: calc(16px * 5 + 1px);
     left: 12px;
@@ -278,6 +271,14 @@ body {
     overflow-x: hidden;
 }
 
+.editor_area::-webkit-scrollbar:horizontal {
+    height: 0;
+}
+
+.editor_container::-webkit-scrollbar:horizontal {
+    height: 0;
+}
+
 .editor_header {
     padding: 26px 28px 12px;
     background-color: var(--vscode-editor-background);
@@ -294,10 +295,6 @@ body {
 .editor_header.editor_header_hidden {
     opacity: 0;
     transform: translateY(-8px);
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-bottom-color: transparent;
     pointer-events: none;
 }
 
@@ -449,13 +446,12 @@ body {
 .context_menu {
     position: fixed;
     min-width: 180px;
-    background: var(--vscode-editorWidget-background, #252526);
-    color: var(--vscode-foreground, #d4d4d4);
-    border: 1px solid var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
-    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-    border-radius: 14px;
-    padding: 6px;
-    backdrop-filter: blur(8px);
+    background: var(--vscode-menu-background, #252526);
+    color: var(--vscode-menu-foreground, #d4d4d4);
+    border: 1px solid var(--vscode-menu-border, rgba(255, 255, 255, 0.08));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    padding: 4px;
     z-index: 10000;
     display: none;
 }
@@ -469,11 +465,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 6px 12px;
     border: none;
     background: transparent;
     color: inherit;
-    border-radius: 10px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
     text-align: left;
@@ -481,18 +477,18 @@ body {
 
 .context_menu_item i {
     font-size: 16px;
-    color: var(--vscode-descriptionForeground, #9aa0a6);
+    color: var(--vscode-menu-foreground, #9aa0a6);
 }
 
 .context_menu_separator {
     height: 1px;
-    margin: 6px 8px;
-    background: var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
+    margin: 4px 8px;
+    background: var(--vscode-menu-separatorBackground, rgba(255, 255, 255, 0.08));
 }
 
 .context_menu_item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--vscode-foreground, #ffffff);
+    background: var(--vscode-menu-selectionBackground, rgba(255, 255, 255, 0.08));
+    color: var(--vscode-menu-selectionForeground, #ffffff);
 }
 
 .context_menu_item.destructive {
