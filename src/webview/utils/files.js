@@ -289,7 +289,6 @@ function handleDragStart(event, itemType, itemPath) {
   try {
     event.dataTransfer.setData('application/bunnote-item', JSON.stringify(dragPayload));
   } catch (e) {
-    // ignore
   }
   event.dataTransfer.effectAllowed = 'move';
   showDragIndicator(`Move ${itemType === 'folder' ? 'folder' : 'note'}`, event.clientX, event.clientY);

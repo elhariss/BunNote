@@ -1,9 +1,5 @@
 // @ts-nocheck
 
-/**
- * Update editor content from current tab
- * エディターコンテンツを現在のタブから更新
- */
 function updateEditor() {
   if (currentFile && openTabs[currentFile]) {
     const currentContent = easyMDE.value();
@@ -22,7 +18,7 @@ function updateEditor() {
         const cursor = easyMDE.codemirror.getCursor();
         const scrollInfo = easyMDE.codemirror.getScrollInfo();
 
-        try { clearHiddenMarks(); } catch (e) { /* ignore */ }
+        try { clearHiddenMarks(); } catch (e) { }
         easyMDE.value(newContent);
 
         easyMDE.codemirror.setCursor(cursor);
@@ -59,7 +55,7 @@ function startTitleEditing() {
   const len = editorTitleInput.value.length;
   try {
     editorTitleInput.setSelectionRange(len, len);
-  } catch (e) { /* ignore */ }
+  } catch (e) { }
   resizeTitleInput();
 }
 
@@ -200,10 +196,6 @@ function closeTab(e, fileName) {
   renderTabs();
 }
 
-/**
- * Save current file content
- * 現在のファイルコンテンツを保存
- */
 function saveFile(isAutoSave = false) {
   if (!currentFile) {
     return;

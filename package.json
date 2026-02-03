@@ -214,6 +214,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically use the default vault path if no workspace vault is configured"
+        },
+        "bunnote.colorMarkers": {
+          "type": "boolean",
+          "default": false,
+          "description": "Color Markdown markers in the editor."
         }
       }
     }
