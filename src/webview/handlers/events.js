@@ -265,8 +265,21 @@ function initEvents() {
 
     cm.on("change", function (cmInstance, change) {
       lastTypingAt = Date.now();
+      if (typeof updateCopyButtons === 'function') {
+        requestAnimationFrame(() => {
+          try { updateCopyButtons(); } catch (e) { }
+        });
+      }
       const changedText = (change.text || []).join("\n");
       const removedText = (change.removed || []).join("\n");
+      const hasLineShift = changedText.includes("\n") || removedText.includes("\n");
+      if (hasLineShift) {
+        markCodeBlockDirty();
+        requestAnimationFrame(() => {
+          try { addCodeCopyButtons(); } catch (e) { }
+          try { updateCopyButtons(); } catch (e) { }
+        });
+      }
       const hasFenceChange = changedText.includes("```") || changedText.includes("~~~") || removedText.includes("```") || removedText.includes("~~~");
       if (hasFenceChange) {
         markCodeBlockDirty();
