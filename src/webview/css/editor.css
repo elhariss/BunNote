@@ -370,13 +370,13 @@ body[data-marker-color="on"] .cm-url {
 .cm-code-copy-btn {
     position: relative;
     z-index: 10;
-    background-color: var(--vscode-button-secondaryBackground);
-    border: 1px solid var(--vscode-button-border, transparent);
+    background-color: transparent;
+    border: none;
     border-radius: 6px;
     padding: 0;
-    color: var(--vscode-button-secondaryForeground);
+    color: var(--vscode-icon-foreground);
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -384,15 +384,16 @@ body[data-marker-color="on"] .cm-url {
     width: 28px;
     height: 28px;
     box-sizing: border-box;
+    opacity: 0.85;
 }
 
 .cm-code-copy-btn:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-    border-color: var(--vscode-button-border, transparent);
+    background-color: rgba(255, 255, 255, 0.08);
+    opacity: 1;
 }
 
 .cm-code-copy-btn:active {
-    background-color: var(--vscode-button-secondaryHoverBackground);
+    background-color: rgba(255, 255, 255, 0.12);
     transform: scale(0.95);
 }
 
