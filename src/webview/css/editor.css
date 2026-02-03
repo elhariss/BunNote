@@ -106,6 +106,34 @@
     transition: opacity 0.15s ease;
 }
 
+body[data-marker-color="on"] .cm-header,
+body[data-marker-color="on"] .cm-header-1,
+body[data-marker-color="on"] .cm-header-2,
+body[data-marker-color="on"] .cm-header-3 {
+    color: var(--vscode-button-foreground, #ffffff) !important;
+}
+
+body[data-marker-color="on"] .cm-em,
+body[data-marker-color="on"] .cm-strong {
+    color: var(--vscode-button-background, #3794ff) !important;
+}
+
+
+body[data-marker-color="on"] .cm-variable-2,
+body[data-marker-color="on"] .cm-variable-3 {
+    color: var(--vscode-, #c8c8c8) !important;
+}
+
+body[data-marker-color="on"] .cm-quote {
+    color: var(--vscode-descriptionForeground, #c8c8c8) !important;
+
+}
+
+body[data-marker-color="on"] .cm-link,
+body[data-marker-color="on"] .cm-url {
+    color: var(--vscode-textLink-foreground, #3794ff) !important;
+}
+
 /* Markdown Elements / マークダウン要素 */
 .EasyMDEContainer .cm-header-1 {
     font-size: 2em !important;
@@ -378,4 +406,30 @@
 .cm-code-copy-btn:empty::before {
     content: "Copy";
     font-size: 12px;
+}
+
+
+body[data-marker-color="on"] .EasyMDEContainer .cm-header,
+body[data-marker-color="on"] .EasyMDEContainer .cm-header-1,
+body[data-marker-color="on"] .EasyMDEContainer .cm-header-2,
+body[data-marker-color="on"] .EasyMDEContainer .cm-header-3 {
+    color: var(--vscode-foreground, #ffffff) !important;
+}
+
+body[data-marker-color="on"] .EasyMDEContainer .cm-strong,
+body[data-marker-color="on"] .EasyMDEContainer .cm-quote,
+body[data-marker-color="on"] .EasyMDEContainer .cm-variable-2,
+body[data-marker-color="on"] .EasyMDEContainer .cm-variable-3 {
+    color: var(--vscode-descriptionForeground, #c8c8c8) !important;
+}
+
+
+body[data-marker-color="on"] .EasyMDEContainer .cm-em,
+body[data-marker-color="on"] .EasyMDEContainer .cm-strong {
+    color: var(--vscode-badge-background, #c8c8c8) !important;
+}
+
+body[data-marker-color="on"] .EasyMDEContainer .cm-link,
+body[data-marker-color="on"] .EasyMDEContainer .cm-url {
+    color: var(--vscode-textLink-foreground, #3794ff) !important;
 }

@@ -2,10 +2,6 @@ const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 
-/**
- * Editor Provider for opening markdown files in VS Code's main editor area
- * VS Codeのメインエディタエリアでマークダウンファイルを開くためのエディタープロバイダー
- */
 class EditorProvider {
   constructor(context) {
     this.context = context;
@@ -128,6 +124,8 @@ class EditorProvider {
   }
 
   getHtml(webview) {
+    const config = vscode.workspace.getConfiguration("bunnote");
+    const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
     const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
     const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
@@ -161,7 +159,8 @@ class EditorProvider {
         .replace("{{TABS_URI}}", tabsUri)
         .replace("{{EVENTS_URI}}", eventsUri)
         .replace("{{MAIN_URI}}", mainUri)
-        .replace("{{EDITOR_MODE}}", "custom");
+        .replace("{{EDITOR_MODE}}", "custom")
+        .replace("{{MARKER_COLOR_MODE}}", markerColorMode);
 
       return html;
     } catch (err) {

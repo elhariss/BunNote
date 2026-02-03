@@ -145,10 +145,6 @@ class ViewProvider {
     }
   }
 
-  /** 
-   * Setup file system watcher to detect external changes to markdown files
-   * マークダウンファイルの外部変更を検出するファイルシステムウォッチャーを設定
-   */
   setupFileWatcher() {
     if (this.fileWatcher) {
       this.fileWatcher.dispose();
@@ -190,10 +186,6 @@ class ViewProvider {
     this.setupFileWatcher();
   }
 
-  /** 
-   * Recursively scan vault directory for markdown files and folders
-   * Vaultディレクトリを再帰的にスキャンしてマークダウンファイルとフォルダを取得
-   */
   async getMarkdownFiles() {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -259,10 +251,6 @@ class ViewProvider {
     return result;
   }
 
-  /** 
-   * Initialize webview and setup message handlers for file operations
-   * Webviewを初期化してファイル操作用のメッセージハンドラーを設定
-   */
   resolveWebviewView(view) {
     this.view = view;
     const webviewRoot = vscode.Uri.file(path.join(this.context.extensionPath, "src", "webview"));
@@ -286,16 +274,8 @@ class ViewProvider {
     }
 
     view.webview.onDidReceiveMessage(async (msg) => {
-      /** 
-       * Sanitize file names to prevent path traversal and security issues
-       * パストラバーサルやセキュリティ問題を防ぐためにファイル名をサニタイズ
-       */
       const vaultPath = this.getVaultPath();
 
-      /** 
-       * Handle file rename with custom editor tab management
-       * カスタムエディタタブ管理を含むファイル名変更を処理
-       */
       const performRename = async (safeOldName, safeNewName, source) => {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -456,10 +436,6 @@ class ViewProvider {
         const rawTitle = (msg.title || "").trim();
         const displayTitle = rawTitle || "Untitled";
 
-        /** 
-         * Generate unique file name by appending counter if name exists
-         * 名前が存在する場合はカウンターを追加してユニークなファイル名を生成
-         */
         const makeUniqueName = (baseTitle) => {
           const base = baseTitle.trim() || "Untitled";
           let candidate = base;
@@ -952,6 +928,8 @@ class ViewProvider {
   }
 
   getHtml() {
+    const config = vscode.workspace.getConfiguration("bunnote");
+    const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
     const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
     const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
@@ -985,7 +963,8 @@ class ViewProvider {
         .replace("{{TABS_URI}}", tabsUri)
         .replace("{{EVENTS_URI}}", eventsUri)
         .replace("{{MAIN_URI}}", mainUri)
-        .replace("{{EDITOR_MODE}}", "sidebar");
+        .replace("{{EDITOR_MODE}}", "sidebar")
+        .replace("{{MARKER_COLOR_MODE}}", markerColorMode);
     } catch (err) {
       console.error("Failed to load webview HTML:", err);
       return "<html><body><h3>Failed to load BunNote view.</h3></body></html>";
