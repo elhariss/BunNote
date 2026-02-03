@@ -1236,8 +1236,6 @@ function updateHiddenSyntax(includeActiveInline = false) {
 }
 
 function addCodeCopyButtons() {
-  return;
-
   const wrapper = cm.getWrapperElement();
   if (!wrapper) return;
   if (!wrapper.style.position) {
@@ -1297,15 +1295,16 @@ function addCopyButtonToBlock(startLine, endLine) {
   const sizer = wrapper.querySelector('.CodeMirror-sizer');
   const sizerRect = sizer ? sizer.getBoundingClientRect() : wrapperRect;
   const buttonWidth = 28;
-  const contentPaddingRight = 20;
-  const inset = 8;
+  const contentPaddingRight = 2;
+  const inset = 4;
   const targetLine = Math.min(endLine - 1, Math.max(startLine + 1, startLine));
   const lineRect = getCodeLineRect(targetLine);
   if (!lineRect) return;
 
   copyBtn.style.position = 'absolute';
-  copyBtn.style.left = `${Math.max(8, sizerRect.right - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
-  copyBtn.style.top = `${lineRect.top - wrapperRect.top - 10}px`;
+  const rightEdge = Math.min(lineRect.right, sizerRect.right, wrapperRect.right);
+  copyBtn.style.left = `${Math.max(8, rightEdge - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
+  copyBtn.style.top = `${Math.max(4, lineRect.top - wrapperRect.top - 19)}px`;
   copyBtn.style.zIndex = '10';
 
   wrapper.appendChild(copyBtn);
@@ -1363,8 +1362,8 @@ function updateCopyButtons() {
   const sizer = wrapper.querySelector('.CodeMirror-sizer');
   const sizerRect = sizer ? sizer.getBoundingClientRect() : wrapperRect;
   const buttonWidth = 28;
-  const contentPaddingRight = 20;
-  const inset = 8;
+  const contentPaddingRight = 2;
+  const inset = 4;
   const buttons = wrapper.querySelectorAll('.cm-code-copy-btn');
 
   buttons.forEach(btn => {
@@ -1376,8 +1375,9 @@ function updateCopyButtons() {
     const lineRect = getCodeLineRect(targetLine);
     if (!lineRect) return;
 
-    btn.style.left = `${Math.max(8, sizerRect.right - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
-    btn.style.top = `${lineRect.top - wrapperRect.top - 10}px`;
+    const rightEdge = Math.min(lineRect.right, sizerRect.right, wrapperRect.right);
+    btn.style.left = `${Math.max(8, rightEdge - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
+    btn.style.top = `${Math.max(4, lineRect.top - wrapperRect.top - 12)}px`;
   });
 }
 
