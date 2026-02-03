@@ -45,6 +45,8 @@ function runHiddenSyntaxUpdate(minIdleMs = 700) {
 let listMarkerRefreshTimer = null;
 let listMarkerFrom = null;
 let listMarkerTo = null;
+let quickSyntaxTimer = null;
+let codeFenceLineState = null;
 
 function queueListMarks(fromLine, toLine) {
   if (!cm || typeof refreshListMarks !== 'function') return;
@@ -70,6 +72,53 @@ function queueListMarks(fromLine, toLine) {
       refreshListMarks(l);
     }
   }, 60);
+}
+
+function queueQuickSyntaxUpdate() {
+  if (quickSyntaxTimer) return;
+  quickSyntaxTimer = setTimeout(() => {
+    quickSyntaxTimer = null;
+    try { runHiddenSyntaxUpdate(0); } catch (e) { }
+  }, 40);
+}
+
+function isLineInFence(lineIndex) {
+  if (!cm) return false;
+  const total = cm.lineCount();
+  if (!codeFenceLineState || codeFenceLineState.length !== total) {
+    refreshFenceCache();
+  }
+  if (lineIndex < 0 || lineIndex >= codeFenceLineState.length) {
+    return false;
+  }
+  return codeFenceLineState[lineIndex] === true;
+}
+
+function refreshFenceCache() {
+  if (!cm) return;
+  const total = cm.lineCount();
+  const next = new Array(total).fill(false);
+  let inCode = false;
+  let fenceChar = null;
+  for (let i = 0; i < total; i++) {
+    const text = cm.getLine(i) || "";
+    const fenceMatch = text.match(/^\s*([`~]{3,})/);
+    if (fenceMatch) {
+      const fence = fenceMatch[1][0];
+      if (!inCode) {
+        inCode = true;
+        fenceChar = fence;
+      } else if (fenceChar === fence) {
+        inCode = false;
+        fenceChar = null;
+      }
+      continue;
+    }
+    if (inCode) {
+      next[i] = true;
+    }
+  }
+  codeFenceLineState = next;
 }
 
 function getHiddenTimings() {
@@ -218,8 +267,36 @@ function initEvents() {
       lastTypingAt = Date.now();
       const changedText = (change.text || []).join("\n");
       const removedText = (change.removed || []).join("\n");
-      if (changedText.includes("```") || changedText.includes("~~~") || removedText.includes("```") || removedText.includes("~~~")) {
+      const hasFenceChange = changedText.includes("```") || changedText.includes("~~~") || removedText.includes("```") || removedText.includes("~~~");
+      if (hasFenceChange) {
         markCodeBlockDirty();
+        refreshFenceCache();
+      }
+      const cursorLine = cmInstance.getCursor().line;
+      if (isLineInFence(cursorLine)) {
+        const lineCount = cmInstance.lineCount();
+        const fromLine = Math.max(0, Math.min(change.from.line, lineCount - 1));
+        const toLine = Math.max(fromLine, Math.min(change.to.line + (change.text ? change.text.length : 1), lineCount - 1));
+        for (let l = fromLine; l <= toLine; l++) {
+          if (!isLineInFence(l)) continue;
+          const handle = cmInstance.getLineHandle(l);
+          if (!handle) continue;
+          cmInstance.addLineClass(handle, "text", "cm-code-block-line");
+          if (typeof codeLineHandles !== 'undefined' && codeLineHandles) {
+            codeLineHandles.push(handle);
+          }
+        }
+        if (currentFile && openTabs[currentFile]) {
+          openTabs[currentFile].content = easyMDE.value();
+        }
+        queueAutoSave();
+        return;
+      }
+      const lineText = cmInstance.getLine(cursorLine) || "";
+      const isFence = /^\s*([`~]{3,})/.test(lineText);
+      const isHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(lineText);
+      if (isFence || isHr) {
+        queueQuickSyntaxUpdate();
       }
       const lineCount = cmInstance.lineCount();
       const from = Math.max(0, change.from.line - 1);
@@ -252,12 +329,22 @@ function initEvents() {
       const cursor = cm.getCursor();
       if (cursor) {
         if (lastCursorLine !== null && lastCursorLine !== cursor.line) {
+          const prevText = cm.getLine(lastCursorLine) || "";
+          const wasHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(prevText);
+          if (wasHr) {
+            try { runHiddenSyntaxUpdate(0); } catch (e) { }
+          }
+        }
+        if (lastCursorLine !== null && lastCursorLine !== cursor.line) {
           scheduleImageMarksUpdate(lastCursorLine, lastCursorLine);
         }
         scheduleImageMarksUpdate(cursor.line, cursor.line);
         lastCursorLine = cursor.line;
       }
       clearRevealedImageLine();
+      if (cursor && isLineInFence(cursor.line)) {
+        return;
+      }
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
@@ -361,6 +448,9 @@ function initEvents() {
       "Cmd-S": function () { saveFile(false); },
       "Enter": function (cmInstance) {
         const cursor = cmInstance.getCursor();
+        if (isLineInFence(cursor.line)) {
+          return cmInstance.execCommand("newlineAndIndent");
+        }
         const lineText = cmInstance.getLine(cursor.line) || "";
         const numberedMatch = lineText.match(/^(\s*)(\d+[.)])\s*(.*)$/);
         if (numberedMatch) {
@@ -403,6 +493,8 @@ function initEvents() {
       }
     });
 
+    refreshFenceCache();
+
     queueRenderUpdate();
   }
 
@@ -430,6 +522,8 @@ function initEvents() {
       if (easyMDE) {
         easyMDE.value(msg.content || '');
       }
+
+      refreshFenceCache();
 
       updateEditor();
       queueRenderUpdate();
