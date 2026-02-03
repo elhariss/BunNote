@@ -54,11 +54,18 @@ function initEditor() {
 
   easyMDE.codemirror.setOption("mode", {
     name: "gfm",
-    highlightFormatting: true
+    highlightFormatting: true,
+    fencedCodeBlocks: true
   });
 
   cm = easyMDE.codemirror;
   cm.setOption("styleActiveLine", true);
+
+  if (!window.CodeMirror && cm && cm.constructor) {
+    window.CodeMirror = cm.constructor;
+  }
+
+  loadCodeMirrorModes();
 
   initEditorContextMenu();
 
@@ -129,6 +136,57 @@ function initEditor() {
   codeLineHandles = [];
   listLineFlags = new WeakMap();
   listMarkerMarks = new Map();
+}
+
+function loadScriptOnce(src) {
+  if (document.querySelector(`script[data-src="${src}"]`)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.dataset.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function loadCodeMirrorModes() {
+  if (window._bunnoteCmModesLoaded) return;
+  if (!window.CodeMirror) return;
+  window._bunnoteCmModesLoaded = true;
+
+  const base = 'https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/';
+  const scripts = [
+    `${base}meta.js`,
+    `${base}javascript/javascript.js`,
+    `${base}xml/xml.js`,
+    `${base}htmlmixed/htmlmixed.js`,
+    `${base}css/css.js`,
+    `${base}clike/clike.js`,
+    `${base}python/python.js`,
+    `${base}json/json.js`,
+    `${base}markdown/markdown.js`
+  ];
+
+  let chain = Promise.resolve();
+  scripts.forEach((src) => {
+    chain = chain.then(() => loadScriptOnce(src));
+  });
+
+  chain.then(() => {
+    if (cm) {
+      cm.setOption("mode", {
+        name: "gfm",
+        highlightFormatting: true,
+        fencedCodeBlocks: true
+      });
+    }
+  }).catch(() => {
+    window._bunnoteCmModesLoaded = false;
+  });
 }
 
 function initEditorContextMenu() {
