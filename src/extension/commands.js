@@ -292,7 +292,7 @@ function registerCommands(context, state, providers) {
       }
 
       try {
-        fs.rmSync(uri.fsPath, { force: true });
+        await vscode.workspace.fs.delete(uri, { useTrash: true });
         vaultProvider.refresh();
       } catch (err) {
         vscode.window.showErrorMessage("Failed to delete file: " + err.message);
@@ -386,7 +386,7 @@ function registerCommands(context, state, providers) {
       }
 
       try {
-        fs.rmSync(uri.fsPath, { recursive: true, force: true });
+        await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
         vaultProvider.refresh();
       } catch (err) {
         vscode.window.showErrorMessage("Failed to delete folder: " + err.message);
