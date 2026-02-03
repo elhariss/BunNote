@@ -236,6 +236,41 @@ body[data-marker-color="on"] .cm-url {
     color: var(--vscode-descriptionForeground) !important;
 }
 
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-keyword {
+    color: var(--vscode-symbolIcon-keywordForeground, #c586c0);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-atom,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-number {
+    color: var(--vscode-debugTokenExpression-number, #b5cea8);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-string,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-string-2 {
+    color: var(--vscode-debugTokenExpression-string, #ce9178);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-comment {
+    color: var(--vscode-descriptionForeground, #6a9955);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-def,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable-2,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable-3,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-property {
+    color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-builtin,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-type {
+    color: var(--vscode-symbolIcon-classForeground, #4ec9b0);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-operator {
+    color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
 .EasyMDEContainer .CodeMirror-line.cm-code-block-start {
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
