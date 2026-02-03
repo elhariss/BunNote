@@ -1,7 +1,3 @@
-/**
- * Queue auto-save after typing
- * 入力後に自動保存をキューに入れる
- */
 function queueAutoSave() {
   if (!currentFile || !openTabs[currentFile]) {
     return;
@@ -37,22 +33,79 @@ function runHiddenSyntaxUpdate(minIdleMs = 700) {
   const scrollInfo = cm.getScrollInfo();
 
   cm.operation(() => {
-    try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
-    try { if (selections && selections.length) cm.setSelections(selections, null, { scroll: false }); } catch (e) { /* ignore */ }
+    try { updateHiddenSyntax(false); } catch (e) { }
+    try { if (selections && selections.length) cm.setSelections(selections, null, { scroll: false }); } catch (e) { }
   });
 
   requestAnimationFrame(() => {
-    try { cm.scrollTo(scrollInfo.left, scrollInfo.top); } catch (e) { /* ignore */ }
+    try { cm.scrollTo(scrollInfo.left, scrollInfo.top); } catch (e) { }
   });
 }
 
-/**
- * Initialize editor events and message handlers
- * エディターイベントとメッセージハンドラーを初期化
- */
-function scheduleDeferredRenderUpdate() {
+let listMarkerRefreshTimer = null;
+let listMarkerFrom = null;
+let listMarkerTo = null;
+
+function queueListMarks(fromLine, toLine) {
+  if (!cm || typeof refreshListMarks !== 'function') return;
+  const maxLine = cm.lineCount() - 1;
+  const start = Math.max(0, typeof fromLine === 'number' ? fromLine : 0);
+  const end = Math.min(maxLine, typeof toLine === 'number' ? toLine : maxLine);
+
+  if (listMarkerFrom === null || start < listMarkerFrom) {
+    listMarkerFrom = start;
+  }
+  if (listMarkerTo === null || end > listMarkerTo) {
+    listMarkerTo = end;
+  }
+
+  if (listMarkerRefreshTimer) return;
+  listMarkerRefreshTimer = setTimeout(() => {
+    listMarkerRefreshTimer = null;
+    const runFrom = listMarkerFrom === null ? start : listMarkerFrom;
+    const runTo = listMarkerTo === null ? end : listMarkerTo;
+    listMarkerFrom = null;
+    listMarkerTo = null;
+    for (let l = runFrom; l <= runTo; l++) {
+      refreshListMarks(l);
+    }
+  }, 60);
+}
+
+function getHiddenTimings() {
+  const contentLength = easyMDE ? easyMDE.value().length : 0;
+  const isHeavy = contentLength > 120000;
+  const isVeryHeavy = contentLength > 250000;
+  const isSidebarMode = document.body.dataset.editorMode === 'sidebar';
+
+  let changeDelay = typeof hiddenUpdateDebounceMs === 'number' ? hiddenUpdateDebounceMs : 80;
+  let cursorDelay = typeof hiddenCursorDebounceMs === 'number' ? hiddenCursorDebounceMs : 60;
+  let minIdleMs = 700;
+
+  if (isHeavy) {
+    changeDelay = Math.max(changeDelay, 180);
+    cursorDelay = Math.max(cursorDelay, 160);
+    minIdleMs = 1200;
+  }
+
+  if (isVeryHeavy) {
+    changeDelay = Math.max(changeDelay, 260);
+    cursorDelay = Math.max(cursorDelay, 240);
+    minIdleMs = 1600;
+  }
+
+  if (isSidebarMode) {
+    changeDelay += 60;
+    cursorDelay += 60;
+    minIdleMs += 300;
+  }
+
+  return { changeDelay, cursorDelay, minIdleMs };
+}
+
+function queueRenderUpdate() {
   const run = () => {
-    try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+    try { updateHiddenSyntax(false); } catch (e) { }
     lastHiddenUpdateAt = Date.now();
   };
 
@@ -176,11 +229,13 @@ function initEvents() {
         updateListLineFlag(l);
       }
       updateListLineFlag(cmInstance.getCursor().line);
+      queueListMarks(from, to);
 
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
+      const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { updateHiddenSyntax(false); } catch (e) { }
-      }, 50);
+        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
+      }, timings.changeDelay);
 
       if (lastLineWithFormatting !== null) {
         lastLineWithFormatting = null;
@@ -202,11 +257,12 @@ function initEvents() {
         scheduleImageMarksUpdate(cursor.line, cursor.line);
         lastCursorLine = cursor.line;
       }
-      clearRevealedImageLineIfNeeded();
+      clearRevealedImageLine();
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
+      const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { updateHiddenSyntax(false); } catch (e) { }
-      }, 25);
+        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
+      }, timings.cursorDelay);
     });
 
     cm.on("focus", function () {
@@ -283,10 +339,6 @@ function initEvents() {
       }
     });
 
-    /**
-     * Get next number for ordered list at given indent level
-     * 指定されたインデントレベルの順序付きリストの次の番号を取得
-     */
     const getNextNumberAtIndent = (cmInstance, startLine, targetIndentLen) => {
       for (let i = startLine; i >= 0; i--) {
         const text = cmInstance.getLine(i) || "";
@@ -351,14 +403,14 @@ function initEvents() {
       }
     });
 
-    scheduleDeferredRenderUpdate();
+    queueRenderUpdate();
   }
 
   window.addEventListener('message', (e) => {
     const msg = e.data;
 
     if (msg.command === 'resolvedImage') {
-      handleResolvedImageResponse(msg.requestId, msg.uri);
+      handleImageResolved(msg.requestId, msg.uri);
       return;
     }
 
@@ -380,7 +432,7 @@ function initEvents() {
       }
 
       updateEditor();
-      scheduleDeferredRenderUpdate();
+      queueRenderUpdate();
       renderTabs();
 
       if (cm) {
@@ -388,7 +440,7 @@ function initEvents() {
           try {
             cm.refresh();
             cm.focus();
-          } catch (e) { /* ignore */ }
+          } catch (e) { }
         }, 100);
       }
       return;
@@ -410,7 +462,7 @@ function initEvents() {
           openTabs[currentFile].content = msg.content;
           lastSavedContent[currentFile] = msg.content;
           easyMDE.value(msg.content);
-          scheduleDeferredRenderUpdate();
+          queueRenderUpdate();
         }
       }
       return;
@@ -442,7 +494,7 @@ function initEvents() {
       currentFilePath = msg.filePath || null;
       fastLoadPending = true;
       updateEditor();
-      scheduleDeferredRenderUpdate();
+      queueRenderUpdate();
       renderTabs();
       if (pendingTitleEditFile && pendingTitleEditFile === msg.fileName) {
         pendingTitleEditFile = null;
@@ -463,7 +515,7 @@ function initEvents() {
       renderTabs();
       renderFilesList();
       startTitleEditing();
-      scheduleDeferredRenderUpdate();
+      queueRenderUpdate();
     } else if (msg.command === 'openFile') {
       vscode.postMessage({
         command: 'loadFile',

@@ -1,7 +1,3 @@
-/**
- * Initialize EasyMDE editor with custom configuration
- * カスタム設定でEasyMDEエディターを初期化
- */
 function initEditor() {
   const editorElement = document.getElementById('editor');
 
@@ -110,15 +106,13 @@ function initEditor() {
     }
   });
 
-  // Add copy buttons to code blocks
   cm.on("update", () => {
     scheduleCopyButtonsUpdate();
   });
 
-  // Update button positions on scroll (reuse scroller from above)
   if (scroller) {
     scroller.addEventListener('scroll', () => {
-      updateCopyButtonPositions();
+      updateCopyButtons();
     }, { passive: true });
   }
 
@@ -127,7 +121,7 @@ function initEditor() {
     if (resizeRaf) return;
     resizeRaf = requestAnimationFrame(() => {
       resizeRaf = null;
-      updateCopyButtonPositions();
+      updateCopyButtons();
     });
   });
 
@@ -137,10 +131,6 @@ function initEditor() {
   listMarkerMarks = new Map();
 }
 
-/**
- * Initialize editor context menu
- * エディターコンテキストメニューを初期化
- */
 function initEditorContextMenu() {
   const menu = document.getElementById('editorContextMenu');
   if (!menu || !cm) return;
@@ -183,7 +173,6 @@ function initEditorContextMenu() {
 
   wrapper.addEventListener('contextmenu', showMenu);
 
-  // Get the CodeMirror scroller element and add scroll listener
   const scroller = cm.getScrollerElement ? cm.getScrollerElement() : null;
   if (scroller) {
     scroller.addEventListener('scroll', hideAllContextMenus, { passive: true });
@@ -237,7 +226,6 @@ function restoreEditorContextSelection() {
   try {
     cm.setSelections(editorContextSelections);
   } catch (e) {
-    // ignore
   }
 }
 
@@ -347,21 +335,21 @@ function clearHiddenMarks() {
   if (listMarkerMarks) {
     listMarkerMarks.forEach(marks => {
       marks.forEach(m => {
-        try { m.clear(); } catch (e) { /* ignore */ }
+        try { m.clear(); } catch (e) { }
       });
     });
     listMarkerMarks.clear();
   }
   while (hiddenMarks.length) {
     const m = hiddenMarks.pop();
-    try { m.clear(); } catch (e) { /* ignore */ }
+    try { m.clear(); } catch (e) { }
   }
   while (codeLineHandles.length) {
     const h = codeLineHandles.pop();
     try {
       cm.removeLineClass(h, "text", "cm-code-block-line");
       cm.removeLineClass(h, "text", "cm-code-fence-line");
-    } catch (e) { /* ignore */ }
+    } catch (e) { }
   }
 }
 
@@ -381,7 +369,7 @@ function clearListMarkersForLine(lineIndex) {
   const marks = listMarkerMarks.get(lineIndex);
   if (!marks) return;
   marks.forEach(m => {
-    try { m.clear(); } catch (e) { /* ignore */ }
+    try { m.clear(); } catch (e) { }
   });
   listMarkerMarks.delete(lineIndex);
 }
@@ -451,6 +439,50 @@ function applyListMarkersForLine(lineIndex) {
   }
 }
 
+function refreshListMarks(lineIndex) {
+  if (!cm) return;
+  const text = cm.getLine(lineIndex) || "";
+  const isList = /^\s*([-+*](?!-)|\d+[.)])\s+/.test(text);
+  if (!isList) {
+    clearListMarkersForLine(lineIndex);
+    return;
+  }
+
+  const cursor = cm.getCursor();
+  const isActive = cursor && cursor.line === lineIndex;
+
+  if (!isActive) {
+    applyListMarkersForLine(lineIndex);
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastTypingAt < typingGraceMs) {
+    return;
+  }
+
+  const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
+  const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
+  let markerStart = unordered ? unordered[1].length : ordered ? ordered[1].length : 0;
+  let markerEnd = markerStart + 1;
+  if (ordered) {
+    markerEnd = markerStart + (ordered[2] + ordered[3]).length;
+  }
+
+  const taskMatch = text.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/);
+  if (taskMatch) {
+    const bracketStart = text.indexOf('[', taskMatch[1].length);
+    const end = bracketStart >= 0 ? bracketStart + 3 : markerEnd;
+    markerEnd = Math.max(markerEnd, end);
+  }
+
+  if (cursor && cursor.ch <= markerEnd + 1) {
+    return;
+  }
+
+  applyListMarkersForLine(lineIndex);
+}
+
 function updateListLineFlag(lineIndex) {
   const handle = cm.getLineHandle(lineIndex);
   if (!handle) return;
@@ -463,10 +495,6 @@ function updateListLineFlag(lineIndex) {
   }
 }
 
-/**
- * Hide inline bold/italic markers using tokens
- * トークンを使用してインラインの太字/斜体マーカーを非表示
- */
 function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -506,10 +534,6 @@ function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'c
   }
 }
 
-/**
- * Hide markdown link syntax on non-active lines: [text](url)
- * 非アクティブ行のマークダウンリンク構文を非表示: [text](url)
- */
 function hideLinkSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -612,11 +636,11 @@ function revealImageMarkdown(lineIndex, start, end) {
     } else {
       cm.setCursor({ line: lineIndex, ch: Math.max(0, start || 0) });
     }
-  } catch (e) { /* ignore */ }
-  try { updateHiddenSyntax(false); } catch (e) { /* ignore */ }
+  } catch (e) { }
+  try { updateHiddenSyntax(false); } catch (e) { }
 }
 
-function clearRevealedImageLineIfNeeded() {
+function clearRevealedImageLine() {
   if (!cm) return;
   if (revealedImageLine === null) return;
   const cursor = cm.getCursor();
@@ -630,7 +654,7 @@ function clearImageMarksForLine(lineIndex) {
   const marks = imageLineMarks.get(lineIndex);
   if (marks && marks.length) {
     marks.forEach(m => {
-      try { m.clear(); } catch (e) { /* ignore */ }
+      try { m.clear(); } catch (e) { }
     });
   }
   imageLineMarks.delete(lineIndex);
@@ -769,7 +793,7 @@ function scheduleCopyButtonsUpdate() {
   copyButtonsTimer = setTimeout(() => {
     copyButtonsTimer = null;
     codeBlockDirty = false;
-    addCopyButtonsToCodeBlocks();
+    addCodeCopyButtons();
   }, 300);
 }
 
@@ -793,7 +817,7 @@ function requestResolvedImage(url, img) {
   });
 }
 
-function handleResolvedImageResponse(requestId, uri) {
+function handleImageResolved(requestId, uri) {
   if (!requestId) return;
   const img = pendingImageRequests.get(requestId);
   if (!img) return;
@@ -804,18 +828,10 @@ function handleResolvedImageResponse(requestId, uri) {
   }
 }
 
-/**
- * Render markdown images on non-active lines: ![alt](url)
- * 非アクティブ行のマークダウン画像をレンダリング: ![alt](url)
- */
 function renderImageSyntax(text, lineIndex, ignoreRanges = []) {
   return getImageRanges(text, ignoreRanges);
 }
 
-/**
- * Hide inline code span markers on non-active lines: `code` or ``code``
- * 非アクティブ行のインラインコードスパンマーカーを非表示
- */
 function hideInlineCodeSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
@@ -962,10 +978,6 @@ function getInlineCursorMarkerRanges(text, cursorCh) {
   return ranges;
 }
 
-/**
- * Update hidden syntax markers for markdown formatting
- * マークダウンフォーマットの非表示構文マーカーを更新
- */
 function updateHiddenSyntax(includeActiveInline = false) {
   clearHiddenMarks();
 
@@ -1223,11 +1235,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
   }
 }
 
-/**
- * Add copy buttons to code blocks
- * コードブロックにコピーボタンを追加
- */
-function addCopyButtonsToCodeBlocks() {
+function addCodeCopyButtons() {
   return;
 
   const wrapper = cm.getWrapperElement();
@@ -1236,7 +1244,6 @@ function addCopyButtonsToCodeBlocks() {
     wrapper.style.position = 'relative';
   }
 
-  // Remove existing copy buttons
   const existingButtons = wrapper.querySelectorAll('.cm-code-copy-btn');
   existingButtons.forEach(btn => btn.remove());
 
@@ -1256,7 +1263,6 @@ function addCopyButtonsToCodeBlocks() {
         codeBlockStart = i;
         fenceChar = fence;
       } else if (fenceChar === fence) {
-        // End of code block - add copy button
         addCopyButtonToBlock(codeBlockStart, i);
         inCodeBlock = false;
         codeBlockStart = -1;
@@ -1266,17 +1272,12 @@ function addCopyButtonsToCodeBlocks() {
   }
 }
 
-/**
- * Add copy button to a specific code block
- * 特定のコードブロックにコピーボタンを追加
- */
 function addCopyButtonToBlock(startLine, endLine) {
   if (!cm) return;
 
   const wrapper = cm.getWrapperElement();
   if (!wrapper) return;
 
-  // Create copy button
   const copyBtn = document.createElement('button');
   copyBtn.className = 'cm-code-copy-btn';
   copyBtn.innerHTML = '<i class="ph ph-copy"></i>';
@@ -1286,7 +1287,6 @@ function addCopyButtonToBlock(startLine, endLine) {
   copyBtn.dataset.startLine = startLine;
   copyBtn.dataset.endLine = endLine;
 
-  // Add click handler
   copyBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1308,27 +1308,19 @@ function addCopyButtonToBlock(startLine, endLine) {
   copyBtn.style.top = `${lineRect.top - wrapperRect.top - 10}px`;
   copyBtn.style.zIndex = '10';
 
-  // Append to wrapper
   wrapper.appendChild(copyBtn);
 }
 
-/**
- * Copy code block content to clipboard
- * コードブロックの内容をクリップボードにコピー
- */
 function copyCodeBlock(startLine, endLine, button) {
   if (!cm) return;
 
-  // Extract code content (excluding fence lines)
   const lines = [];
   for (let i = startLine + 1; i < endLine; i++) {
     lines.push(cm.getLine(i) || "");
   }
   const code = lines.join('\n');
 
-  // Copy to clipboard
   navigator.clipboard.writeText(code).then(() => {
-    // Show VSCode message
     vscode.postMessage({
       command: 'showMessage',
       type: 'info',
@@ -1336,7 +1328,6 @@ function copyCodeBlock(startLine, endLine, button) {
     });
   }).catch(err => {
     console.error('Failed to copy code:', err);
-    // Fallback for older browsers
     const textarea = document.createElement('textarea');
     textarea.value = code;
     textarea.style.position = 'fixed';
@@ -1362,11 +1353,7 @@ function copyCodeBlock(startLine, endLine, button) {
   });
 }
 
-/**
- * Update copy button positions on scroll
- * スクロール時にコピーボタンの位置を更新
- */
-function updateCopyButtonPositions() {
+function updateCopyButtons() {
   if (!cm) return;
 
   const wrapper = cm.getWrapperElement();
