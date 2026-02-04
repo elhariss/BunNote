@@ -12,7 +12,7 @@
     color: var(--vscode-editor-foreground) !important;
     border: none !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important;
-    font-size: 16px !important;
+    font-size: var(--bunnote-editor-font-size, 16px) !important;
     line-height: 1.6 !important;
 }
 
@@ -237,38 +237,51 @@ body[data-marker-color="on"] .cm-url {
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-keyword {
-    color: var(--vscode-symbolIcon-keywordForeground, #c586c0);
+    color: var(--vscode-symbolIcon-keywordForeground);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-atom,
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-number {
-    color: var(--vscode-debugTokenExpression-number, #b5cea8);
+    color: var(--vscode-debugTokenExpression-number);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-string,
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-string-2 {
-    color: var(--vscode-debugTokenExpression-string, #ce9178);
+    color: var(--vscode-debugTokenExpression-string);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-comment {
-    color: var(--vscode-descriptionForeground, #6a9955);
+    color: var(--vscode-descriptionForeground);
 }
 
-.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-def,
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-def {
+    color: var(--vscode-symbolIcon-classForeground);
+}
+
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable,
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable-2,
-.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable-3,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-variable-3 {
+    color: var(--vscode-symbolIcon-variableForeground);
+}
+
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-property {
-    color: var(--vscode-editor-foreground, #d4d4d4);
+    color: var(--vscode-symbolIcon-propertyForeground);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-builtin,
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-type {
-    color: var(--vscode-symbolIcon-classForeground, #4ec9b0);
+    color: var(--vscode-symbolIcon-classForeground);
+}
+
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-qualifier,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-meta,
+.EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-attribute {
+    color: var(--vscode-symbolIcon-namespaceForeground);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line .cm-operator {
-    color: var(--vscode-editor-foreground, #d4d4d4);
+    color: var(--vscode-editor-foreground);
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-block-start {

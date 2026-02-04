@@ -220,6 +220,13 @@
           "type": "boolean",
           "default": false,
           "description": "Color Markdown markers in the editor."
+        },
+        "bunnote.editorFontSize": {
+          "type": "number",
+          "default": 14,
+          "minimum": 10,
+          "maximum": 32,
+          "description": "Editor font size (px)."
         }
       }
     }

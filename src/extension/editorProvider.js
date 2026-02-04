@@ -126,6 +126,7 @@ class EditorProvider {
   getHtml(webview) {
     const config = vscode.workspace.getConfiguration("bunnote");
     const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
+    const editorFontSize = config.get("editorFontSize", 14);
     const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
     const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
@@ -157,7 +158,8 @@ class EditorProvider {
         .replace("{{EVENTS_URI}}", eventsUri)
         .replace("{{MAIN_URI}}", mainUri)
         .replace("{{EDITOR_MODE}}", "custom")
-        .replace("{{MARKER_COLOR_MODE}}", markerColorMode);
+        .replace("{{MARKER_COLOR_MODE}}", markerColorMode)
+        .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize));
 
       return html;
     } catch (err) {
