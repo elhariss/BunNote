@@ -113,7 +113,8 @@
       },
       {
         "command": "bunnote.openSettings",
-        "title": "BunNote: Open Settings"
+        "title": "BunNote: Open Settings",
+        "icon": "$(settings-gear)"
       },
       {
         "command": "bunnote.openInEditor",
@@ -145,7 +146,7 @@
           "group": "navigation"
         },
         {
-          "command": "bunnote.setVault",
+          "command": "bunnote.openSettings",
           "when": "view == bunNoteVault",
           "group": "navigation"
         }
