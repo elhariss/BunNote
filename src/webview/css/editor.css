@@ -230,6 +230,7 @@ body[data-marker-color="on"] .cm-url {
 .EasyMDEContainer .CodeMirror-line.cm-code-block-line {
     background-color: var(--vscode-textCodeBlock-background);
     padding: 0 20px !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .EasyMDEContainer .CodeMirror-line.cm-code-fence-line {
