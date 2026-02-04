@@ -52,32 +52,7 @@
         <div class="loading_spinner" role="status" aria-live="polite"></div>
     </div>
     <div class="container">
-        <div class="sidebar">
-            <div class="sidebar_header">
-                <button class="btn_icon btn_collapse" title="Collapse" onclick="toggleVaultCollapse()" id="collapseBtn">
-                    <i class="ph ph-caret-down"></i>
-                </button>
-                <h3>VAULT</h3>
-                <div class="sidebar_actions">
-                    <button class="btn_icon" title="New Note" onclick="createNewNote()">
-                        <i class="ph ph-file-plus"></i>
-                    </button>
-                    <button class="btn_icon" title="New Folder" onclick="createNewFolder()">
-                        <i class="ph ph-folder-plus"></i>
-                    </button>
-                    <button class="btn_icon" title="Refresh" onclick="refreshFiles()">
-                        <i class="ph ph-arrows-clockwise"></i>
-                    </button>
-                    <button class="btn_icon" title="Settings" onclick="setVault()">
-                        <i class="ph ph-gear"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="files_list" id="filesList">
-                <!-- Empty state -->
-            </div>
-        </div>
+        <div class="sidebar"></div>
 
         <div class="editor_area">
             <div class="editor_tabs" id="editorTabs"></div>
@@ -182,7 +157,6 @@
     <script src="{{UTILS_URI}}"></script>
     <script src="{{TABS_URI}}"></script>
     <script src="{{EDITOR_URI}}"></script>
-    <script src="{{FILES_URI}}"></script>
     <script src="{{EVENTS_URI}}"></script>
     <script src="{{MAIN_URI}}"></script>
 </body>

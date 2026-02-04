@@ -934,7 +934,6 @@ class ViewProvider {
     const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
     const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
-    const filesPath = path.join(this.context.extensionPath, "src", "webview", "utils", "files.js");
     const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
     const tabsPath = path.join(this.context.extensionPath, "src", "webview", "UI", "tabs.js");
     const eventsPath = path.join(this.context.extensionPath, "src", "webview", "handlers", "events.js");
@@ -946,7 +945,6 @@ class ViewProvider {
     const cssUri = toWebviewUri(cssPath);
     const editorCssUri = toWebviewUri(editorCssPath);
     const utilsUri = toWebviewUri(utilsPath);
-    const filesUri = toWebviewUri(filesPath);
     const editorUri = toWebviewUri(editorPath);
     const tabsUri = toWebviewUri(tabsPath);
     const eventsUri = toWebviewUri(eventsPath);
@@ -958,7 +956,6 @@ class ViewProvider {
         .replace("{{CSS_URI}}", cssUri)
         .replace("{{EDITOR_CSS_URI}}", editorCssUri)
         .replace("{{UTILS_URI}}", utilsUri)
-        .replace("{{FILES_URI}}", filesUri)
         .replace("{{EDITOR_URI}}", editorUri)
         .replace("{{TABS_URI}}", tabsUri)
         .replace("{{EVENTS_URI}}", eventsUri)

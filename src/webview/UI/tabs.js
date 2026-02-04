@@ -94,7 +94,6 @@ function handleRenameResult(msg) {
       currentFile = msg.newName;
       updateEditor();
       renderTabs();
-      renderFilesList();
     } else if (openTabs[msg.newName]) {
       renderTabs();
     }
@@ -160,7 +159,6 @@ function handleFolderMoveResult(msg) {
 
   updateEditor();
   renderTabs();
-  renderFilesList();
 }
 
 function renderTabs() {

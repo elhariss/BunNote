@@ -4,9 +4,6 @@ let currentFile = null;
 let currentFilePath = null;
 let vaultPath = null;
 let openTabs = {};
-let files = [];
-let folders = [];
-let expandedFolders = new Set();
 let easyMDE = null;
 let cm = null;
 let editorTitleInput = null;
@@ -76,8 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     vscode.postMessage({ command: 'ready' });
-  } else {
-    vscode.postMessage({ command: 'getVault' });
   }
 });
 
@@ -87,20 +82,3 @@ window.addEventListener('load', () => {
   document.body.classList.remove('loading');
 });
 
-function toggleVaultCollapse() {
-  const sidebar = document.querySelector('.sidebar');
-  const filesList = document.getElementById('filesList');
-  const collapseBtn = document.getElementById('collapseBtn');
-  const icon = collapseBtn.querySelector('i');
-
-  sidebar.classList.toggle('collapsed');
-  filesList.classList.toggle('collapsed');
-
-  if (filesList.classList.contains('collapsed')) {
-    icon.className = 'ph ph-caret-right';
-    collapseBtn.title = 'Expand';
-  } else {
-    icon.className = 'ph ph-caret-down';
-    collapseBtn.title = 'Collapse';
-  }
-}
