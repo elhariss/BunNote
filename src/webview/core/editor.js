@@ -258,6 +258,14 @@ function initEditorContextMenu() {
   bindAction('editorInlineCodeAction', () => wrapSelection('`', '`'));
 }
 
+function hideAllContextMenus() {
+  const menus = document.querySelectorAll('.context_menu');
+  menus.forEach(menu => {
+    menu.classList.remove('visible');
+    menu.setAttribute('aria-hidden', 'true');
+  });
+}
+
 function showContextMenu(menu, event) {
   menu.classList.add('visible');
   menu.setAttribute('aria-hidden', 'false');
