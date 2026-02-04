@@ -50,31 +50,23 @@ function activate(context) {
    */
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
-      const settingsThatRequireReload = [
-        "bunnote.vaultPath",
-        "bunnote.defaultVaultPath",
-        "bunnote.autoUseDefaultVault"
-      ];
-
-      const requiresReload = settingsThatRequireReload.some(setting =>
-        event.affectsConfiguration(setting)
-      );
-
-      if (requiresReload) {
-        const action = "Reload Window";
-        const cancel = "Later";
-        vscode.window
-          .showInformationMessage(
-            "BunNote settings have been updated. Reload VS Code to apply changes?",
-            action,
-            cancel
-          )
-          .then((selectedAction) => {
-            if (selectedAction === action) {
-              vscode.commands.executeCommand("workbench.action.reloadWindow");
-            }
-          });
+      if (!event.affectsConfiguration("bunnote")) {
+        return;
       }
+
+      const action = "Reload Window";
+      const cancel = "Later";
+      vscode.window
+        .showInformationMessage(
+          "BunNote settings have been updated. Reload VS Code to apply changes?",
+          action,
+          cancel
+        )
+        .then((selectedAction) => {
+          if (selectedAction === action) {
+            vscode.commands.executeCommand("workbench.action.reloadWindow");
+          }
+        });
     })
   );
 }
