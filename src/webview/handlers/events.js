@@ -467,50 +467,50 @@ function initEvents() {
     mergedExtraKeys["Ctrl-S"] = function () { saveFile(false); };
     mergedExtraKeys["Cmd-S"] = function () { saveFile(false); };
     mergedExtraKeys["Enter"] = function (cmInstance) {
-        const cursor = cmInstance.getCursor();
-        if (isLineInFence(cursor.line)) {
-          return cmInstance.execCommand("newlineAndIndent");
-        }
-        const lineText = cmInstance.getLine(cursor.line) || "";
-        const numberedMatch = lineText.match(/^(\s*)(\d+[.)])\s*(.*)$/);
-        if (numberedMatch) {
-          const indent = numberedMatch[1] || "";
-          const rest = (numberedMatch[3] || "").trim();
-          const markerRaw = numberedMatch[2] || "1.";
-          const markerSuffix = markerRaw.includes(")") ? ")" : ".";
-          const indentLen = indent.replace(/\t/g, "    ").length;
-          if (rest.length === 0 && indent.length >= 4) {
-            const nextIndent = indent.slice(0, Math.max(0, indent.length - 4));
-            const nextIndentLen = Math.max(0, indentLen - 4);
-            const nextNumber = getNextNumberAtIndent(cmInstance, cursor.line - 1, nextIndentLen);
-            const replacement = `${nextIndent}${nextNumber}${markerSuffix} `;
-            cmInstance.replaceRange(replacement, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: lineText.length });
-            cmInstance.setCursor({ line: cursor.line, ch: replacement.length });
-            return;
-          }
-          if (rest.length > 0) {
-            const nextNumber = getNextNumberAtIndent(cmInstance, cursor.line, indentLen);
-            cmInstance.replaceSelection(`\n${indent}${nextNumber}${markerSuffix} `);
-            return;
-          }
-        }
-        const taskMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]\s*(.*)$/);
-        if (taskMatch) {
-          const indent = taskMatch[1];
-          const marker = taskMatch[2];
-          const rest = taskMatch[4] || "";
-          if (rest.trim().length === 0) {
-            return cmInstance.execCommand("newlineAndIndent");
-          }
-          cmInstance.replaceSelection("\n" + indent + marker + " [ ] ");
+      const cursor = cmInstance.getCursor();
+      if (isLineInFence(cursor.line)) {
+        return cmInstance.execCommand("newlineAndIndent");
+      }
+      const lineText = cmInstance.getLine(cursor.line) || "";
+      const numberedMatch = lineText.match(/^(\s*)(\d+[.)])\s*(.*)$/);
+      if (numberedMatch) {
+        const indent = numberedMatch[1] || "";
+        const rest = (numberedMatch[3] || "").trim();
+        const markerRaw = numberedMatch[2] || "1.";
+        const markerSuffix = markerRaw.includes(")") ? ")" : ".";
+        const indentLen = indent.replace(/\t/g, "    ").length;
+        if (rest.length === 0 && indent.length >= 4) {
+          const nextIndent = indent.slice(0, Math.max(0, indent.length - 4));
+          const nextIndentLen = Math.max(0, indentLen - 4);
+          const nextNumber = getNextNumberAtIndent(cmInstance, cursor.line - 1, nextIndentLen);
+          const replacement = `${nextIndent}${nextNumber}${markerSuffix} `;
+          cmInstance.replaceRange(replacement, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: lineText.length });
+          cmInstance.setCursor({ line: cursor.line, ch: replacement.length });
           return;
         }
-        try {
-          return cmInstance.execCommand("newlineAndIndentContinueMarkdownList");
-        } catch (e) {
+        if (rest.length > 0) {
+          const nextNumber = getNextNumberAtIndent(cmInstance, cursor.line, indentLen);
+          cmInstance.replaceSelection(`\n${indent}${nextNumber}${markerSuffix} `);
+          return;
+        }
+      }
+      const taskMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]\s*(.*)$/);
+      if (taskMatch) {
+        const indent = taskMatch[1];
+        const marker = taskMatch[2];
+        const rest = taskMatch[4] || "";
+        if (rest.trim().length === 0) {
           return cmInstance.execCommand("newlineAndIndent");
         }
-      };
+        cmInstance.replaceSelection("\n" + indent + marker + " [ ] ");
+        return;
+      }
+      try {
+        return cmInstance.execCommand("newlineAndIndentContinueMarkdownList");
+      } catch (e) {
+        return cmInstance.execCommand("newlineAndIndent");
+      }
+    };
 
     cm.setOption("extraKeys", mergedExtraKeys);
 
