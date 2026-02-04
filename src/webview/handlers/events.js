@@ -261,6 +261,30 @@ function initEvents() {
           cmInstance.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
         }
       }
+
+      if (change.origin === "+input" && change.text[0] === "(") {
+        const cursor = cmInstance.getCursor();
+        const line = cmInstance.getLine(cursor.line) || "";
+        const charAfter = line[cursor.ch] || "";
+
+        if (charAfter !== ")") {
+          change.cancel();
+          cmInstance.replaceRange("()", cursor);
+          cmInstance.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+        }
+      }
+
+      if (change.origin === "+input" && change.text[0] === '"') {
+        const cursor = cmInstance.getCursor();
+        const line = cmInstance.getLine(cursor.line) || "";
+        const charAfter = line[cursor.ch] || "";
+
+        if (charAfter !== '"') {
+          change.cancel();
+          cmInstance.replaceRange("\"\"", cursor);
+          cmInstance.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+        }
+      }
     });
 
     cm.on("change", function (cmInstance, change) {
