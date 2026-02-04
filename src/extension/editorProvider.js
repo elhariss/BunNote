@@ -37,7 +37,7 @@ class EditorProvider {
 
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
 
-    const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
+    const docChangeSub = vscode.workspace.onDidChangeTextDocument(e => {
       if (e.document.uri.toString() === document.uri.toString()) {
         webviewPanel.webview.postMessage({
           command: "updateContent",
@@ -119,7 +119,7 @@ class EditorProvider {
     });
 
     webviewPanel.onDidDispose(() => {
-      changeDocumentSubscription.dispose();
+      docChangeSub.dispose();
     });
   }
 
