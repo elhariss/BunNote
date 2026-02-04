@@ -112,7 +112,7 @@ function initEditor() {
   });
 
   cm.on("update", () => {
-    scheduleCopyButtonsUpdate();
+    scheduleCopyButtons();
   });
 
   if (scroller) {
@@ -329,7 +329,7 @@ function initEditorContextMenu() {
     if (!btn) return;
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      restoreEditorContextSelection();
+      restoreEditorSelection();
       handler();
       hideAllContextMenus();
     });
@@ -375,7 +375,7 @@ function showContextMenu(menu, event) {
 
 let editorContextSelections = null;
 
-function restoreEditorContextSelection() {
+function restoreEditorSelection() {
   if (!cm || !editorContextSelections || !editorContextSelections.length) return;
   try {
     cm.setSelections(editorContextSelections);
@@ -941,7 +941,7 @@ function updateImageMarks(fromLine = 0, toLine = null) {
   }
 }
 
-function scheduleCopyButtonsUpdate() {
+function scheduleCopyButtons() {
   if (!codeBlockDirty) return;
   if (copyButtonsTimer) return;
   copyButtonsTimer = setTimeout(() => {
@@ -954,7 +954,7 @@ function scheduleCopyButtonsUpdate() {
 
 function markCodeBlockDirty() {
   codeBlockDirty = true;
-  scheduleCopyButtonsUpdate();
+  scheduleCopyButtons();
 }
 
 function requestResolvedImage(url, img) {
@@ -1029,7 +1029,7 @@ function hideInlineCodeSyntax(text, lineIndex, ignoreRanges = [], className = 'c
   }
 }
 
-function getInlineCursorMarkerRanges(text, cursorCh) {
+function getInlineMarkerRanges(text, cursorCh) {
   const ranges = [];
   const addRange = (start, end) => {
     if (typeof start !== 'number' || typeof end !== 'number') return;
@@ -1337,7 +1337,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
       if (isTyping || suppressMarkers) {
         continue;
       }
-      const inlineVisibleRanges = getInlineCursorMarkerRanges(text, cursor.ch);
+      const inlineVisibleRanges = getInlineMarkerRanges(text, cursor.ch);
       const combinedIgnoreRanges = listIgnoreRanges.concat(inlineVisibleRanges);
       hideInlineFormatting(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
       hideLinkSyntax(text, i, inlineVisibleRanges, 'cm-hidden-syntax-inline');
