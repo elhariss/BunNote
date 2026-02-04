@@ -1,5 +1,7 @@
 function initEditor() {
   const editorElement = document.getElementById('editor');
+  const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || '');
+  const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   easyMDE = new EasyMDE({
     element: editorElement,
@@ -14,17 +16,17 @@ function initEditor() {
       codeSyntaxHighlighting: true,
     },
     shortcuts: {
-      toggleBold: "Cmd-B",
-      toggleItalic: "Cmd-I",
-      drawLink: "Cmd-K",
-      toggleHeadingSmaller: "Cmd-H",
-      toggleUnorderedList: "Cmd-L",
-      toggleOrderedList: "Cmd-Alt-L",
-      cleanBlock: "Cmd-E",
-      drawTable: "Cmd-Alt-T",
-      toggleBlockquote: "Cmd-'",
-      toggleCodeBlock: "Cmd-Alt-C",
-      togglePreview: "Cmd-P",
+      toggleBold: `${modKey}-B`,
+      toggleItalic: `${modKey}-I`,
+      drawLink: `${modKey}-K`,
+      toggleHeadingSmaller: `${modKey}-H`,
+      toggleUnorderedList: `${modKey}-L`,
+      toggleOrderedList: `${modKey}-Alt-L`,
+      cleanBlock: `${modKey}-E`,
+      drawTable: `${modKey}-Alt-T`,
+      toggleBlockquote: `${modKey}-'`,
+      toggleCodeBlock: `${modKey}-Alt-C`,
+      togglePreview: `${modKey}-P`,
       toggleSideBySide: null,
       toggleFullScreen: null
     }
@@ -52,11 +54,7 @@ function initEditor() {
 
   updateEditorTitle();
 
-  easyMDE.codemirror.setOption("mode", {
-    name: "gfm",
-    highlightFormatting: true,
-    fencedCodeBlocks: true
-  });
+  setMarkdownMode();
 
   cm = easyMDE.codemirror;
   cm.setOption("styleActiveLine", true);
@@ -123,6 +121,10 @@ function initEditor() {
     }, { passive: true });
   }
 
+  cm.on("scroll", () => {
+    updateCopyButtons();
+  });
+
   let resizeRaf = null;
   window.addEventListener('resize', () => {
     if (resizeRaf) return;
@@ -161,6 +163,7 @@ function loadCodeMirrorModes() {
   const base = 'https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/';
   const scripts = [
     `${base}meta.js`,
+    `${base}gfm/gfm.js`,
     `${base}javascript/javascript.js`,
     `${base}xml/xml.js`,
     `${base}htmlmixed/htmlmixed.js`,
@@ -171,22 +174,107 @@ function loadCodeMirrorModes() {
     `${base}markdown/markdown.js`
   ];
 
+  const markLoaded = (src) => {
+    const match = src.match(/\/mode\/([^/]+)\/\1\.js$/);
+    if (match && match[1]) {
+      loadedCodeMirrorModes.add(match[1]);
+    }
+  };
+
   let chain = Promise.resolve();
   scripts.forEach((src) => {
-    chain = chain.then(() => loadScriptOnce(src));
+    chain = chain.then(() => loadScriptOnce(src).then(() => markLoaded(src)));
   });
 
   chain.then(() => {
-    if (cm) {
-      cm.setOption("mode", {
-        name: "gfm",
-        highlightFormatting: true,
-        fencedCodeBlocks: true
-      });
-    }
+    setMarkdownMode();
+    queueFenceModeUpdate();
   }).catch(() => {
     window._bunnoteCmModesLoaded = false;
   });
+}
+
+const loadedCodeMirrorModes = new Set();
+let fenceModeTimer = null;
+
+function setMarkdownMode() {
+  if (!easyMDE || !easyMDE.codemirror) return;
+  easyMDE.codemirror.setOption("mode", {
+    name: "gfm",
+    highlightFormatting: true,
+    fencedCodeBlocks: true,
+    fencedCodeBlockHighlighting: true
+  });
+}
+
+const fenceModeAliases = {
+  "c#": "text/x-csharp",
+  "csharp": "text/x-csharp",
+  "cs": "text/x-csharp",
+  "c++": "text/x-c++src",
+  "cpp": "text/x-c++src",
+  "c": "text/x-csrc",
+  "objc": "text/x-objectivec",
+  "objectivec": "text/x-objectivec",
+  "objective-c": "text/x-objectivec"
+};
+
+function normalizeFenceLang(lang) {
+  if (!lang) return "";
+  return String(lang).trim().toLowerCase();
+}
+
+function collectFenceLanguages(text) {
+  const langs = new Set();
+  if (!text) return langs;
+  const regex = /^\s*[`~]{3,}\s*([^\s`~]+)?/gm;
+  let match;
+  while ((match = regex.exec(text))) {
+    const lang = normalizeFenceLang(match[1] || "");
+    if (lang) {
+      langs.add(lang);
+    }
+  }
+  return langs;
+}
+
+function loadModeForFence(lang) {
+  if (!window.CodeMirror || !lang) return Promise.resolve(false);
+  const aliasMime = fenceModeAliases[lang] || null;
+  const info = CodeMirror.findModeByName(lang)
+    || CodeMirror.findModeByExtension(lang)
+    || (aliasMime ? CodeMirror.findModeByMIME(aliasMime) : null)
+    || CodeMirror.findModeByMIME(lang);
+  if (!info || !info.mode) return Promise.resolve(false);
+  if (loadedCodeMirrorModes.has(info.mode)) return Promise.resolve(false);
+  const src = `https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/${info.mode}/${info.mode}.js`;
+  return loadScriptOnce(src).then(() => {
+    loadedCodeMirrorModes.add(info.mode);
+    return true;
+  }).catch(() => false);
+}
+
+function queueFenceModeUpdate() {
+  if (!cm) return;
+  if (fenceModeTimer) return;
+  fenceModeTimer = setTimeout(() => {
+    fenceModeTimer = null;
+    const langs = collectFenceLanguages(cm.getValue());
+    if (!langs.size) return;
+    let updated = false;
+    let chain = Promise.resolve();
+    langs.forEach((lang) => {
+      chain = chain.then(() => loadModeForFence(lang).then((didLoad) => {
+        if (didLoad) updated = true;
+      }));
+    });
+    chain.then(() => {
+      if (updated) {
+        setMarkdownMode();
+        try { cm.refresh(); } catch (e) { }
+      }
+    });
+  }, 150);
 }
 
 function initEditorContextMenu() {
@@ -860,6 +948,7 @@ function scheduleCopyButtonsUpdate() {
     copyButtonsTimer = null;
     codeBlockDirty = false;
     addCodeCopyButtons();
+    updateCopyButtons();
   }, 300);
 }
 
@@ -1357,20 +1446,8 @@ function addCopyButtonToBlock(startLine, endLine) {
     copyCodeBlock(startLine, endLine, copyBtn);
   });
 
-  const wrapperRect = wrapper.getBoundingClientRect();
-  const sizer = wrapper.querySelector('.CodeMirror-sizer');
-  const sizerRect = sizer ? sizer.getBoundingClientRect() : wrapperRect;
-  const buttonWidth = 28;
-  const contentPaddingRight = 2;
-  const inset = 4;
-  const targetLine = Math.min(endLine - 1, Math.max(startLine + 1, startLine));
-  const lineRect = getCodeLineRect(targetLine);
-  if (!lineRect) return;
-
   copyBtn.style.position = 'absolute';
-  const rightEdge = Math.min(lineRect.right, sizerRect.right, wrapperRect.right);
-  copyBtn.style.left = `${Math.max(8, rightEdge - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
-  copyBtn.style.top = `${Math.max(4, lineRect.top - wrapperRect.top - 19)}px`;
+  copyBtn.style.display = 'none';
   copyBtn.style.zIndex = '10';
 
   wrapper.appendChild(copyBtn);
@@ -1439,7 +1516,17 @@ function updateCopyButtons() {
 
     const targetLine = Math.min(endLine - 1, Math.max(startLine + 1, startLine));
     const lineRect = getCodeLineRect(targetLine);
-    if (!lineRect) return;
+    if (!lineRect) {
+      btn.style.display = 'none';
+      return;
+    }
+
+    if (lineRect.bottom < wrapperRect.top || lineRect.top > wrapperRect.bottom) {
+      btn.style.display = 'none';
+      return;
+    }
+
+    btn.style.display = '';
 
     const rightEdge = Math.min(lineRect.right, sizerRect.right, wrapperRect.right);
     btn.style.left = `${Math.max(8, rightEdge - wrapperRect.left - buttonWidth - contentPaddingRight - inset)}px`;
