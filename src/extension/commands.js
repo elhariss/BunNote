@@ -402,7 +402,7 @@ function registerCommands(context, state, providers) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("bunnote.openSettings", () => {
-      vscode.commands.executeCommand("workbench.action.openSettings", "bunnote");
+      vscode.commands.executeCommand("workbench.action.openSettings", "@bunnote");
     })
   );
 }
