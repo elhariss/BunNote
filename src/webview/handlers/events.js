@@ -284,6 +284,9 @@ function initEvents() {
       if (hasFenceChange) {
         markCodeBlockDirty();
         refreshFenceCache();
+        if (typeof queueFenceModeUpdate === 'function') {
+          queueFenceModeUpdate();
+        }
       }
       const cursorLine = cmInstance.getCursor().line;
       if (isLineInFence(cursorLine)) {
@@ -456,10 +459,14 @@ function initEvents() {
       return 1;
     };
 
-    cm.setOption("extraKeys", {
-      "Ctrl-S": function () { saveFile(false); },
-      "Cmd-S": function () { saveFile(false); },
-      "Enter": function (cmInstance) {
+    const existingExtraKeys = cm.getOption("extraKeys");
+    const mergedExtraKeys = (existingExtraKeys && typeof existingExtraKeys === "object")
+      ? { ...existingExtraKeys }
+      : {};
+
+    mergedExtraKeys["Ctrl-S"] = function () { saveFile(false); };
+    mergedExtraKeys["Cmd-S"] = function () { saveFile(false); };
+    mergedExtraKeys["Enter"] = function (cmInstance) {
         const cursor = cmInstance.getCursor();
         if (isLineInFence(cursor.line)) {
           return cmInstance.execCommand("newlineAndIndent");
@@ -503,8 +510,9 @@ function initEvents() {
         } catch (e) {
           return cmInstance.execCommand("newlineAndIndent");
         }
-      }
-    });
+      };
+
+    cm.setOption("extraKeys", mergedExtraKeys);
 
     refreshFenceCache();
 
@@ -537,6 +545,9 @@ function initEvents() {
       }
 
       refreshFenceCache();
+      if (typeof queueFenceModeUpdate === 'function') {
+        queueFenceModeUpdate();
+      }
 
       updateEditor();
       queueRenderUpdate();
@@ -600,6 +611,10 @@ function initEvents() {
       currentFile = msg.fileName;
       currentFilePath = msg.filePath || null;
       fastLoadPending = true;
+      refreshFenceCache();
+      if (typeof queueFenceModeUpdate === 'function') {
+        queueFenceModeUpdate();
+      }
       updateEditor();
       queueRenderUpdate();
       renderTabs();
