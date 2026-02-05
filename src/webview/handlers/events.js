@@ -1,3 +1,4 @@
+// Events handler - updated
 document.addEventListener('scroll', function (e) {
   const openMenus = document.querySelectorAll('.context_menu.visible');
   if (openMenus.length) {
@@ -28,7 +29,7 @@ function queueAutoSave() {
   }, autoSaveDelay);
 }
 
-function updateSyntax(minIdleMs = 700) {
+function runHiddenSyntaxUpdate(minIdleMs = 700) {
   if (!cm) return;
   const now = Date.now();
   if (now - lastTypingAt < minIdleMs) {
@@ -80,11 +81,11 @@ function queueListMarks(fromLine, toLine) {
   }, 60);
 }
 
-function queueSyntax() {
+function queueQuickSyntaxUpdate() {
   if (quickSyntaxTimer) return;
   quickSyntaxTimer = setTimeout(() => {
     quickSyntaxTimer = null;
-    try { updateSyntax(0); } catch (e) { }
+    try { runHiddenSyntaxUpdate(0); } catch (e) { }
   }, 40);
 }
 
@@ -133,8 +134,8 @@ function getHiddenTimings() {
   const isVeryHeavy = contentLength > 250000;
   const isSidebarMode = document.body.dataset.editorMode === 'sidebar';
 
-  let changeDelay = typeof updateDebounce === 'number' ? updateDebounce : 80;
-  let cursorDelay = typeof cursorDebounce === 'number' ? cursorDebounce : 60;
+  let changeDelay = typeof hiddenUpdateDebounceMs === 'number' ? hiddenUpdateDebounceMs : 80;
+  let cursorDelay = typeof hiddenCursorDebounceMs === 'number' ? hiddenCursorDebounceMs : 60;
   let minIdleMs = 700;
 
   if (isHeavy) {
@@ -166,7 +167,7 @@ function queueRenderUpdate() {
 
   const runImages = () => {
     if (cm) {
-      scheduleImages(0, cm.lineCount() - 1);
+      scheduleImageMarksUpdate(0, cm.lineCount() - 1);
     }
   };
 
@@ -205,7 +206,7 @@ function initEvents() {
         const lineText = cmInstance.getLine(lineNumber) || "";
         const beforeCursor = lineText.slice(0, cursor.ch);
 
-        lastFormatLine = lineNumber;
+        lastLineWithFormatting = lineNumber;
 
         const listMatch = lineText.match(/^(\s*)([-+*])(?!-)$/);
         if (listMatch && cursor.ch === listMatch[1].length + 1) {
@@ -315,8 +316,8 @@ function initEvents() {
       if (hasFenceChange) {
         markCodeBlockDirty();
         refreshFenceCache();
-        if (typeof queueFence === 'function') {
-          queueFence();
+        if (typeof queueFenceModeUpdate === 'function') {
+          queueFenceModeUpdate();
         }
       }
       const cursorLine = cmInstance.getCursor().line;
@@ -341,12 +342,12 @@ function initEvents() {
       const isFence = /^\s*([`~]{3,})/.test(lineText);
       const isHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(lineText);
       if (isFence || isHr) {
-        queueSyntax();
+        queueQuickSyntaxUpdate();
       }
       const lineCount = cmInstance.lineCount();
       const from = Math.max(0, change.from.line - 1);
       const to = Math.min(lineCount - 1, change.to.line + 1);
-      scheduleImages(from, to);
+      scheduleImageMarksUpdate(from, to);
       for (let l = from; l <= to; l++) {
         updateListLineFlag(l);
       }
@@ -356,11 +357,11 @@ function initEvents() {
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { updateSyntax(timings.minIdleMs); } catch (e) { }
+        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
       }, timings.changeDelay);
 
-      if (lastFormatLine !== null) {
-        lastFormatLine = null;
+      if (lastLineWithFormatting !== null) {
+        lastLineWithFormatting = null;
       }
 
       fileContent = easyMDE.value();
@@ -375,23 +376,23 @@ function initEvents() {
           const prevText = cm.getLine(lastCursorLine) || "";
           const wasHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(prevText);
           if (wasHr) {
-            try { updateSyntax(0); } catch (e) { }
+            try { runHiddenSyntaxUpdate(0); } catch (e) { }
           }
         }
         if (lastCursorLine !== null && lastCursorLine !== cursor.line) {
-          scheduleImages(lastCursorLine, lastCursorLine);
+          scheduleImageMarksUpdate(lastCursorLine, lastCursorLine);
         }
-        scheduleImages(cursor.line, cursor.line);
+        scheduleImageMarksUpdate(cursor.line, cursor.line);
         lastCursorLine = cursor.line;
       }
-      clearRevealed();
+      clearRevealedImageLine();
       if (cursor && isLineInFence(cursor.line)) {
         return;
       }
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { updateSyntax(timings.minIdleMs); } catch (e) { }
+        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
       }, timings.cursorDelay);
     });
 
@@ -401,7 +402,7 @@ function initEvents() {
 
     cm.on("blur", function () {
       editorFocused = false;
-      updateSyntax(0);
+      runHiddenSyntaxUpdate(0);
     });
 
     cm.on("mousedown", function (cmInstance, event) {
@@ -411,8 +412,8 @@ function initEvents() {
       }
 
       lastTypingAt = Date.now();
-      lastCheckbox = lastTypingAt;
-      suppressUntil = Date.now() + 800;
+      lastCheckboxToggleAt = lastTypingAt;
+      suppressMarkersUntil = Date.now() + 800;
 
       const pos = cmInstance.coordsChar({ left: event.clientX, top: event.clientY }, "window");
       const line = pos.line;
@@ -429,8 +430,8 @@ function initEvents() {
         const toCh = fromCh + taskMatch[0].length;
         cmInstance.replaceRange(replacement, { line, ch: fromCh }, { line, ch: toCh });
         event.preventDefault();
-        lastCheckbox = Date.now();
-        suppressUntil = Date.now() + 800;
+        lastCheckboxToggleAt = Date.now();
+        suppressMarkersUntil = Date.now() + 800;
         setTimeout(() => {
           try { updateHiddenSyntax(false); } catch (e) { }
         }, 0);
@@ -569,8 +570,8 @@ function initEvents() {
       }
 
       refreshFenceCache();
-      if (typeof queueFence === 'function') {
-        queueFence();
+      if (typeof queueFenceModeUpdate === 'function') {
+        queueFenceModeUpdate();
       }
 
       updateEditor();

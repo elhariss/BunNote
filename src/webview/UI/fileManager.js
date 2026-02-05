@@ -1,5 +1,7 @@
 // @ts-nocheck
 
+let pendingEdit = null;
+
 function updateEditor() {
   if (currentFile && fileContent !== undefined) {
     const currentContent = easyMDE.value();

@@ -8,7 +8,6 @@ let easyMDE = null;
 let cm = null;
 let editorTitleInput = null;
 let isTitleEditing = false;
-let pendingEdit = null;
 
 let autoSaveTimer = null;
 let autoSaveDelay = 750;
@@ -19,20 +18,20 @@ let ignoreFileChangedMs = 1500;
 
 let lastTypingAt = 0;
 let typingGraceMs = 500;
-let lastCheckbox = 0;
+let lastCheckboxToggleAt = 0;
 let checkboxGraceMs = 1500;
-let suppressUntil = 0;
+let suppressMarkersUntil = 0;
 
 let hiddenMarks = [];
 let codeLineHandles = [];
 let listLineFlags = new WeakMap();
 let listMarkerMarks = new Map();
-let lastFormatLine = null;
+let lastLineWithFormatting = null;
 let hiddenUpdateTimer = null;
 let lastHiddenUpdateAt = 0;
-let updateMinInt = 50;
-let updateDebounce = 80;
-let cursorDebounce = 60;
+let hiddenUpdateMinInterval = 50;
+let hiddenUpdateDebounceMs = 80;
+let hiddenCursorDebounceMs = 60;
 let fastLoadPending = false;
 let lastCursorLine = null;
 let editorFocused = false;
@@ -41,9 +40,9 @@ const isMainEditorMode = document.body.dataset.editorMode === 'main';
 
 if (isMainEditorMode) {
   autoSaveDelay = 2000;
-  updateMinInt = 90;
-  updateDebounce = 140;
-  cursorDebounce = 110;
+  hiddenUpdateMinInterval = 90;
+  hiddenUpdateDebounceMs = 140;
+  hiddenCursorDebounceMs = 110;
   imageUpdateDelay = 500;
 }
 
