@@ -22,11 +22,17 @@ const isMarkdownFile = (name) => (name || "").toLowerCase().endsWith(".md");
 
 const isAllowedDropFile = (name) => isMarkdownFile(name) || isImageFile(name);
 
+/**
+ * Generate unique file name by appending counter if file exists
+ * ファイルが存在する場合はカウンタを追加して一意のファイル名を生成
+ */
 const getUniqueDestination = (dir, baseName) => {
     const ext = path.extname(baseName);
     const stem = path.basename(baseName, ext);
     let candidate = path.join(dir, baseName);
     let counter = 1;
+    // Keep incrementing counter until we find an unused name
+    // 未使用の名前が見つかるまでカウンタを増やし続ける
     while (fs.existsSync(candidate)) {
         const nextName = `${stem} (${counter})${ext}`;
         candidate = path.join(dir, nextName);
@@ -170,6 +176,12 @@ class VaultTreeProvider {
         return [...folders, ...files];
     }
 
+    /**
+     * Handle drag and drop operations for files and folders
+     * Security: validate paths are within vault, prevent self-drops
+     * ファイルとフォルダのドラッグ&ドロップ操作を処理
+     * セキュリティ：パスがvault内にあることを検証、自己ドロップを防止
+     */
     async handleDrop(target, dataTransfer) {
         const vaultPath = this.getVaultPath();
         if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -216,14 +228,17 @@ class VaultTreeProvider {
 
             const baseName = path.basename(sourcePath);
 
+            // Handle internal vault moves / vault内の移動を処理
             if (isInsideVault) {
                 const destination = path.join(targetDir, baseName);
                 const normalizedDestination = path.resolve(destination);
 
+                // Prevent no-op moves / 無意味な移動を防止
                 if (normalizedSource === normalizedDestination) {
                     continue;
                 }
 
+                // Prevent moving folder into itself / フォルダを自身の中に移動することを防止
                 if (normalizedDestination.startsWith(normalizedSource + path.sep)) {
                     vscode.window.showErrorMessage("Cannot move a folder into itself");
                     continue;
@@ -242,6 +257,7 @@ class VaultTreeProvider {
                 continue;
             }
 
+            // Handle external file imports / 外部ファイルのインポートを処理
             if (!isAllowedDropFile(baseName)) {
                 vscode.window.showErrorMessage("Only markdown or image files can be added to the vault");
                 continue;
@@ -260,6 +276,7 @@ class VaultTreeProvider {
                 continue;
             }
 
+            // Copy external files with unique naming / 外部ファイルを一意の名前でコピー
             const destination = getUniqueDestination(targetDir, baseName);
             try {
                 fs.copyFileSync(sourcePath, destination);
