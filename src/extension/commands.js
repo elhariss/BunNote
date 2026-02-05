@@ -13,10 +13,15 @@ const imageExtensions = new Set([
   ".ico"
 ]);
 
+/**
+ * Sanitize file names by removing protocols and control characters
+ * ファイル名からプロトコルと制御文字を削除してサニタイズする
+ */
 const sanitizeFileName = (name) => {
   if (!name || typeof name !== "string") return name;
   let n = name.trim();
 
+  // Remove file:// protocol / file://プロトコルを削除
   if (n.toLowerCase().startsWith("file:")) {
     n = n.replace(/^file:\/\/*/i, "");
   }
@@ -25,7 +30,9 @@ const sanitizeFileName = (name) => {
     n = n.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "");
   }
 
+  // Remove control characters / 制御文字を削除
   n = n.replace(/[\u0000-\u001F\u007F]/g, "");
+  // Normalize path separators / パス区切り文字を正規化
   n = n.replace(/\\/g, "/");
 
   return n;
@@ -126,12 +133,16 @@ function registerCommands(context, state, providers) {
         return;
       }
 
+      // Handle URI objects (from tree view clicks)
+      // URIオブジェクトを処理（ツリービューのクリックから）
       if (fileName && fileName.fsPath) {
         const ext = path.extname(fileName.fsPath).toLowerCase();
+        // Open images with default viewer / 画像はデフォルトビューアで開く
         if (imageExtensions.has(ext)) {
           await vscode.commands.executeCommand("vscode.open", fileName);
           return;
         }
+        // Security check: ensure file is within vault / セキュリティチェック：ファイルがvault内にあることを確認
         const relativePath = path.relative(state.vaultPath, fileName.fsPath).split(path.sep).join("/");
         if (!relativePath || relativePath.startsWith("..")) {
           vscode.window.showErrorMessage("File is outside the vault");
