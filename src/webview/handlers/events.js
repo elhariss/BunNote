@@ -4,7 +4,7 @@ document.addEventListener('scroll', function (e) {
   if (openMenus.length) {
     hideAllContextMenus && hideAllContextMenus();
   }
-}, true); 
+}, true);
 function queueAutoSave() {
   if (!currentFile) {
     return;
