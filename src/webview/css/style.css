@@ -369,10 +369,22 @@ body {
     padding: 0;
     background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
     border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder, #2b2b2b);
+    position: sticky;
+    top: 0;
+    z-index: 5;
     overflow-x: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
+}
+
+body:not([data-editor-mode="sidebar"]) .editor_tabs {
+    display: none;
+}
+
+body[data-editor-mode="sidebar"] .editor_tabs {
+    display: flex !important;
+    min-height: 36px;
 }
 
 .editor_tabs:hover {
@@ -380,7 +392,7 @@ body {
 }
 
 .editor_tabs::-webkit-scrollbar {
-    height: 6px;
+    height: 0;
 }
 
 .editor_tabs::-webkit-scrollbar-track {
@@ -579,8 +591,8 @@ body {
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 
-/* Custom Editor Mode / カスタムエディターモード */
-body[data-editor-mode="custom"] .sidebar {
+/* Main Editor Mode / メインエディターモード */
+body[data-editor-mode="main"] .sidebar {
     display: none !important;
 }
 
@@ -593,12 +605,12 @@ body[data-editor-mode="sidebar"] .editor_area {
     width: 100% !important;
 }
 
-body[data-editor-mode="custom"] .container {
+body[data-editor-mode="main"] .container {
     display: flex !important;
     flex-direction: column !important;
 }
 
-body[data-editor-mode="custom"] .editor_area {
+body[data-editor-mode="main"] .editor_area {
     width: 100% !important;
     height: 100vh !important;
     flex: 1 !important;
@@ -607,29 +619,25 @@ body[data-editor-mode="custom"] .editor_area {
     overflow: hidden !important;
 }
 
-body[data-editor-mode="custom"] .editor_container {
+body[data-editor-mode="main"] .editor_container {
     margin-left: 0 !important;
     width: 100% !important;
     flex: 1 !important;
     overflow: auto !important;
 }
 
-body[data-editor-mode="custom"] .editor_tabs {
+body[data-editor-mode="main"] .editor_header {
     display: none !important;
 }
 
-body[data-editor-mode="custom"] .editor_header {
-    display: none !important;
-}
-
-body[data-editor-mode="custom"] .EasyMDEContainer {
+body[data-editor-mode="main"] .EasyMDEContainer {
     height: 100% !important;
 }
 
-body[data-editor-mode="custom"] .CodeMirror {
+body[data-editor-mode="main"] .CodeMirror {
     height: 100% !important;
 }
 
-body[data-editor-mode="custom"] .CodeMirror-scroll {
+body[data-editor-mode="main"] .CodeMirror-scroll {
     padding-top: 0 !important;
 }
