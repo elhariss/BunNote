@@ -106,6 +106,16 @@
     transition: opacity 0.15s ease;
 }
 
+.EasyMDEContainer .cm-formatting-strikethrough,
+.EasyMDEContainer .cm-formatting-del {
+    display: none !important;
+}
+
+.EasyMDEContainer .CodeMirror-activeline .cm-formatting-strikethrough,
+.EasyMDEContainer .CodeMirror-activeline .cm-formatting-del {
+    display: inline !important;
+}
+
 body[data-marker-color="on"] .cm-header,
 body[data-marker-color="on"] .cm-header-1,
 body[data-marker-color="on"] .cm-header-2,
@@ -149,6 +159,24 @@ body[data-marker-color="on"] .cm-url {
 
 .EasyMDEContainer .cm-header-3 {
     font-size: 1.3em !important;
+    font-weight: 600 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-header-4 {
+    font-size: 1.15em !important;
+    font-weight: 600 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-header-5 {
+    font-size: 1.05em !important;
+    font-weight: 600 !important;
+    color: var(--vscode-editor-foreground) !important;
+}
+
+.EasyMDEContainer .cm-header-6 {
+    font-size: 1em !important;
     font-weight: 600 !important;
     color: var(--vscode-editor-foreground) !important;
 }
@@ -213,6 +241,7 @@ body[data-marker-color="on"] .cm-url {
     position: relative;
     padding-left: 12px !important;
     background-color: var(--vscode-textBlockQuote-background);
+    min-height: 1.6em;
 }
 
 .EasyMDEContainer .cm-blockquote-line::before {
@@ -220,10 +249,13 @@ body[data-marker-color="on"] .cm-url {
     position: absolute;
     left: 0;
     top: 0;
-    bottom: 0;
     width: 3px;
+    height: 100%;
     background-color: var(--vscode-textBlockQuote-border);
-    border-radius: 16px;
+    border-radius: 0;
+    margin: 0;
+    box-sizing: border-box;
+    pointer-events: none;
 }
 
 /* Code Block / コードブロック */
