@@ -1,5 +1,11 @@
+document.addEventListener('scroll', function (e) {
+  const openMenus = document.querySelectorAll('.context_menu.visible');
+  if (openMenus.length) {
+    hideAllContextMenus && hideAllContextMenus();
+  }
+}, true); 
 function queueAutoSave() {
-  if (!currentFile || !openTabs[currentFile]) {
+  if (!currentFile) {
     return;
   }
 
@@ -22,7 +28,7 @@ function queueAutoSave() {
   }, autoSaveDelay);
 }
 
-function runHiddenSyntaxUpdate(minIdleMs = 700) {
+function updateSyntax(minIdleMs = 700) {
   if (!cm) return;
   const now = Date.now();
   if (now - lastTypingAt < minIdleMs) {
@@ -74,11 +80,11 @@ function queueListMarks(fromLine, toLine) {
   }, 60);
 }
 
-function queueQuickSyntaxUpdate() {
+function queueSyntax() {
   if (quickSyntaxTimer) return;
   quickSyntaxTimer = setTimeout(() => {
     quickSyntaxTimer = null;
-    try { runHiddenSyntaxUpdate(0); } catch (e) { }
+    try { updateSyntax(0); } catch (e) { }
   }, 40);
 }
 
@@ -127,8 +133,8 @@ function getHiddenTimings() {
   const isVeryHeavy = contentLength > 250000;
   const isSidebarMode = document.body.dataset.editorMode === 'sidebar';
 
-  let changeDelay = typeof hiddenUpdateDebounceMs === 'number' ? hiddenUpdateDebounceMs : 80;
-  let cursorDelay = typeof hiddenCursorDebounceMs === 'number' ? hiddenCursorDebounceMs : 60;
+  let changeDelay = typeof updateDebounce === 'number' ? updateDebounce : 80;
+  let cursorDelay = typeof cursorDebounce === 'number' ? cursorDebounce : 60;
   let minIdleMs = 700;
 
   if (isHeavy) {
@@ -160,14 +166,15 @@ function queueRenderUpdate() {
 
   const runImages = () => {
     if (cm) {
-      scheduleImageMarksUpdate(0, cm.lineCount() - 1);
+      scheduleImages(0, cm.lineCount() - 1);
     }
   };
 
   const contentLength = easyMDE ? easyMDE.value().length : 0;
   const isHeavy = contentLength > 120000;
 
-  if (isCustomEditorMode) {
+  const isMainEditorMode = document.body.dataset.editorMode === 'main';
+  if (isMainEditorMode) {
     const syntaxDelay = isHeavy ? 600 : 350;
     const imageDelay = isHeavy ? 1000 : 650;
     if (window.requestIdleCallback) {
@@ -198,7 +205,7 @@ function initEvents() {
         const lineText = cmInstance.getLine(lineNumber) || "";
         const beforeCursor = lineText.slice(0, cursor.ch);
 
-        lastLineWithFormatting = lineNumber;
+        lastFormatLine = lineNumber;
 
         const listMatch = lineText.match(/^(\s*)([-+*])(?!-)$/);
         if (listMatch && cursor.ch === listMatch[1].length + 1) {
@@ -308,8 +315,8 @@ function initEvents() {
       if (hasFenceChange) {
         markCodeBlockDirty();
         refreshFenceCache();
-        if (typeof queueFenceModeUpdate === 'function') {
-          queueFenceModeUpdate();
+        if (typeof queueFence === 'function') {
+          queueFence();
         }
       }
       const cursorLine = cmInstance.getCursor().line;
@@ -326,9 +333,7 @@ function initEvents() {
             codeLineHandles.push(handle);
           }
         }
-        if (currentFile && openTabs[currentFile]) {
-          openTabs[currentFile].content = easyMDE.value();
-        }
+        fileContent = easyMDE.value();
         queueAutoSave();
         return;
       }
@@ -336,12 +341,12 @@ function initEvents() {
       const isFence = /^\s*([`~]{3,})/.test(lineText);
       const isHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(lineText);
       if (isFence || isHr) {
-        queueQuickSyntaxUpdate();
+        queueSyntax();
       }
       const lineCount = cmInstance.lineCount();
       const from = Math.max(0, change.from.line - 1);
       const to = Math.min(lineCount - 1, change.to.line + 1);
-      scheduleImageMarksUpdate(from, to);
+      scheduleImages(from, to);
       for (let l = from; l <= to; l++) {
         updateListLineFlag(l);
       }
@@ -351,16 +356,14 @@ function initEvents() {
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
+        try { updateSyntax(timings.minIdleMs); } catch (e) { }
       }, timings.changeDelay);
 
-      if (lastLineWithFormatting !== null) {
-        lastLineWithFormatting = null;
+      if (lastFormatLine !== null) {
+        lastFormatLine = null;
       }
 
-      if (currentFile && openTabs[currentFile]) {
-        openTabs[currentFile].content = easyMDE.value();
-      }
+      fileContent = easyMDE.value();
 
       queueAutoSave();
     });
@@ -372,23 +375,23 @@ function initEvents() {
           const prevText = cm.getLine(lastCursorLine) || "";
           const wasHr = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(prevText);
           if (wasHr) {
-            try { runHiddenSyntaxUpdate(0); } catch (e) { }
+            try { updateSyntax(0); } catch (e) { }
           }
         }
         if (lastCursorLine !== null && lastCursorLine !== cursor.line) {
-          scheduleImageMarksUpdate(lastCursorLine, lastCursorLine);
+          scheduleImages(lastCursorLine, lastCursorLine);
         }
-        scheduleImageMarksUpdate(cursor.line, cursor.line);
+        scheduleImages(cursor.line, cursor.line);
         lastCursorLine = cursor.line;
       }
-      clearRevealedImageLine();
+      clearRevealed();
       if (cursor && isLineInFence(cursor.line)) {
         return;
       }
       if (hiddenUpdateTimer) clearTimeout(hiddenUpdateTimer);
       const timings = getHiddenTimings();
       hiddenUpdateTimer = setTimeout(() => {
-        try { runHiddenSyntaxUpdate(timings.minIdleMs); } catch (e) { }
+        try { updateSyntax(timings.minIdleMs); } catch (e) { }
       }, timings.cursorDelay);
     });
 
@@ -398,7 +401,7 @@ function initEvents() {
 
     cm.on("blur", function () {
       editorFocused = false;
-      runHiddenSyntaxUpdate(0);
+      updateSyntax(0);
     });
 
     cm.on("mousedown", function (cmInstance, event) {
@@ -408,8 +411,8 @@ function initEvents() {
       }
 
       lastTypingAt = Date.now();
-      lastCheckboxToggleAt = lastTypingAt;
-      suppressMarkersUntil = Date.now() + 800;
+      lastCheckbox = lastTypingAt;
+      suppressUntil = Date.now() + 800;
 
       const pos = cmInstance.coordsChar({ left: event.clientX, top: event.clientY }, "window");
       const line = pos.line;
@@ -426,8 +429,8 @@ function initEvents() {
         const toCh = fromCh + taskMatch[0].length;
         cmInstance.replaceRange(replacement, { line, ch: fromCh }, { line, ch: toCh });
         event.preventDefault();
-        lastCheckboxToggleAt = Date.now();
-        suppressMarkersUntil = Date.now() + 800;
+        lastCheckbox = Date.now();
+        suppressUntil = Date.now() + 800;
         setTimeout(() => {
           try { updateHiddenSyntax(false); } catch (e) { }
         }, 0);
@@ -555,27 +558,23 @@ function initEvents() {
       const fileName = msg.fileName || 'Untitled.md';
       currentFilePath = msg.filePath || null;
       fastLoadPending = true;
-      openTabs[fileName] = {
-        name: fileName,
-        content: msg.content || ''
-      };
+      currentFile = fileName;
+      fileContent = msg.content || '';
       if (lastSavedContent) {
         lastSavedContent[fileName] = msg.content || '';
       }
-      currentFile = fileName;
 
       if (easyMDE) {
         easyMDE.value(msg.content || '');
       }
 
       refreshFenceCache();
-      if (typeof queueFenceModeUpdate === 'function') {
-        queueFenceModeUpdate();
+      if (typeof queueFence === 'function') {
+        queueFence();
       }
 
       updateEditor();
       queueRenderUpdate();
-      renderTabs();
 
       if (cm) {
         setTimeout(() => {
@@ -587,9 +586,9 @@ function initEvents() {
       }
       return;
     } else if (msg.command === 'updateContent') {
-      const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+      const isMainEditorMode = document.body.dataset.editorMode === 'main';
 
-      if (isCustomEditorMode) {
+      if (isMainEditorMode) {
         return;
       }
 
@@ -598,10 +597,10 @@ function initEvents() {
         return;
       }
 
-      if (currentFile && openTabs[currentFile]) {
+      if (currentFile) {
         const currentContent = easyMDE.value();
         if (currentContent !== msg.content) {
-          openTabs[currentFile].content = msg.content;
+          fileContent = msg.content;
           lastSavedContent[currentFile] = msg.content;
           easyMDE.value(msg.content);
           queueRenderUpdate();
@@ -625,42 +624,34 @@ function initEvents() {
       }
       renderFilesList();
     } else if (msg.command === 'fileLoaded') {
-      openTabs[msg.fileName] = {
-        name: msg.fileName,
-        content: msg.content
-      };
+      currentFile = msg.fileName;
+      fileContent = msg.content;
+      currentFilePath = msg.filePath || null;
       if (lastSavedContent) {
         lastSavedContent[msg.fileName] = msg.content || '';
       }
-      currentFile = msg.fileName;
-      currentFilePath = msg.filePath || null;
       fastLoadPending = true;
       refreshFenceCache();
-      if (typeof queueFenceModeUpdate === 'function') {
-        queueFenceModeUpdate();
+      if (typeof queueFence === 'function') {
+        queueFence();
       }
       updateEditor();
       queueRenderUpdate();
-      renderTabs();
-      if (pendingTitleEditFile && pendingTitleEditFile === msg.fileName) {
-        pendingTitleEditFile = null;
-        startTitleEditing();
+      if (pendingEdit && pendingEdit === msg.fileName) {
+        pendingEdit = null;
+        startEdit();
       }
     } else if (msg.command === 'newNote') {
-      openTabs[msg.fileName] = {
-        name: msg.fileName,
-        content: msg.content || ''
-      };
+      currentFile = msg.fileName;
+      fileContent = msg.content || '';
+      currentFilePath = msg.filePath || null;
       if (lastSavedContent) {
         lastSavedContent[msg.fileName] = msg.content || '';
       }
-      currentFile = msg.fileName;
-      currentFilePath = msg.filePath || null;
       fastLoadPending = true;
       updateEditor();
-      renderTabs();
       renderFilesList();
-      startTitleEditing();
+      startEdit();
       queueRenderUpdate();
     } else if (msg.command === 'openFile') {
       vscode.postMessage({
@@ -668,9 +659,9 @@ function initEvents() {
         fileName: msg.fileName
       });
     } else if (msg.command === 'renameResult') {
-      handleRenameResult(msg);
+      onRename(msg);
     } else if (msg.command === 'folderMoveResult') {
-      handleFolderMoveResult(msg);
+      onFolderMove(msg);
     } else if (msg.command === 'refresh') {
       vscode.postMessage({ command: 'getVault' });
     }
