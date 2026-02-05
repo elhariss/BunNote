@@ -132,7 +132,7 @@ class EditorProvider {
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
     const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
     const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
-    const tabsPath = path.join(this.context.extensionPath, "src", "webview", "UI", "tabs.js");
+    const fileManagerPath = path.join(this.context.extensionPath, "src", "webview", "UI", "fileManager.js");
     const eventsPath = path.join(this.context.extensionPath, "src", "webview", "handlers", "events.js");
     const mainPath = path.join(this.context.extensionPath, "src", "webview", "core", "main.js");
 
@@ -143,7 +143,7 @@ class EditorProvider {
     const editorCssUri = toWebviewUri(editorCssPath);
     const utilsUri = toWebviewUri(utilsPath);
     const editorUri = toWebviewUri(editorPath);
-    const tabsUri = toWebviewUri(tabsPath);
+    const fileManagerUri = toWebviewUri(fileManagerPath);
     const eventsUri = toWebviewUri(eventsPath);
     const mainUri = toWebviewUri(mainPath);
 
@@ -154,10 +154,10 @@ class EditorProvider {
         .replace("{{EDITOR_CSS_URI}}", editorCssUri)
         .replace("{{UTILS_URI}}", utilsUri)
         .replace("{{EDITOR_URI}}", editorUri)
-        .replace("{{TABS_URI}}", tabsUri)
+        .replace("{{FILE_MANAGER_URI}}", fileManagerUri)
         .replace("{{EVENTS_URI}}", eventsUri)
         .replace("{{MAIN_URI}}", mainUri)
-        .replace("{{EDITOR_MODE}}", "custom")
+        .replace("{{EDITOR_MODE}}", "main")
         .replace("{{MARKER_COLOR_MODE}}", markerColorMode)
         .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize));
 
