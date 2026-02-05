@@ -17,7 +17,7 @@
 }
 
 .EasyMDEContainer .CodeMirror-scroll {
-    padding: 20px 0 80px !important;
+    padding: 0 0 80px !important;
     overflow-x: hidden !important;
 }
 
