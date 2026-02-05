@@ -2,13 +2,13 @@ const vscode = acquireVsCodeApi();
 
 let currentFile = null;
 let currentFilePath = null;
+let fileContent = '';
 let vaultPath = null;
-let openTabs = {};
 let easyMDE = null;
 let cm = null;
 let editorTitleInput = null;
 let isTitleEditing = false;
-let pendingTitleEditFile = null;
+let pendingEdit = null;
 
 let autoSaveTimer = null;
 let autoSaveDelay = 750;
@@ -19,31 +19,31 @@ let ignoreFileChangedMs = 1500;
 
 let lastTypingAt = 0;
 let typingGraceMs = 500;
-let lastCheckboxToggleAt = 0;
+let lastCheckbox = 0;
 let checkboxGraceMs = 1500;
-let suppressMarkersUntil = 0;
+let suppressUntil = 0;
 
 let hiddenMarks = [];
 let codeLineHandles = [];
 let listLineFlags = new WeakMap();
 let listMarkerMarks = new Map();
-let lastLineWithFormatting = null;
+let lastFormatLine = null;
 let hiddenUpdateTimer = null;
 let lastHiddenUpdateAt = 0;
-let hiddenUpdateMinInterval = 50;
-let hiddenUpdateDebounceMs = 80;
-let hiddenCursorDebounceMs = 60;
+let updateMinInt = 50;
+let updateDebounce = 80;
+let cursorDebounce = 60;
 let fastLoadPending = false;
 let lastCursorLine = null;
 let editorFocused = false;
 
-const isCustomEditorMode = document.body.dataset.editorMode === 'custom';
+const isMainEditorMode = document.body.dataset.editorMode === 'main';
 
-if (isCustomEditorMode) {
+if (isMainEditorMode) {
   autoSaveDelay = 2000;
-  hiddenUpdateMinInterval = 90;
-  hiddenUpdateDebounceMs = 140;
-  hiddenCursorDebounceMs = 110;
+  updateMinInt = 90;
+  updateDebounce = 140;
+  cursorDebounce = 110;
   imageUpdateDelay = 500;
 }
 
@@ -52,15 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initEvents();
 
 
-  if (isCustomEditorMode) {
+  if (isMainEditorMode) {
     const sidebar = document.querySelector('.sidebar');
     const editorArea = document.querySelector('.editor_area');
-    const editorTabs = document.querySelector('.editor_tabs');
     const editorHeader = document.querySelector('.editor_header');
     const editorContainer = document.querySelector('.editor_container');
 
     if (sidebar) sidebar.style.display = 'none';
-    if (editorTabs) editorTabs.style.display = 'none';
     if (editorHeader) editorHeader.style.display = 'none';
     if (editorArea) {
       editorArea.style.width = '100%';
