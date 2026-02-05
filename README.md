@@ -1,7 +1,7 @@
 <div align="center">
 
 
-![BunNote Preview 1](media/icon.png)
+<img src="media/icon.png" width="170">
 
 # 文ノート (BunNote)
 
