@@ -280,9 +280,8 @@ body {
 }
 
 .editor_header {
-    padding: 26px 0 12px;
+    padding: 26px 18px 12px;
     background-color: var(--vscode-editor-background);
-    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
     color: var(--vscode-editor-foreground);
     display: flex;
     align-items: flex-start;
@@ -300,7 +299,7 @@ body {
 
 /* Editor Title / タイトル */
 .editor_title {
-    font-size: 20px;
+    font-size: 25px;
     line-height: 1.2;
     font-weight: 700;
     color: var(--vscode-editor-foreground);
