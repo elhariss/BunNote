@@ -24,7 +24,7 @@ function initEditor() {
     status: false,
     autofocus: true,
     lineWrapping: true,
-    placeholder: "# Start writing...\n\nType markdown and see it render live!\n\n## Examples:\n**bold text**\n*italic text*\n- bullet point\n> blockquote",
+    placeholder: "Start writing...",
     renderingConfig: {
       singleLineBreaks: false,
       codeSyntaxHighlighting: true,
