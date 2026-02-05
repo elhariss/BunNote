@@ -316,7 +316,7 @@ class ViewProvider {
           const newUri = vscode.Uri.file(newPath);
 
           const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs);
-          const customEditorTabs = tabs.filter(tab => {
+          const mainEditorTabs = tabs.filter(tab => {
             if (tab.input instanceof vscode.TabInputCustom) {
               return tab.input.uri.toString() === oldUri.toString();
             }
@@ -326,11 +326,11 @@ class ViewProvider {
           fs.renameSync(oldPath, newPath);
           vscode.window.showInformationMessage("Note renamed to: " + safeNewName);
 
-          for (const tab of customEditorTabs) {
+          for (const tab of mainEditorTabs) {
             await vscode.window.tabGroups.close(tab);
           }
 
-          if (customEditorTabs.length > 0) {
+          if (mainEditorTabs.length > 0) {
             await vscode.commands.executeCommand("vscode.openWith", newUri, "bunnote.markdownEditor");
           }
 
@@ -890,7 +890,7 @@ class ViewProvider {
             error: err.message
           });
         }
-      } else if (msg.command === "openInCustomEditor") {
+      } else if (msg.command === "openInMainEditor") {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
           return;
@@ -936,7 +936,7 @@ class ViewProvider {
     const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
     const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
     const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
-    const tabsPath = path.join(this.context.extensionPath, "src", "webview", "UI", "tabs.js");
+    const fileManagerPath = path.join(this.context.extensionPath, "src", "webview", "UI", "fileManager.js");
     const eventsPath = path.join(this.context.extensionPath, "src", "webview", "handlers", "events.js");
     const mainPath = path.join(this.context.extensionPath, "src", "webview", "core", "main.js");
 
@@ -947,7 +947,7 @@ class ViewProvider {
     const editorCssUri = toWebviewUri(editorCssPath);
     const utilsUri = toWebviewUri(utilsPath);
     const editorUri = toWebviewUri(editorPath);
-    const tabsUri = toWebviewUri(tabsPath);
+    const fileManagerUri = toWebviewUri(fileManagerPath);
     const eventsUri = toWebviewUri(eventsPath);
     const mainUri = toWebviewUri(mainPath);
 
@@ -958,7 +958,7 @@ class ViewProvider {
         .replace("{{EDITOR_CSS_URI}}", editorCssUri)
         .replace("{{UTILS_URI}}", utilsUri)
         .replace("{{EDITOR_URI}}", editorUri)
-        .replace("{{TABS_URI}}", tabsUri)
+        .replace("{{FILE_MANAGER_URI}}", fileManagerUri)
         .replace("{{EVENTS_URI}}", eventsUri)
         .replace("{{MAIN_URI}}", mainUri)
         .replace("{{EDITOR_MODE}}", "sidebar")
