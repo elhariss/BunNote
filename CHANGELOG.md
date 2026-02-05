@@ -13,9 +13,7 @@ All notable changes to the "bunnote" extension will be documented in this file.
 - Real-time sync with external markdown editors (Obsidian, etc.)
 - Task list support with checkboxes
 - Syntax highlighting for code blocks
-- Multiple note tabs support
 - File and folder management (create, rename, delete, duplicate, move)
 - Vault configuration with workspace and default paths
 - File system watcher for external changes
 - Markdown syntax hiding for cleaner editing experience
-- Full VS Code theme integration
