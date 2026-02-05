@@ -1,3 +1,8 @@
+
+/**
+ * Extract directory path from file name
+ * ファイル名からディレクトリパスを抽出
+ */
 function getCurrentDirectory(fileName) {
   if (!fileName) {
     return '';
@@ -16,6 +21,11 @@ function formatTitle(fileName) {
   return withoutExt || 'Untitled';
 }
 
+
+/**
+ * Build relative path from title, ensuring .md extension and cleaning invalid characters
+ * タイトルから相対パスを構築し、.md拡張子を確保して無効な文字をクリーンアップ
+ */
 function buildRelPath(rawTitle, targetFile = currentFile) {
   if (!targetFile) {
     return null;
@@ -25,9 +35,11 @@ function buildRelPath(rawTitle, targetFile = currentFile) {
     return null;
   }
   let newBase = trimmed;
+
   if (!newBase.toLowerCase().endsWith('.md')) {
     newBase += '.md';
   }
+ 
   newBase = newBase.replace(/[\\/]+/g, '-').replace(/[:*?"<>|]+/g, '').trim();
   if (!newBase) {
     return null;
