@@ -18,6 +18,23 @@ const isImageFile = (name) => {
     return imageExtensions.has(ext);
 };
 
+const isMarkdownFile = (name) => (name || "").toLowerCase().endsWith(".md");
+
+const isAllowedDropFile = (name) => isMarkdownFile(name) || isImageFile(name);
+
+const getUniqueDestination = (dir, baseName) => {
+    const ext = path.extname(baseName);
+    const stem = path.basename(baseName, ext);
+    let candidate = path.join(dir, baseName);
+    let counter = 1;
+    while (fs.existsSync(candidate)) {
+        const nextName = `${stem} (${counter})${ext}`;
+        candidate = path.join(dir, nextName);
+        counter += 1;
+    }
+    return candidate;
+};
+
 class VaultItem extends vscode.TreeItem {
     constructor({ label, uri, isFolder, isNote }) {
         super(label, isFolder ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
@@ -195,33 +212,59 @@ class VaultTreeProvider {
 
             const normalizedSource = path.resolve(sourcePath);
             const relative = path.relative(normalizedVault, normalizedSource);
-            if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
-                vscode.window.showErrorMessage("Only vault items can be moved");
-                continue;
-            }
+            const isInsideVault = relative && !relative.startsWith("..") && !path.isAbsolute(relative);
 
             const baseName = path.basename(sourcePath);
-            const destination = path.join(targetDir, baseName);
-            const normalizedDestination = path.resolve(destination);
 
-            if (normalizedSource === normalizedDestination) {
+            if (isInsideVault) {
+                const destination = path.join(targetDir, baseName);
+                const normalizedDestination = path.resolve(destination);
+
+                if (normalizedSource === normalizedDestination) {
+                    continue;
+                }
+
+                if (normalizedDestination.startsWith(normalizedSource + path.sep)) {
+                    vscode.window.showErrorMessage("Cannot move a folder into itself");
+                    continue;
+                }
+
+                if (fs.existsSync(destination)) {
+                    vscode.window.showErrorMessage("A file or folder with that name already exists");
+                    continue;
+                }
+
+                try {
+                    fs.renameSync(sourcePath, destination);
+                } catch (err) {
+                    vscode.window.showErrorMessage("Failed to move item: " + err.message);
+                }
                 continue;
             }
 
-            if (normalizedDestination.startsWith(normalizedSource + path.sep)) {
-                vscode.window.showErrorMessage("Cannot move a folder into itself");
+            if (!isAllowedDropFile(baseName)) {
+                vscode.window.showErrorMessage("Only markdown or image files can be added to the vault");
                 continue;
             }
 
-            if (fs.existsSync(destination)) {
-                vscode.window.showErrorMessage("A file or folder with that name already exists");
-                continue;
-            }
-
+            let stat = null;
             try {
-                fs.renameSync(sourcePath, destination);
+                stat = fs.statSync(sourcePath);
             } catch (err) {
-                vscode.window.showErrorMessage("Failed to move item: " + err.message);
+                vscode.window.showErrorMessage("Failed to access dropped item: " + err.message);
+                continue;
+            }
+
+            if (!stat.isFile()) {
+                vscode.window.showErrorMessage("Only files can be added to the vault");
+                continue;
+            }
+
+            const destination = getUniqueDestination(targetDir, baseName);
+            try {
+                fs.copyFileSync(sourcePath, destination);
+            } catch (err) {
+                vscode.window.showErrorMessage("Failed to copy file into vault: " + err.message);
             }
         }
 
