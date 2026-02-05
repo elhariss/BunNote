@@ -1,13 +1,3 @@
-function escapeHtml(text) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, m => map[m]);
-}
-
 function getCurrentDirectory(fileName) {
   if (!fileName) {
     return '';
@@ -16,7 +6,7 @@ function getCurrentDirectory(fileName) {
   return idx === -1 ? '' : fileName.slice(0, idx + 1);
 }
 
-function formatTitleFromFile(fileName) {
+function formatTitle(fileName) {
   if (!fileName) {
     return 'Untitled';
   }
@@ -26,7 +16,7 @@ function formatTitleFromFile(fileName) {
   return withoutExt || 'Untitled';
 }
 
-function buildNewRelativeName(rawTitle, targetFile = currentFile) {
+function buildRelPath(rawTitle, targetFile = currentFile) {
   if (!targetFile) {
     return null;
   }
