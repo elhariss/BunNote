@@ -13,8 +13,6 @@ let autoSaveTimer = null;
 let autoSaveDelay = 750;
 let lastSavedContent = {};
 let lastLocalSaveAt = 0;
-let lastLocalSaveFile = null;
-let ignoreFileChangedMs = 1500;
 
 let lastTypingAt = 0;
 let typingGraceMs = 500;

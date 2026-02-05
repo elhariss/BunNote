@@ -5,16 +5,22 @@ document.addEventListener('scroll', function (e) {
     hideAllContextMenus && hideAllContextMenus();
   }
 }, true);
+/**
+ * Queue auto-save with debouncing to prevent excessive saves
+ * 過度な保存を防ぐためにデバウンスを使用して自動保存をキューに入れる
+ */
 function queueAutoSave() {
   if (!currentFile) {
     return;
   }
 
   const content = easyMDE.value();
+  // Skip if content hasn't changed / 内容が変更されていない場合はスキップ
   if (lastSavedContent && lastSavedContent[currentFile] === content) {
     return;
   }
 
+  // Clear existing timer to debounce / デバウンスのために既存のタイマーをクリア
   if (autoSaveTimer) {
     clearTimeout(autoSaveTimer);
   }
@@ -128,6 +134,12 @@ function refreshFenceCache() {
   codeFenceLineState = next;
 }
 
+/**
+ * Calculate adaptive timing delays based on document size and editor mode
+ * Performance optimization: larger documents get longer delays to prevent lag
+ * ドキュメントサイズとエディタモードに基づいて適応的な遅延時間を計算
+ * パフォーマンス最適化：大きなドキュメントは遅延を長くしてラグを防ぐ
+ */
 function getHiddenTimings() {
   const contentLength = easyMDE ? easyMDE.value().length : 0;
   const isHeavy = contentLength > 120000;
@@ -138,18 +150,21 @@ function getHiddenTimings() {
   let cursorDelay = typeof hiddenCursorDebounceMs === 'number' ? hiddenCursorDebounceMs : 60;
   let minIdleMs = 700;
 
+  // Increase delays for heavy documents / 大きなドキュメントの場合は遅延を増やす
   if (isHeavy) {
     changeDelay = Math.max(changeDelay, 180);
     cursorDelay = Math.max(cursorDelay, 160);
     minIdleMs = 1200;
   }
 
+  // Further increase for very heavy documents / 非常に大きなドキュメントの場合はさらに増やす
   if (isVeryHeavy) {
     changeDelay = Math.max(changeDelay, 260);
     cursorDelay = Math.max(cursorDelay, 240);
     minIdleMs = 1600;
   }
 
+  // Sidebar mode needs extra delay due to limited space / サイドバーモードは限られたスペースのため追加の遅延が必要
   if (isSidebarMode) {
     changeDelay += 60;
     cursorDelay += 60;
@@ -199,6 +214,10 @@ function queueRenderUpdate() {
 
 function initEvents() {
   if (cm) {
+    /**
+     * Smart list handling: auto-indent nested lists when space is pressed at end of line
+     * スマートリスト処理：行末でスペースを押すとネストされたリストを自動インデント
+     */
     cm.on("beforeChange", function (cmInstance, change) {
       if (change.origin === "+input" && change.text[0] === " ") {
         const cursor = cmInstance.getCursor();
@@ -216,12 +235,15 @@ function initEvents() {
           }
         }
 
+        // Detect list markers and task markers / リストマーカーとタスクマーカーを検出
         const listMarkerMatch = beforeCursor.match(/^(\s*)([-+*]|\d+[.)])\s$/);
         const taskMarkerMatch = beforeCursor.match(/^(\s*)([-+*]|\d+[.)])\s+\[[ xX]\]\s$/);
         const listContentMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+(.+)$/);
         const taskContentMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+\[[ xX]\]\s+(.+)$/);
         const hasContent = (listContentMatch && listContentMatch[3].trim().length > 0) ||
           (taskContentMatch && taskContentMatch[3].trim().length > 0);
+        // Create nested list item when space pressed at end of line with content
+        // 内容のある行の末尾でスペースを押すとネストされたリスト項目を作成
         if (hasContent && (listMarkerMatch || taskMarkerMatch) && cursor.ch === lineText.length) {
           change.cancel();
           const indent = (listMarkerMatch ? listMarkerMatch[1] : taskMarkerMatch[1]) + "  ";
@@ -234,6 +256,10 @@ function initEvents() {
         }
       }
 
+      /**
+       * Auto-pair asterisks for bold formatting
+       * 太字フォーマット用にアスタリスクを自動ペア化
+       */
       if (change.origin === "+input" && change.text[0] === "*") {
         const cursor = cmInstance.getCursor();
         const line = cmInstance.getLine(cursor.line);
@@ -415,6 +441,8 @@ function initEvents() {
       lastCheckboxToggleAt = lastTypingAt;
       suppressMarkersUntil = Date.now() + 800;
 
+      // Find the task checkbox in the line and toggle its state
+      // 行内のタスクチェックボックスを見つけて状態を切り替える
       const pos = cmInstance.coordsChar({ left: event.clientX, top: event.clientY }, "window");
       const line = pos.line;
       const text = cmInstance.getLine(line) || "";
@@ -438,6 +466,12 @@ function initEvents() {
       }
     });
 
+    /**
+     * Tab key handler for list indentation
+     * Tab: indent list item, Shift+Tab: unindent list item
+     * リストのインデント用Tabキーハンドラ
+     * Tab：リスト項目をインデント、Shift+Tab：リスト項目をアンインデント
+     */
     cm.on("keydown", function (cmInstance, event) {
       if (event.key !== "Tab") return;
 
@@ -454,6 +488,7 @@ function initEvents() {
       const indentUnit = "    ";
 
       if (event.shiftKey) {
+        // Shift+Tab: remove one level of indentation / Shift+Tab：1レベルのインデントを削除
         if (text.startsWith(indentUnit)) {
           const next = text.slice(indentUnit.length);
           cmInstance.replaceRange(next, { line, ch: 0 }, { line, ch: text.length });
@@ -461,7 +496,9 @@ function initEvents() {
           cmInstance.setCursor({ line, ch });
         }
       } else {
+        // Tab: add one level of indentation / Tab：1レベルのインデントを追加
         let next = indentUnit + text;
+        // Reset numbered lists to 1 when indenting / インデント時に番号付きリストを1にリセット
         if (/^\d+[.)]$/.test(listMatch[2])) {
           next = next.replace(/^(\s*)\d+[.)]\s+/, "$11. ");
         }
@@ -470,16 +507,25 @@ function initEvents() {
       }
     });
 
+    /**
+     * Calculate next number for ordered lists at specific indentation level
+     * Scans upward to find the last number at the same indent level
+     * 特定のインデントレベルでの順序付きリストの次の番号を計算
+     * 同じインデントレベルの最後の番号を見つけるために上方向にスキャン
+     */
     const getNextNumberAtIndent = (cmInstance, startLine, targetIndentLen) => {
       for (let i = startLine; i >= 0; i--) {
         const text = cmInstance.getLine(i) || "";
         const match = text.match(/^(\s*)(\d+)([.)])\s+/);
+
         if (!match) continue;
+
         const indentLen = (match[1] || "").replace(/\t/g, "    ").length;
         if (indentLen === targetIndentLen) {
           const num = parseInt(match[2], 10);
           if (Number.isFinite(num)) return num + 1;
         }
+
         if (indentLen < targetIndentLen) {
           return 1;
         }
@@ -494,12 +540,19 @@ function initEvents() {
 
     mergedExtraKeys["Ctrl-S"] = function () { saveFile(false); };
     mergedExtraKeys["Cmd-S"] = function () { saveFile(false); };
+    /**
+     * Smart Enter key handler for lists
+     * Handles numbered lists, task lists, and nested indentation
+     * リスト用のスマートEnterキーハンドラ
+     * 番号付きリスト、タスクリスト、ネストされたインデントを処理
+     */
     mergedExtraKeys["Enter"] = function (cmInstance) {
       const cursor = cmInstance.getCursor();
       if (isLineInFence(cursor.line)) {
         return cmInstance.execCommand("newlineAndIndent");
       }
       const lineText = cmInstance.getLine(cursor.line) || "";
+      // Handle numbered lists / 番号付きリストを処理
       const numberedMatch = lineText.match(/^(\s*)(\d+[.)])\s*(.*)$/);
       if (numberedMatch) {
         const indent = numberedMatch[1] || "";
@@ -507,6 +560,7 @@ function initEvents() {
         const markerRaw = numberedMatch[2] || "1.";
         const markerSuffix = markerRaw.includes(")") ? ")" : ".";
         const indentLen = indent.replace(/\t/g, "    ").length;
+        // Empty list item with indent: unindent one level / インデント付きの空のリスト項目：1レベルアンインデント
         if (rest.length === 0 && indent.length >= 4) {
           const nextIndent = indent.slice(0, Math.max(0, indent.length - 4));
           const nextIndentLen = Math.max(0, indentLen - 4);
@@ -516,12 +570,14 @@ function initEvents() {
           cmInstance.setCursor({ line: cursor.line, ch: replacement.length });
           return;
         }
+        // List item with content: create new numbered item / 内容のあるリスト項目：新しい番号付き項目を作成
         if (rest.length > 0) {
           const nextNumber = getNextNumberAtIndent(cmInstance, cursor.line, indentLen);
           cmInstance.replaceSelection(`\n${indent}${nextNumber}${markerSuffix} `);
           return;
         }
       }
+      // Handle task lists / タスクリストを処理
       const taskMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]\s*(.*)$/);
       if (taskMatch) {
         const indent = taskMatch[1];
@@ -533,6 +589,7 @@ function initEvents() {
         cmInstance.replaceSelection("\n" + indent + marker + " [ ] ");
         return;
       }
+      // Default: use CodeMirror's built-in list continuation / デフォルト：CodeMirrorの組み込みリスト継続を使用
       try {
         return cmInstance.execCommand("newlineAndIndentContinueMarkdownList");
       } catch (e) {
@@ -638,10 +695,6 @@ function initEvents() {
       }
       updateEditor();
       queueRenderUpdate();
-      if (pendingEdit && pendingEdit === msg.fileName) {
-        pendingEdit = null;
-        startEdit();
-      }
     } else if (msg.command === 'newNote') {
       currentFile = msg.fileName;
       fileContent = msg.content || '';
