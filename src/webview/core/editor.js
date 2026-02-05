@@ -1,3 +1,16 @@
+document.addEventListener('mousedown', (e) => {
+  // Only hide if click is outside any visible context menu
+  const openMenus = document.querySelectorAll('.context_menu.visible');
+  if (openMenus.length) {
+    let inside = false;
+    openMenus.forEach(menu => {
+      if (menu.contains(e.target)) inside = true;
+    });
+    if (!inside) hideAllContextMenus();
+  }
+});
+
+window.addEventListener('scroll', hideAllContextMenus, { passive: true });
 function initEditor() {
   const editorElement = document.getElementById('editor');
   const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || '');
@@ -35,24 +48,24 @@ function initEditor() {
   editorTitleInput = document.getElementById('editorTitleInput');
 
   if (editorTitleInput) {
-    editorTitleInput.addEventListener('click', () => startTitleEditing());
+    editorTitleInput.addEventListener('click', () => startEdit());
     editorTitleInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        finishTitleEditing(true);
+        finishEdit(true);
       } else if (event.key === 'Escape') {
-        finishTitleEditing(false);
+        finishEdit(false);
       }
     });
     editorTitleInput.addEventListener('input', () => {
-      if (typeof window.resizeTitleInput === 'function') {
-        window.resizeTitleInput();
+      if (typeof window.resizeTitle === 'function') {
+        window.resizeTitle();
       }
     });
-    editorTitleInput.addEventListener('blur', () => finishTitleEditing(true));
+    editorTitleInput.addEventListener('blur', () => finishEdit(true));
   }
 
-  updateEditorTitle();
+  updateTitle();
 
   setMarkdownMode();
 
@@ -65,9 +78,11 @@ function initEditor() {
 
   loadCodeMirrorModes();
 
-  initEditorContextMenu();
+  initCtxMenu();
 
   const header = document.querySelector('.editor-header');
+  const editorArea = document.querySelector('.editor_area');
+  const editorContainer = document.querySelector('.editor_container');
   const scroller = cm.getScrollerElement ? cm.getScrollerElement() : null;
   if (header && scroller) {
     let isHidden = false;
@@ -117,6 +132,18 @@ function initEditor() {
 
   if (scroller) {
     scroller.addEventListener('scroll', () => {
+      updateCopyButtons();
+    }, { passive: true });
+  }
+
+  if (editorArea) {
+    editorArea.addEventListener('scroll', () => {
+      updateCopyButtons();
+    }, { passive: true });
+  }
+
+  if (editorContainer) {
+    editorContainer.addEventListener('scroll', () => {
       updateCopyButtons();
     }, { passive: true });
   }
@@ -177,7 +204,7 @@ function loadCodeMirrorModes() {
   const markLoaded = (src) => {
     const match = src.match(/\/mode\/([^/]+)\/\1\.js$/);
     if (match && match[1]) {
-      loadedCodeMirrorModes.add(match[1]);
+      loadedModes.add(match[1]);
     }
   };
 
@@ -188,13 +215,13 @@ function loadCodeMirrorModes() {
 
   chain.then(() => {
     setMarkdownMode();
-    queueFenceModeUpdate();
+    queueFence();
   }).catch(() => {
     window._bunnoteCmModesLoaded = false;
   });
 }
 
-const loadedCodeMirrorModes = new Set();
+const loadedModes = new Set();
 let fenceModeTimer = null;
 
 function setMarkdownMode() {
@@ -224,7 +251,7 @@ function normalizeFenceLang(lang) {
   return String(lang).trim().toLowerCase();
 }
 
-function collectFenceLanguages(text) {
+function getFenceLangs(text) {
   const langs = new Set();
   if (!text) return langs;
   const regex = /^\s*[`~]{3,}\s*([^\s`~]+)?/gm;
@@ -246,20 +273,20 @@ function loadModeForFence(lang) {
     || (aliasMime ? CodeMirror.findModeByMIME(aliasMime) : null)
     || CodeMirror.findModeByMIME(lang);
   if (!info || !info.mode) return Promise.resolve(false);
-  if (loadedCodeMirrorModes.has(info.mode)) return Promise.resolve(false);
+  if (loadedModes.has(info.mode)) return Promise.resolve(false);
   const src = `https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/${info.mode}/${info.mode}.js`;
   return loadScriptOnce(src).then(() => {
-    loadedCodeMirrorModes.add(info.mode);
+    loadedModes.add(info.mode);
     return true;
   }).catch(() => false);
 }
 
-function queueFenceModeUpdate() {
+function queueFence() {
   if (!cm) return;
   if (fenceModeTimer) return;
   fenceModeTimer = setTimeout(() => {
     fenceModeTimer = null;
-    const langs = collectFenceLanguages(cm.getValue());
+    const langs = getFenceLangs(cm.getValue());
     if (!langs.size) return;
     let updated = false;
     let chain = Promise.resolve();
@@ -277,7 +304,7 @@ function queueFenceModeUpdate() {
   }, 150);
 }
 
-function initEditorContextMenu() {
+function initCtxMenu() {
   const menu = document.getElementById('editorContextMenu');
   if (!menu || !cm) return;
 
@@ -290,8 +317,8 @@ function initEditorContextMenu() {
     menu.classList.add('visible');
     menu.setAttribute('aria-hidden', 'false');
 
-    editorContextSelections = cm.listSelections();
-    const hasSelection = editorContextSelections.some(sel =>
+    ctxSelections = cm.listSelections();
+    const hasSelection = ctxSelections.some(sel =>
       sel.anchor.line !== sel.head.line || sel.anchor.ch !== sel.head.ch
     );
 
@@ -329,7 +356,7 @@ function initEditorContextMenu() {
     if (!btn) return;
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      restoreEditorSelection();
+      restoreSelection();
       handler();
       hideAllContextMenus();
     });
@@ -373,12 +400,12 @@ function showContextMenu(menu, event) {
   menu.style.top = `${Math.max(8, top)}px`;
 }
 
-let editorContextSelections = null;
+let ctxSelections = null;
 
-function restoreEditorSelection() {
-  if (!cm || !editorContextSelections || !editorContextSelections.length) return;
+function restoreSelection() {
+  if (!cm || !ctxSelections || !ctxSelections.length) return;
   try {
-    cm.setSelections(editorContextSelections);
+    cm.setSelections(ctxSelections);
   } catch (e) {
   }
 }
@@ -518,7 +545,7 @@ function recordListMark(lineIndex, mark) {
   marks.push(mark);
 }
 
-function clearListMarkersForLine(lineIndex) {
+function clearMarkers(lineIndex) {
   if (!listMarkerMarks) return;
   const marks = listMarkerMarks.get(lineIndex);
   if (!marks) return;
@@ -528,10 +555,10 @@ function clearListMarkersForLine(lineIndex) {
   listMarkerMarks.delete(lineIndex);
 }
 
-function applyListMarkersForLine(lineIndex) {
+function applyMarkers(lineIndex) {
   if (!cm) return;
   const text = cm.getLine(lineIndex) || "";
-  clearListMarkersForLine(lineIndex);
+  clearMarkers(lineIndex);
 
   const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
   const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
@@ -598,7 +625,7 @@ function refreshListMarks(lineIndex) {
   const text = cm.getLine(lineIndex) || "";
   const isList = /^\s*([-+*](?!-)|\d+[.)])\s+/.test(text);
   if (!isList) {
-    clearListMarkersForLine(lineIndex);
+    clearMarkers(lineIndex);
     return;
   }
 
@@ -606,7 +633,7 @@ function refreshListMarks(lineIndex) {
   const isActive = cursor && cursor.line === lineIndex;
 
   if (!isActive) {
-    applyListMarkersForLine(lineIndex);
+    applyMarkers(lineIndex);
     return;
   }
 
@@ -634,7 +661,7 @@ function refreshListMarks(lineIndex) {
     return;
   }
 
-  applyListMarkersForLine(lineIndex);
+  applyMarkers(lineIndex);
 }
 
 function updateListLineFlag(lineIndex) {
@@ -649,7 +676,7 @@ function updateListLineFlag(lineIndex) {
   }
 }
 
-function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
+function hideFormat(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
 
@@ -756,7 +783,7 @@ function isRemoteImageUrl(url) {
   return /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(url);
 }
 
-function scheduleImageMarksUpdate(fromLine, toLine) {
+function scheduleImages(fromLine, toLine) {
   if (!cm) return;
   const maxLine = cm.lineCount() - 1;
   const start = Math.max(0, typeof fromLine === 'number' ? fromLine : 0);
@@ -783,7 +810,7 @@ function scheduleImageMarksUpdate(fromLine, toLine) {
 function revealImageMarkdown(lineIndex, start, end) {
   if (!cm || typeof lineIndex !== 'number') return;
   revealedImageLine = lineIndex;
-  clearImageMarksForLine(lineIndex);
+  clearImgMarks(lineIndex);
   try {
     if (typeof start === 'number' && typeof end === 'number' && end > start) {
       cm.setSelection({ line: lineIndex, ch: start }, { line: lineIndex, ch: end });
@@ -794,17 +821,17 @@ function revealImageMarkdown(lineIndex, start, end) {
   try { updateHiddenSyntax(false); } catch (e) { }
 }
 
-function clearRevealedImageLine() {
+function clearRevealed() {
   if (!cm) return;
   if (revealedImageLine === null) return;
   const cursor = cm.getCursor();
   if (!cursor || cursor.line === revealedImageLine) return;
   const lineToRestore = revealedImageLine;
   revealedImageLine = null;
-  scheduleImageMarksUpdate(lineToRestore, lineToRestore);
+  scheduleImages(lineToRestore, lineToRestore);
 }
 
-function clearImageMarksForLine(lineIndex) {
+function clearImgMarks(lineIndex) {
   const marks = imageLineMarks.get(lineIndex);
   if (marks && marks.length) {
     marks.forEach(m => {
@@ -879,7 +906,7 @@ function updateImageMarks(fromLine = 0, toLine = null) {
       continue;
     }
 
-    clearImageMarksForLine(i);
+    clearImgMarks(i);
 
     if (revealedImageLine === i || activeLine === i) {
       imageLineCache.set(i, text);
@@ -913,7 +940,7 @@ function updateImageMarks(fromLine = 0, toLine = null) {
       img.src = token.url;
       if (!isRemoteImageUrl(token.url)) {
         img.dataset.pendingSrc = token.url;
-        requestResolvedImage(token.url, img);
+        resolveImg(token.url, img);
       }
 
       wrapper.appendChild(img);
@@ -957,7 +984,7 @@ function markCodeBlockDirty() {
   scheduleCopyButtons();
 }
 
-function requestResolvedImage(url, img) {
+function resolveImg(url, img) {
   if (!img || typeof vscode === 'undefined' || !vscode || !vscode.postMessage) {
     return;
   }
@@ -987,7 +1014,7 @@ function renderImageSyntax(text, lineIndex, ignoreRanges = []) {
   return getImageRanges(text, ignoreRanges);
 }
 
-function hideInlineCodeSyntax(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
+function hideCode(text, lineIndex, ignoreRanges = [], className = 'cm-hidden-syntax') {
   const overlapsIgnore = (start, end) =>
     ignoreRanges.some(r => start < r.end && end > r.start);
 
@@ -1029,7 +1056,7 @@ function hideInlineCodeSyntax(text, lineIndex, ignoreRanges = [], className = 'c
   }
 }
 
-function getInlineMarkerRanges(text, cursorCh) {
+function getMarkerRanges(text, cursorCh) {
   const ranges = [];
   const addRange = (start, end) => {
     if (typeof start !== 'number' || typeof end !== 'number') return;
@@ -1170,8 +1197,8 @@ function updateHiddenSyntax(includeActiveInline = false) {
     let listIgnoreRanges = [];
     const isCursorNearRange = (start, end) => cursor.ch >= start - 1 && cursor.ch <= end;
     const now = Date.now();
-    const isTyping = i === cursor.line && (now - lastTypingAt < typingGraceMs || now - lastCheckboxToggleAt < checkboxGraceMs);
-    const suppressMarkers = i === cursor.line && now < suppressMarkersUntil;
+    const isTyping = i === cursor.line && (now - lastTypingAt < typingGraceMs || now - lastCheckbox < checkboxGraceMs);
+    const suppressMarkers = i === cursor.line && now < suppressUntil;
 
     const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
     if (fenceMatch) {
@@ -1279,13 +1306,13 @@ function updateHiddenSyntax(includeActiveInline = false) {
           ));
           listIgnoreRanges = [{ start, end: start + markerText.length }];
         }
-        hideInlineFormatting(text, i, listIgnoreRanges, 'cm-hidden-syntax-inline');
+        hideFormat(text, i, listIgnoreRanges, 'cm-hidden-syntax-inline');
       };
 
       if (!isActive) {
         applyListHiding();
       } else {
-        const recentCheckboxToggle = isTask && (now - lastCheckboxToggleAt < checkboxGraceMs);
+        const recentCheckboxToggle = isTask && (now - lastCheckbox < checkboxGraceMs);
         if (suppressMarkers || recentCheckboxToggle || (isTask && isTyping)) {
           applyListHiding();
         } else {
@@ -1316,6 +1343,9 @@ function updateHiddenSyntax(includeActiveInline = false) {
       const end = start + heading[2].length + (heading[3] ? heading[3].length : 0);
       if (i !== cursor.line) {
         hiddenMarks.push(cm.markText({ line: i, ch: start }, { line: i, ch: end }, { className: 'cm-hidden-syntax' }));
+        hideFormat(text, i, [], 'cm-hidden-syntax-inline');
+        hideLinkSyntax(text, i, [], 'cm-hidden-syntax-inline');
+        hideCode(text, i, [], 'cm-hidden-syntax-inline');
         continue;
       }
       continue;
@@ -1337,11 +1367,11 @@ function updateHiddenSyntax(includeActiveInline = false) {
       if (isTyping || suppressMarkers) {
         continue;
       }
-      const inlineVisibleRanges = getInlineMarkerRanges(text, cursor.ch);
+      const inlineVisibleRanges = getMarkerRanges(text, cursor.ch);
       const combinedIgnoreRanges = listIgnoreRanges.concat(inlineVisibleRanges);
-      hideInlineFormatting(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
+      hideFormat(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
       hideLinkSyntax(text, i, inlineVisibleRanges, 'cm-hidden-syntax-inline');
-      hideInlineCodeSyntax(text, i, inlineVisibleRanges, 'cm-hidden-syntax-inline');
+      hideCode(text, i, inlineVisibleRanges, 'cm-hidden-syntax-inline');
       continue;
     }
 
@@ -1352,9 +1382,9 @@ function updateHiddenSyntax(includeActiveInline = false) {
       if (i !== cursor.line) {
         hiddenMarks.push(cm.markText({ line: i, ch: start }, { line: i, ch: end }, { className: 'cm-hidden-syntax' }));
         const imageRanges = renderImageSyntax(text, i, []);
-        hideInlineFormatting(text, i, imageRanges, 'cm-hidden-syntax-inline');
+        hideFormat(text, i, imageRanges, 'cm-hidden-syntax-inline');
         hideLinkSyntax(text, i, imageRanges, 'cm-hidden-syntax-inline');
-        hideInlineCodeSyntax(text, i, imageRanges, 'cm-hidden-syntax-inline');
+        hideCode(text, i, imageRanges, 'cm-hidden-syntax-inline');
         continue;
       }
       if (!isCursorNearRange(start, end)) {
@@ -1378,15 +1408,15 @@ function updateHiddenSyntax(includeActiveInline = false) {
 
     const imageRanges = renderImageSyntax(text, i, listIgnoreRanges);
     const combinedIgnoreRanges = listIgnoreRanges.concat(imageRanges);
-    hideInlineFormatting(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
+    hideFormat(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
     hideLinkSyntax(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
-    hideInlineCodeSyntax(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
+    hideCode(text, i, combinedIgnoreRanges, 'cm-hidden-syntax-inline');
   }
 
   if (includeActiveInline) {
     const activeText = cm.getLine(cursor.line) || "";
-    hideInlineFormatting(activeText, cursor.line);
-    hideInlineCodeSyntax(activeText, cursor.line);
+    hideFormat(activeText, cursor.line);
+    hideCode(activeText, cursor.line);
   }
 }
 
@@ -1416,7 +1446,7 @@ function addCodeCopyButtons() {
         codeBlockStart = i;
         fenceChar = fence;
       } else if (fenceChar === fence) {
-        addCopyButtonToBlock(codeBlockStart, i);
+        addCopyBtn(codeBlockStart, i);
         inCodeBlock = false;
         codeBlockStart = -1;
         fenceChar = null;
@@ -1425,7 +1455,7 @@ function addCodeCopyButtons() {
   }
 }
 
-function addCopyButtonToBlock(startLine, endLine) {
+function addCopyBtn(startLine, endLine) {
   if (!cm) return;
 
   const wrapper = cm.getWrapperElement();
