@@ -186,6 +186,10 @@ class ViewProvider {
     this.setupFileWatcher();
   }
 
+  /**
+   * Recursively scan vault directory for markdown and image files
+   * vaultディレクトリを再帰的にスキャンしてマークダウンと画像ファイルを取得
+   */
   async getMarkdownFiles() {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -194,12 +198,15 @@ class ViewProvider {
 
     const files = [];
     const folders = [];
+    // Yield to event loop periodically to prevent blocking UI
+    // UIをブロックしないように定期的にイベントループに制御を戻す
     const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
     const walkDir = async (dir) => {
       try {
         const items = await fs.promises.readdir(dir, { withFileTypes: true });
         for (const item of items) {
+          // Skip hidden files / 隠しファイルをスキップ
           if (item.name.startsWith(".")) {
             continue;
           }
@@ -208,6 +215,7 @@ class ViewProvider {
           if (item.isDirectory()) {
             const relativePath = path.relative(vaultPath, fullPath).split(path.sep).join("/");
             folders.push(relativePath);
+            // Yield every 200 items to keep UI responsive / 200項目ごとに制御を戻してUIの応答性を維持
             if (folders.length % 200 === 0) {
               await yieldToEventLoop();
             }
@@ -241,6 +249,7 @@ class ViewProvider {
       folders: folders.sort((a, b) => a.localeCompare(b))
     };
 
+    // Cache results for faster subsequent loads / 次回の読み込みを高速化するために結果をキャッシュ
     this.cache = {
       vaultPath,
       ...result,
@@ -276,6 +285,10 @@ class ViewProvider {
     view.webview.onDidReceiveMessage(async (msg) => {
       const vaultPath = this.getVaultPath();
 
+      /**
+       * Handle file rename with validation and editor tab management
+       * ファイル名変更を検証とエディタタブ管理で処理
+       */
       const performRename = async (safeOldName, safeNewName, source) => {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -291,6 +304,7 @@ class ViewProvider {
         const oldPath = path.join(vaultPath, safeOldName);
         const newPath = path.join(vaultPath, safeNewName);
 
+        // No-op if names are identical / 名前が同じ場合は何もしない
         if (safeOldName === safeNewName) {
           view.webview.postMessage({ command: "renameResult", success: true, oldName: safeOldName, newName: safeNewName, source });
           return;
@@ -315,6 +329,7 @@ class ViewProvider {
           const oldUri = vscode.Uri.file(oldPath);
           const newUri = vscode.Uri.file(newPath);
 
+          // Find and close all editor tabs with the old file / 古いファイルを開いているエディタタブを検索して閉じる
           const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs);
           const mainEditorTabs = tabs.filter(tab => {
             if (tab.input instanceof vscode.TabInputCustom) {
@@ -326,6 +341,7 @@ class ViewProvider {
           fs.renameSync(oldPath, newPath);
           vscode.window.showInformationMessage("Note renamed to: " + safeNewName);
 
+          // Close old tabs and reopen with new name / 古いタブを閉じて新しい名前で再度開く
           for (const tab of mainEditorTabs) {
             await vscode.window.tabGroups.close(tab);
           }
