@@ -48,7 +48,20 @@
 </head>
 
 <body class="loading" data-editor-mode="{{EDITOR_MODE}}" data-marker-color="{{MARKER_COLOR_MODE}}"
+    data-locale="{{LOCALE}}"
     style="--bunnote-editor-font-size: {{EDITOR_FONT_SIZE}}px;">
+    <script>
+        // Initialize translations
+        window.BUNNOTE_TRANSLATIONS = {{TRANSLATIONS}};
+        window.BUNNOTE_LOCALE = "{{LOCALE}}";
+        window.t = function(key, ...args) {
+            let text = window.BUNNOTE_TRANSLATIONS[key] || key;
+            args.forEach((arg, index) => {
+                text = text.replace(`{${index}}`, arg);
+            });
+            return text;
+        };
+    </script>
     <div class="loading_overlay" id="appLoading" aria-label="Loading">
         <div class="loading_spinner" role="status" aria-live="polite"></div>
     </div>
@@ -59,98 +72,106 @@
             <div class="editor_header">
                 <div class="editor_title_wrapper">
                     <textarea class="editor_title_input" id="editorTitleInput" rows="1" autocomplete="off"
-                        placeholder="Untitled"></textarea>
+                        placeholder=""></textarea>
                 </div>
             </div>
             <div class="editor_container">
                 <textarea class="markdown_editor" id="editor"></textarea>
             </div>
+            <div class="editor_stats" id="editorStats">
+                <span class="editor_stats_item">
+                    <span id="wordCount">0</span> <span id="wordsLabel"></span>
+                </span>
+                <span class="editor_stats_item">
+                    <span id="charCount">0</span> <span id="charactersLabel"></span>
+                </span>
+            </div>
         </div>
     </div>
 
     <div class="context_menu" id="fileContextMenu" role="menu" aria-hidden="true">
-        <button class="context_menu_item" id="openInEditorAction" role="menuitem">
+        <button class="context_menu_item" id="openInEditorAction" role="menuitem" data-i18n="contextMenu.openInEditor">
             <i class="ph ph-arrow-square-out"></i>
-            Open in editor
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item" id="editTitleAction" role="menuitem">
+        <button class="context_menu_item" id="editTitleAction" role="menuitem" data-i18n="contextMenu.editTitle">
             <i class="ph ph-pencil-simple"></i>
-            Edit title
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="duplicateFileAction" role="menuitem">
+        <button class="context_menu_item" id="duplicateFileAction" role="menuitem" data-i18n="contextMenu.duplicateNote">
             <i class="ph ph-copy"></i>
-            Duplicate note
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item destructive" id="deleteFileAction" role="menuitem">
+        <button class="context_menu_item destructive" id="deleteFileAction" role="menuitem" data-i18n="contextMenu.deleteNote">
             <i class="ph ph-trash"></i>
-            Delete note
+            <span class="menu-text"></span>
         </button>
     </div>
 
     <div class="context_menu" id="folderContextMenu" role="menu" aria-hidden="true">
-        <button class="context_menu_item" id="createSubfolderAction" role="menuitem">
+        <button class="context_menu_item" id="createSubfolderAction" role="menuitem" data-i18n="contextMenu.newFolder">
             <i class="ph ph-folder-plus"></i>
-            New folder
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item" id="renameFolderAction" role="menuitem">
+        <button class="context_menu_item" id="renameFolderAction" role="menuitem" data-i18n="contextMenu.renameFolder">
             <i class="ph ph-pencil-simple"></i>
-            Rename folder
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item destructive" id="deleteFolderAction" role="menuitem">
+        <button class="context_menu_item destructive" id="deleteFolderAction" role="menuitem" data-i18n="contextMenu.deleteFolder">
             <i class="ph ph-trash"></i>
-            Delete folder
+            <span class="menu-text"></span>
         </button>
     </div>
 
     <div class="context_menu" id="listContextMenu" role="menu" aria-hidden="true">
-        <button class="context_menu_item" id="createFolderAction" role="menuitem">
+        <button class="context_menu_item" id="createFolderAction" role="menuitem" data-i18n="contextMenu.newFolder">
             <i class="ph ph-folder-plus"></i>
-            New folder
+            <span class="menu-text"></span>
         </button>
     </div>
 
     <div class="context_menu" id="editorContextMenu" role="menu" aria-hidden="true">
-        <button class="context_menu_item" id="editorBoldAction" role="menuitem">
+        <button class="context_menu_item" id="editorBoldAction" role="menuitem" data-i18n="contextMenu.bold">
             <i class="ph ph-text-bolder"></i>
-            Bold
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorItalicAction" role="menuitem">
+        <button class="context_menu_item" id="editorItalicAction" role="menuitem" data-i18n="contextMenu.italic">
             <i class="ph ph-text-italic"></i>
-            Italic
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorStrikeAction" role="menuitem">
+        <button class="context_menu_item" id="editorStrikeAction" role="menuitem" data-i18n="contextMenu.strikethrough">
             <i class="ph ph-text-strikethrough"></i>
-            Strikethrough
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item" id="editorBulletListAction" role="menuitem">
+        <button class="context_menu_item" id="editorBulletListAction" role="menuitem" data-i18n="contextMenu.bulletList">
             <i class="ph ph-list-bullets"></i>
-            Bulleted list
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorNumberListAction" role="menuitem">
+        <button class="context_menu_item" id="editorNumberListAction" role="menuitem" data-i18n="contextMenu.numberList">
             <i class="ph ph-list-numbers"></i>
-            Numbered list
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorTaskListAction" role="menuitem">
+        <button class="context_menu_item" id="editorTaskListAction" role="menuitem" data-i18n="contextMenu.taskList">
             <i class="ph ph-check-square"></i>
-            Task list
+            <span class="menu-text"></span>
         </button>
         <div class="context_menu_separator" role="separator"></div>
-        <button class="context_menu_item" id="editorQuoteAction" role="menuitem">
+        <button class="context_menu_item" id="editorQuoteAction" role="menuitem" data-i18n="contextMenu.blockquote">
             <i class="ph ph-quotes"></i>
-            Blockquote
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorCodeBlockAction" role="menuitem">
+        <button class="context_menu_item" id="editorCodeBlockAction" role="menuitem" data-i18n="contextMenu.codeBlock">
             <i class="ph ph-code-block"></i>
-            Code block
+            <span class="menu-text"></span>
         </button>
-        <button class="context_menu_item" id="editorInlineCodeAction" role="menuitem">
+        <button class="context_menu_item" id="editorInlineCodeAction" role="menuitem" data-i18n="contextMenu.inlineCode">
             <i class="ph ph-code"></i>
-            Inline code
+            <span class="menu-text"></span>
         </button>
     </div>
 
@@ -159,6 +180,31 @@
     <script src="{{EDITOR_URI}}"></script>
     <script src="{{EVENTS_URI}}"></script>
     <script src="{{MAIN_URI}}"></script>
+    <script>
+        // Apply translations to UI elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Translate context menu items
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const textSpan = el.querySelector('.menu-text');
+                if (textSpan) {
+                    textSpan.textContent = window.t(key);
+                }
+            });
+            
+            // Translate editor placeholders
+            const titleInput = document.getElementById('editorTitleInput');
+            if (titleInput) {
+                titleInput.placeholder = window.t('editor.untitled');
+            }
+            
+            // Translate stats labels
+            const wordsLabel = document.getElementById('wordsLabel');
+            const charactersLabel = document.getElementById('charactersLabel');
+            if (wordsLabel) wordsLabel.textContent = window.t('editor.words');
+            if (charactersLabel) charactersLabel.textContent = window.t('editor.characters');
+        });
+    </script>
 </body>
 
 </html>

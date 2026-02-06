@@ -1,7 +1,7 @@
 {
   "name": "bunnote",
-  "displayName": "BunNote",
-  "description": "Write and manage notes directly from VS Code with full markdown support",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "version": "1.0.5",
   "publisher": "elharis",
   "repository": {
@@ -41,7 +41,7 @@
       "activitybar": [
         {
           "id": "bunNote",
-          "title": "BunNote",
+          "title": "%viewsContainers.bunNote.title%",
           "icon": "media/icon.svg"
         }
       ]
@@ -50,12 +50,12 @@
       "bunNote": [
         {
           "id": "bunNoteVault",
-          "name": "Vault",
+          "name": "%views.bunNoteVault.name%",
           "icon": "media/icon.png"
         },
         {
           "id": "bunNoteEditor",
-          "name": "Editor",
+          "name": "%views.bunNoteEditor.name%",
           "type": "webview",
           "icon": "media/icon.png"
         }
@@ -64,61 +64,61 @@
     "commands": [
       {
         "command": "bunnote.setVault",
-        "title": "BunNote: Set Vault Folder",
+        "title": "%commands.setVault.title%",
         "icon": "$(gear)"
       },
       {
         "command": "bunnote.createNote",
-        "title": "BunNote: Create New Note",
-        "icon": "$(add)"
+        "title": "%commands.createNote.title%",
+        "icon": "$(new-file)"
       },
       {
         "command": "bunnote.createFolder",
-        "title": "BunNote: Create New Folder",
+        "title": "%commands.createFolder.title%",
         "icon": "$(new-folder)"
       },
       {
         "command": "bunnote.openFile",
-        "title": "BunNote: Open Note"
+        "title": "%commands.openFile.title%"
       },
       {
         "command": "bunnote.openInMainEditor",
-        "title": "BunNote: Open in Main Editor",
+        "title": "%commands.openInMainEditor.title%",
         "icon": "$(go-to-file)"
       },
       {
         "command": "bunnote.renameFile",
-        "title": "BunNote: Rename File",
+        "title": "%commands.renameFile.title%",
         "icon": "$(edit)"
       },
       {
         "command": "bunnote.deleteFile",
-        "title": "BunNote: Delete File",
+        "title": "%commands.deleteFile.title%",
         "icon": "$(trash)"
       },
       {
         "command": "bunnote.renameFolder",
-        "title": "BunNote: Rename Folder",
+        "title": "%commands.renameFolder.title%",
         "icon": "$(edit)"
       },
       {
         "command": "bunnote.deleteFolder",
-        "title": "BunNote: Delete Folder",
+        "title": "%commands.deleteFolder.title%",
         "icon": "$(trash)"
       },
       {
         "command": "bunnote.refreshFiles",
-        "title": "BunNote: Refresh Files",
+        "title": "%commands.refreshFiles.title%",
         "icon": "$(refresh)"
       },
       {
         "command": "bunnote.openSettings",
-        "title": "BunNote: Open Settings",
+        "title": "%commands.openSettings.title%",
         "icon": "$(settings-gear)"
       },
       {
         "command": "bunnote.openInEditor",
-        "title": "Open in Editor"
+        "title": "%commands.openInEditor.title%"
       }
     ],
     "menus": {
@@ -131,24 +131,24 @@
       ],
       "view/title": [
         {
-          "command": "bunnote.createFolder",
-          "when": "view == bunNoteVault",
-          "group": "navigation"
-        },
-        {
           "command": "bunnote.createNote",
           "when": "view == bunNoteVault",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "bunnote.createFolder",
+          "when": "view == bunNoteVault",
+          "group": "navigation@2"
         },
         {
           "command": "bunnote.refreshFiles",
           "when": "view == bunNoteVault",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "bunnote.openSettings",
           "when": "view == bunNoteVault",
-          "group": "navigation"
+          "group": "navigation@4"
         }
       ],
       "editor/title/context": [
@@ -160,6 +160,16 @@
       ],
       "view/item/context": [
         {
+          "command": "bunnote.createNote",
+          "when": "view == bunNoteVault && viewItem == bunnoteFolder",
+          "group": "1_create@1"
+        },
+        {
+          "command": "bunnote.createFolder",
+          "when": "view == bunNoteVault && viewItem == bunnoteFolder",
+          "group": "1_create@2"
+        },
+        {
           "command": "bunnote.openInMainEditor",
           "when": "view == bunNoteVault && viewItem == bunnoteFile",
           "group": "inline"
@@ -167,29 +177,29 @@
         {
           "command": "bunnote.renameFile",
           "when": "view == bunNoteVault && viewItem == bunnoteFile",
-          "group": "navigation"
+          "group": "2_modify@1"
         },
         {
           "command": "bunnote.deleteFile",
           "when": "view == bunNoteVault && viewItem == bunnoteFile",
-          "group": "navigation"
+          "group": "3_delete@1"
         },
         {
           "command": "bunnote.renameFolder",
           "when": "view == bunNoteVault && viewItem == bunnoteFolder",
-          "group": "navigation"
+          "group": "2_modify@1"
         },
         {
           "command": "bunnote.deleteFolder",
           "when": "view == bunNoteVault && viewItem == bunnoteFolder",
-          "group": "navigation"
+          "group": "3_delete@1"
         }
       ]
     },
     "customEditors": [
       {
         "viewType": "bunnote.markdownEditor",
-        "displayName": "BunNote Markdown Editor",
+        "displayName": "%customEditors.markdownEditor.displayName%",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -199,34 +209,34 @@
       }
     ],
     "configuration": {
-      "title": "BunNote",
+      "title": "%configuration.title%",
       "properties": {
         "bunnote.vaultPath": {
           "type": "string",
           "default": "",
-          "description": "Path to your BunNote vault folder"
+          "description": "%configuration.vaultPath.description%"
         },
         "bunnote.defaultVaultPath": {
           "type": "string",
           "default": "",
-          "description": "Default vault path to use when no workspace vault is set"
+          "description": "%configuration.defaultVaultPath.description%"
         },
         "bunnote.autoUseDefaultVault": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically use the default vault path if no workspace vault is configured"
+          "description": "%configuration.autoUseDefaultVault.description%"
         },
         "bunnote.colorMarkers": {
           "type": "boolean",
           "default": false,
-          "description": "Color Markdown markers in the editor."
+          "description": "%configuration.colorMarkers.description%"
         },
         "bunnote.editorFontSize": {
           "type": "number",
           "default": 14,
           "minimum": 10,
           "maximum": 32,
-          "description": "Editor font size (px)."
+          "description": "%configuration.editorFontSize.description%"
         }
       }
     }

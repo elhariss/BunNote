@@ -24,7 +24,7 @@ function initEditor() {
     status: false,
     autofocus: true,
     lineWrapping: true,
-    placeholder: "Start writing...",
+    placeholder: window.t ? window.t('editor.startWriting') : "Start writing...",
     renderingConfig: {
       singleLineBreaks: false,
       codeSyntaxHighlighting: true,
@@ -129,6 +129,7 @@ function initEditor() {
 
   cm.on("update", () => {
     scheduleCopyButtons();
+    updateEditorStats();
   });
 
   if (scroller) {
@@ -1497,7 +1498,7 @@ function copyCodeBlock(startLine, endLine, button) {
     vscode.postMessage({
       command: 'showMessage',
       type: 'info',
-      message: 'Copied to your clipboard'
+      message: window.t ? window.t('message.copiedToClipboard') : 'Copied to your clipboard'
     });
   }).catch(err => {
     console.error('Failed to copy code:', err);
@@ -1512,14 +1513,14 @@ function copyCodeBlock(startLine, endLine, button) {
       vscode.postMessage({
         command: 'showMessage',
         type: 'info',
-        message: 'Copied to your clipboard'
+        message: window.t ? window.t('message.copiedToClipboard') : 'Copied to your clipboard'
       });
     } catch (e) {
       console.error('Fallback copy failed:', e);
       vscode.postMessage({
         command: 'showMessage',
         type: 'error',
-        message: 'Failed to copy code'
+        message: window.t ? window.t('message.failedToCopy') : 'Failed to copy code'
       });
     }
     document.body.removeChild(textarea);
@@ -1578,4 +1579,26 @@ function getCodeLineRect(lineNumber) {
     }
   }
   return null;
+}
+
+
+function updateEditorStats() {
+  if (!cm) return;
+  
+  const text = cm.getValue() || '';
+    const charCount = text.length;
+  
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  const wordCount = text.trim().length === 0 ? 0 : words.length;
+
+  const wordCountEl = document.getElementById('wordCount');
+  const charCountEl = document.getElementById('charCount');
+  
+  if (wordCountEl) {
+    wordCountEl.textContent = wordCount.toLocaleString();
+  }
+  
+  if (charCountEl) {
+    charCountEl.textContent = charCount.toLocaleString();
+  }
 }

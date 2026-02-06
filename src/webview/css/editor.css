@@ -515,3 +515,31 @@ body[data-marker-color="on"] .EasyMDEContainer .cm-link,
 body[data-marker-color="on"] .EasyMDEContainer .cm-url {
     color: var(--vscode-textLink-foreground, #3794ff) !important;
 }
+
+/* Editor Stats / エディター統計 */
+.editor_stats {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+    background-color: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    z-index: 100;
+}
+
+.editor_stats_item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.editor_stats_item span:first-child {
+    font-weight: 500;
+    color: var(--vscode-textLink-foreground);
+}
