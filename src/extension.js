@@ -3,11 +3,15 @@ const { registerCommands } = require("./extension/commands");
 const { VaultTreeProvider } = require("./extension/vaultTreeProvider");
 const { ViewProvider } = require("./extension/viewProvider");
 const { EditorProvider } = require("./extension/editorProvider");
+const { initLocalization, t } = require("./locales/i18n");
 
 /**
  * Extension activation function / 拡張機能のアクティベーション関数
  */
 function activate(context) {
+  // Initialize localization / ローカライゼーションを初期化
+  initLocalization(context);
+
   const config = vscode.workspace.getConfiguration("bunnote");
   let vaultPath = config.get("vaultPath");
   const defaultVaultPath = config.get("defaultVaultPath");
@@ -54,11 +58,11 @@ function activate(context) {
         return;
       }
 
-      const action = "Reload Window";
-      const cancel = "Later";
+      const action = t("dialog.reloadWindow") || "Reload Window";
+      const cancel = t("dialog.later") || "Later";
       vscode.window
         .showInformationMessage(
-          "BunNote settings have been updated. Reload VS Code to apply changes?",
+          t("message.settingsUpdated") || "BunNote settings have been updated. Reload VS Code to apply changes?",
           action,
           cancel
         )
@@ -77,3 +81,4 @@ module.exports = {
   activate,
   deactivate
 };
+

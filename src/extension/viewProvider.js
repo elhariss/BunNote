@@ -944,6 +944,7 @@ class ViewProvider {
   }
 
   getHtml() {
+    const { getAllTranslations, getLocale } = require("../locales/i18n");
     const config = vscode.workspace.getConfiguration("bunnote");
     const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
     const editorFontSize = config.get("editorFontSize", 14);
@@ -967,6 +968,10 @@ class ViewProvider {
     const eventsUri = toWebviewUri(eventsPath);
     const mainUri = toWebviewUri(mainPath);
 
+    // Get translations for webview
+    const translations = getAllTranslations();
+    const locale = getLocale();
+
     try {
       const html = fs.readFileSync(htmlPath, "utf8");
       return html
@@ -979,7 +984,9 @@ class ViewProvider {
         .replace("{{MAIN_URI}}", mainUri)
         .replace("{{EDITOR_MODE}}", "sidebar")
         .replace("{{MARKER_COLOR_MODE}}", markerColorMode)
-        .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize));
+        .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize))
+        .replace("{{TRANSLATIONS}}", JSON.stringify(translations))
+        .replace("{{LOCALE}}", locale);
     } catch (err) {
       console.error("Failed to load webview HTML:", err);
       return "<html><body><h3>Failed to load BunNote view.</h3></body></html>";
