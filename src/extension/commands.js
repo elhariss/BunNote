@@ -59,7 +59,7 @@ function registerCommands(context, state, providers) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("bunnote.createNote", async () => {
+    vscode.commands.registerCommand("bunnote.createNote", async (folderItem) => {
       if (!state.vaultPath) {
         vscode.window.showErrorMessage("Please set BunNote vault first");
         vscode.commands.executeCommand("bunnote.setVault");
@@ -73,14 +73,24 @@ function registerCommands(context, state, providers) {
 
       if (title) {
         const fileName = title.endsWith(".md") ? title : `${title}.md`;
-        await editorProvider.openFile(fileName, true);
+        
+        // If called from folder context menu, create in that folder
+        if (folderItem && folderItem.resourceUri) {
+          const folderPath = folderItem.resourceUri.fsPath;
+          const relativePath = path.relative(state.vaultPath, folderPath);
+          const fileInFolder = path.join(relativePath, fileName).replace(/\\/g, '/');
+          await editorProvider.openFile(fileInFolder, true);
+        } else {
+          await editorProvider.openFile(fileName, true);
+        }
+        
         vaultProvider.refresh();
       }
     })
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("bunnote.createFolder", async () => {
+    vscode.commands.registerCommand("bunnote.createFolder", async (folderItem) => {
       if (!state.vaultPath) {
         vscode.window.showErrorMessage("Please set BunNote vault first");
         vscode.commands.executeCommand("bunnote.setVault");
@@ -109,7 +119,13 @@ function registerCommands(context, state, providers) {
         return;
       }
 
-      const folderPath = path.join(state.vaultPath, safeFolder);
+      // Determine the parent folder path
+      let parentPath = state.vaultPath;
+      if (folderItem && folderItem.resourceUri) {
+        parentPath = folderItem.resourceUri.fsPath;
+      }
+
+      const folderPath = path.join(parentPath, safeFolder);
       if (fs.existsSync(folderPath)) {
         vscode.window.showErrorMessage("A folder with that name already exists");
         return;
