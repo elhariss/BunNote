@@ -1,6 +1,7 @@
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
+const { t } = require("../locales/i18n");
 
 const imageExtensions = new Set([
     ".png",
@@ -116,7 +117,7 @@ class VaultTreeProvider {
         const vaultPath = this.getVaultPath();
         if (!vaultPath || !fs.existsSync(vaultPath)) {
             if (!element) {
-                const item = new vscode.TreeItem("Set vault to view notes", vscode.TreeItemCollapsibleState.None);
+                const item = new vscode.TreeItem(t("tree.setVaultToView"), vscode.TreeItemCollapsibleState.None);
                 item.iconPath = new vscode.ThemeIcon("info");
                 item.contextValue = "bunnoteInfo";
                 return [item];
@@ -240,26 +241,26 @@ class VaultTreeProvider {
 
                 // Prevent moving folder into itself / フォルダを自身の中に移動することを防止
                 if (normalizedDestination.startsWith(normalizedSource + path.sep)) {
-                    vscode.window.showErrorMessage("Cannot move a folder into itself");
+                    vscode.window.showErrorMessage(t("error.cannotMoveFolder"));
                     continue;
                 }
 
                 if (fs.existsSync(destination)) {
-                    vscode.window.showErrorMessage("A file or folder with that name already exists");
+                    vscode.window.showErrorMessage(t("error.nameAlreadyExists"));
                     continue;
                 }
 
                 try {
                     fs.renameSync(sourcePath, destination);
                 } catch (err) {
-                    vscode.window.showErrorMessage("Failed to move item: " + err.message);
+                    vscode.window.showErrorMessage(t("error.failedToMove", err.message));
                 }
                 continue;
             }
 
             // Handle external file imports / 外部ファイルのインポートを処理
             if (!isAllowedDropFile(baseName)) {
-                vscode.window.showErrorMessage("Only markdown or image files can be added to the vault");
+                vscode.window.showErrorMessage(t("error.onlyMarkdownOrImage"));
                 continue;
             }
 
@@ -267,12 +268,12 @@ class VaultTreeProvider {
             try {
                 stat = fs.statSync(sourcePath);
             } catch (err) {
-                vscode.window.showErrorMessage("Failed to access dropped item: " + err.message);
+                vscode.window.showErrorMessage(t("error.failedToAccess", err.message));
                 continue;
             }
 
             if (!stat.isFile()) {
-                vscode.window.showErrorMessage("Only files can be added to the vault");
+                vscode.window.showErrorMessage(t("error.onlyFiles"));
                 continue;
             }
 
@@ -281,7 +282,7 @@ class VaultTreeProvider {
             try {
                 fs.copyFileSync(sourcePath, destination);
             } catch (err) {
-                vscode.window.showErrorMessage("Failed to copy file into vault: " + err.message);
+                vscode.window.showErrorMessage(t("error.failedToCopy", err.message));
             }
         }
 
