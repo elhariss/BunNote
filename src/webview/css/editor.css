@@ -508,7 +508,7 @@ body[data-marker-color="on"] .EasyMDEContainer .cm-variable-3 {
 
 body[data-marker-color="on"] .EasyMDEContainer .cm-em,
 body[data-marker-color="on"] .EasyMDEContainer .cm-strong {
-    color: var(--vscode-badge-background, #c8c8c8) !important;
+    color: var(--vscode-textLink-foreground, #c8c8c8) !important;
 }
 
 body[data-marker-color="on"] .EasyMDEContainer .cm-link,
