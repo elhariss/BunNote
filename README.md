@@ -1,6 +1,5 @@
 <div align="center">
 
-
 <img src="media/icon.png" width="170">
 
 # 文ノート (BunNote)
@@ -14,172 +13,216 @@
 
 </div>
 
+BunNote is a open-source VS Code extension for creating and managing Markdown notes. Write, organize, and manage your notes without leaving your editor.
 
-文ノート（BunNote）は、VS Code上でマークダウンノートを作成・管理できる無料のオープンソース拡張機能です。Obsidianなどの外部マークダウンエディタと同一のVaultを利用でき、スムーズに連携できます。
 <div align="center">
 
 ![BunNote Preview 1](screenshots/preview_1.png)
 
 </div>
 
-### ダウンロード
+## Features
 
-VS Code拡張機能マーケットプレイスより「BunNote」をインストールできます。
+### Markdown Editor
+- Full-featured Markdown editor with live preview
+- Syntax highlighting for code blocks
+- Support for task lists, blockquotes, links, and more
+- Clean, distraction-free writing experience
+- Real-time word and character count
 
-### ドキュメント
+###  Vault Management
+- Organize notes in folders
+- Drag and drop files and folders
+- Quick file creation and navigation
+- Context menu for easy file operations
+- Import external Markdown and image files
 
-#### クイックリンク
-
-- [インストール](#インストール)
-- [使い方](#使い方)
-- [設定](#設定)
-- [マークダウン記法](#マークダウン機能)
-
-
-
-### 主な機能
-
-- 階層フォルダでノートを整理
-- WYSIWYGマークダウンエディタ（表・画像・数式対応）
-- コードブロックのシンタックスハイライト
-- タスクリスト（チェックボックス）
+###  Customization
+- Adjustable editor font size
+- Optional Markdown marker coloring
+- Customizable vault location
 
 
-### インストール
+###  Productivity Features
+- Auto-save functionality
+- Image preview in editor
+- Code block copy buttons
+- Task list checkboxes
+- Inline formatting (bold, italic, strikethrough)
+- Quick link insertion
 
-#### VS Code拡張機能マーケットプレイスからインストール
+## Getting Started
 
-1. VS Codeを起動
-2. 拡張機能ビュー（`Ctrl+Shift+X`）を開く
-3. 「BunNote」で検索
-4. 「インストール」をクリック
+### 1. Install the Extension
+Install BunNote from the VS Code Marketplace or Extensions panel.
 
-#### 手動インストール
+### 2. Set Your Vault Folder
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Run `BunNote: Set Vault Folder`
+3. Select a folder to store your notes
 
-1. 最新リリースから`.vsix`ファイルをダウンロード
-2. VS Codeで`Ctrl+Shift+P`を押してコマンドパレットを開く
-3. 「Extensions: Install from VSIX...」を選択
-4. ダウンロードした`.vsix`ファイルを選択
+### 3. Create Your First Note
+- Click the "New File" icon in the BunNote sidebar
+- Or use the Command Palette: `BunNote: Create New Note`
+- Start writing!
 
-### 使い方
+## Usage
 
-#### 初期設定
+### Creating Notes and Folders
 
-1. アクティビティバーのBunNoteアイコンをクリック
-2. 設定アイコンをクリックしてVS Codeの設定画面を開く
-3. `bunnote.vaultPath`にVaultフォルダのパスを指定
-4. または、コマンドパレット（`Ctrl+Shift+P`）で「BunNote: Set Vault Folder」を実行
+**From Toolbar:**
+- Click the file icon to create a new note in the vault root
+- Click the folder icon to create a new folder in the vault root
 
-#### ノートの作成と管理
+**From Context Menu:**
+- Right-click on any folder in the vault tree
+- Select "Create New Note" or "Create New Folder"
+- The new item will be created inside that folder
 
-**新規ノート作成**
-- ツールバーの「New Note」アイコンをクリック
-- コマンドパレットから「BunNote: Create New Note」を実行
+### Managing Files
 
-**新規フォルダ作成**
-- ツールバーの「New Folder」アイコンをクリック
-- フォルダを右クリックして「New folder」を選択
+**Rename:**
+- Right-click on a file or folder
+- Select "Rename"
+- Enter the new name
 
-**ノートの編集**
-- ファイル一覧からノートをクリックして開く
-- マークダウンファイルを右クリックして「Open in Editor」を選択すると、VS Codeのメインエディタエリアで開く
-- マークダウン記法で自由に編集
-- 変更内容は自動的に保存されます
+**Delete:**
+- Right-click on a file or folder
+- Select "Delete"
+- Confirm the deletion
 
-**エディタモード**
-- サイドバーエディタ: デフォルトのBunNoteサイドバー内でノートを編集
-- カスタムエディタ: VS Codeのメインエディタエリアでノートを編集（右クリック→「Open in Editor」）
-- どちらのモードでも同じマークダウンレンダリングとシンタックス非表示機能を使用できます
+**Move:**
+- Drag and drop files or folders to reorganize your vault
+- Drop external Markdown or image files to import them
 
-**ファイル操作**
-- 右クリックでコンテキストメニューを表示
-- ドラッグ&ドロップでファイルやフォルダを自由に移動
-- ファイル名の変更・複製・削除が可能
+### Editor Features
 
-#### マークダウン機能
+**Formatting:**
+- Right-click in the editor for formatting options
+- Bold: `Ctrl+B` / `Cmd+B`
+- Italic: `Ctrl+I` / `Cmd+I`
+- Heading: `Ctrl+H` / `Cmd+H`
+- Link: `Ctrl+K` / `Cmd+K`
 
-BunNoteは標準的なマークダウン記法に対応しています：
+**Lists:**
+- Bullet list: `Ctrl+L` / `Cmd+L`
+- Numbered list: `Ctrl+Alt+L` / `Cmd+Alt+L`
+- Task list: Right-click → Task list
 
-- 見出し: `#`, `##`, `###`
-- 太字: `**テキスト**`
-- 斜体: `*テキスト*`
-- 取り消し線: `~~テキスト~~`
-- 箇条書き: `-` または `*`
-- 番号付きリスト: `1.`, `2.`, `3.`
-- タスクリスト: `- [ ]` または `- [x]`
-- 引用: `>`
-- コードブロック: ` ``` `
-- インラインコード: `` `コード` ``
-- 水平線: `---`
-- リンク: `[テキスト](URL)`
-- 画像: `![代替テキスト](URL)`
+**Code:**
+- Inline code: Wrap text with backticks
+- Code block: `Ctrl+Alt+C` / `Cmd+Alt+C`
+- Copy code: Click the copy button on code blocks
 
-#### 外部アプリケーションとの連携
+**Images:**
+- Drag and drop images into the editor
+- Use Markdown syntax: `![alt text](image.png)`
+- Images are displayed inline with preview
 
-BunNoteは、Obsidianなど他のマークダウンエディタと同じVaultフォルダを共有できます。
+## Configuration
 
-- 外部アプリでファイルを変更すると、BunNoteが自動的に検出して反映
-- ファイルの作成・削除も自動的に同期
-- 手動更新する場合は、ツールバーの「Refresh」アイコンをクリック
+Access settings via `File > Preferences > Settings` and search for "BunNote":
 
-### 設定
+### Vault Path
+**`bunnote.vaultPath`**
+- Path to your BunNote vault folder
+- Workspace-specific setting
 
-VS Codeの設定（`settings.json`）で以下の項目をカスタマイズできます：
+### Default Vault Path
+**`bunnote.defaultVaultPath`**
+- Default vault path when no workspace vault is set
+- User-level setting
 
-**bunnote.vaultPath**
-- 型: `string`
-- デフォルト: `""`
-- 説明: 現在のワークスペースで使用するVaultフォルダのパス
+### Auto Use Default Vault
+**`bunnote.autoUseDefaultVault`**
+- Automatically use default vault if workspace vault is not configured
+- Default: `true`
 
-**bunnote.defaultVaultPath**
-- 型: `string`
-- デフォルト: `""`
-- 説明: デフォルトで使用するVaultフォルダのパス
+### Color Markers
+**`bunnote.colorMarkers`**
+- Color Markdown markers in the editor
+- Default: `false`
 
-**bunnote.autoUseDefaultVault**
-- 型: `boolean`
-- デフォルト: `true`
-- 説明: ワークスペースでVaultが未設定の場合、デフォルトVaultを自動的に使用する
+### Editor Font Size
+**`bunnote.editorFontSize`**
+- Editor font size in pixels
+- Range: 10-32
+- Default: `14`
 
-設定画面を開くには、BunNoteパネルの設定アイコンをクリックしてください。
+## Keyboard Shortcuts
 
-### コマンド一覧
+| Action | Windows/Linux | macOS |
+|--------|--------------|-------|
+| Bold | `Ctrl+B` | `Cmd+B` |
+| Italic | `Ctrl+I` | `Cmd+I` |
+| Heading | `Ctrl+H` | `Cmd+H` |
+| Link | `Ctrl+K` | `Cmd+K` |
+| Bullet List | `Ctrl+L` | `Cmd+L` |
+| Numbered List | `Ctrl+Alt+L` | `Cmd+Alt+L` |
+| Code Block | `Ctrl+Alt+C` | `Cmd+Alt+C` |
+| Blockquote | `Ctrl+'` | `Cmd+'` |
+| Preview | `Ctrl+P` | `Cmd+P` |
 
-コマンドパレット（`Ctrl+Shift+P`）から以下のコマンドを実行できます：
+## Supported File Types
 
-- `BunNote: Set Vault Folder` - Vaultフォルダを設定
-- `BunNote: Create New Note` - 新規ノートを作成
-- `BunNote: Refresh Files` - ファイル一覧を更新
-- `BunNote: Open Settings` - BunNote設定画面を開く
+### Notes
+- `.md` - Markdown files
 
-### 開発に参加する
+### Images
+- `.png`, `.jpg`, `.jpeg`
+- `.gif`, `.svg`, `.webp`
+- `.bmp`, `.ico`
 
-#### コードの貢献
 
-リポジトリをクローンして、依存関係をインストール後、開発サーバーを起動：
 
-```bash
-git clone https://github.com/elhariss/BunNote
-cd bunnote
-npm install
-```
+## Language Support
 
-VS Codeで`F5`を押すと、拡張機能開発ホストが起動します。
+BunNote automatically detects your VS Code language setting:
 
-#### バグ報告・機能リクエスト
+- **English**: Default language
+- **Japanese (日本語)**: Full translation available
 
-GitHubのIssuesページにて、バグ報告や機能リクエストを受け付けています。
+To change language:
+1. Open VS Code settings
+2. Search for "Display Language"
+3. Select your preferred language
+4. Reload VS Code
 
-### ライセンス
+## Troubleshooting
 
-本プロジェクトは [MIT](https://github.com/elhariss/BunNote/blob/main/LICENSE)ライセンスの下で公開されています。
+### Blank Page on Load
+If the editor shows a blank page:
+1. Close and reopen the BunNote panel
+2. If issue persists, reload VS Code window (`Ctrl+R` / `Cmd+R`)
 
-### コントリビューション
+### Vault Not Showing
+1. Ensure you've set a vault folder
+2. Check that the folder exists and is accessible
+3. Try setting the vault folder again
 
-バグ報告、機能リクエスト、プルリクエストを歓迎します！詳細は[CONTRIBUTING.md](CONTRIBUTING.md)をご覧ください。
+### Images Not Displaying
+1. Ensure images are in a supported format
+2. Check that image paths are correct
+3. Try using relative paths from the vault root
 
-### サポート
+### Auto-save Not Working
+- Auto-save triggers after 750ms of inactivity
+- Check that you have write permissions to the vault folder
+- Ensure the vault path is correctly configured
 
-- 🐛 [バグ報告](https://github.com/elhariss/BunNote/issues/new?template=bug_report_ja.yml)
-- 💡 [機能リクエスト](https://github.com/elhariss/BunNote/issues/new?template=feature_request_ja.yml)
-- ⭐ このプロジェクトが役に立ったら、GitHubでスターをお願いします！
+## Contributing
+
+Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/elhariss/BunNote/issues).
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
+- Icons from [Phosphor Icons](https://phosphoricons.com/)
+
+---
+
+**Enjoy writing with BunNote!** 📝✨
