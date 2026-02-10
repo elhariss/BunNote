@@ -186,10 +186,6 @@ class ViewProvider {
     this.setupFileWatcher();
   }
 
-  /**
-   * Recursively scan vault directory for markdown and image files
-   * vaultディレクトリを再帰的にスキャンしてマークダウンと画像ファイルを取得
-   */
   async getMarkdownFiles() {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !fs.existsSync(vaultPath)) {
@@ -198,15 +194,12 @@ class ViewProvider {
 
     const files = [];
     const folders = [];
-    // Yield to event loop periodically to prevent blocking UI
-    // UIをブロックしないように定期的にイベントループに制御を戻す
     const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
     const walkDir = async (dir) => {
       try {
         const items = await fs.promises.readdir(dir, { withFileTypes: true });
         for (const item of items) {
-          // Skip hidden files / 隠しファイルをスキップ
           if (item.name.startsWith(".")) {
             continue;
           }
@@ -215,7 +208,6 @@ class ViewProvider {
           if (item.isDirectory()) {
             const relativePath = path.relative(vaultPath, fullPath).split(path.sep).join("/");
             folders.push(relativePath);
-            // Yield every 200 items to keep UI responsive / 200項目ごとに制御を戻してUIの応答性を維持
             if (folders.length % 200 === 0) {
               await yieldToEventLoop();
             }
@@ -249,7 +241,6 @@ class ViewProvider {
       folders: folders.sort((a, b) => a.localeCompare(b))
     };
 
-    // Cache results for faster subsequent loads / 次回の読み込みを高速化するために結果をキャッシュ
     this.cache = {
       vaultPath,
       ...result,
@@ -272,23 +263,42 @@ class ViewProvider {
       enableScripts: true,
       localResourceRoots: initialRoots
     };
-    view.webview.html = this.getHtml();
+    
+    try {
+      view.webview.html = this.getHtml();
+    } catch (error) {
+      console.error('Failed to generate webview HTML:', error);
+      view.webview.html = `
+        <html>
+          <body style="display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--vscode-errorForeground);">
+            <div>
+              <h3>Failed to load BunNote editor</h3>
+              <p>Error: ${error.message}</p>
+              <p>Please try reloading the window.</p>
+            </div>
+          </body>
+        </html>
+      `;
+      return;
+    }
 
     if (this.pendingOpenFile) {
-      view.webview.postMessage({
-        command: "openFile",
-        fileName: this.pendingOpenFile
-      });
+      const fileToOpen = this.pendingOpenFile;
       this.pendingOpenFile = null;
+      
+      setTimeout(() => {
+        if (view.webview) {
+          view.webview.postMessage({
+            command: "openFile",
+            fileName: fileToOpen
+          });
+        }
+      }, 100);
     }
 
     view.webview.onDidReceiveMessage(async (msg) => {
       const vaultPath = this.getVaultPath();
 
-      /**
-       * Handle file rename with validation and editor tab management
-       * ファイル名変更を検証とエディタタブ管理で処理
-       */
       const performRename = async (safeOldName, safeNewName, source) => {
         if (!vaultPath) {
           vscode.window.showErrorMessage("Please set BunNote vault first");
@@ -304,7 +314,6 @@ class ViewProvider {
         const oldPath = path.join(vaultPath, safeOldName);
         const newPath = path.join(vaultPath, safeNewName);
 
-        // No-op if names are identical / 名前が同じ場合は何もしない
         if (safeOldName === safeNewName) {
           view.webview.postMessage({ command: "renameResult", success: true, oldName: safeOldName, newName: safeNewName, source });
           return;
@@ -329,7 +338,6 @@ class ViewProvider {
           const oldUri = vscode.Uri.file(oldPath);
           const newUri = vscode.Uri.file(newPath);
 
-          // Find and close all editor tabs with the old file / 古いファイルを開いているエディタタブを検索して閉じる
           const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs);
           const mainEditorTabs = tabs.filter(tab => {
             if (tab.input instanceof vscode.TabInputCustom) {
@@ -341,7 +349,6 @@ class ViewProvider {
           fs.renameSync(oldPath, newPath);
           vscode.window.showInformationMessage("Note renamed to: " + safeNewName);
 
-          // Close old tabs and reopen with new name / 古いタブを閉じて新しい名前で再度開く
           for (const tab of mainEditorTabs) {
             await vscode.window.tabGroups.close(tab);
           }
@@ -944,36 +951,46 @@ class ViewProvider {
   }
 
   getHtml() {
-    const { getAllTranslations, getLocale } = require("../locales/i18n");
-    const config = vscode.workspace.getConfiguration("bunnote");
-    const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
-    const editorFontSize = config.get("editorFontSize", 14);
-    const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
-    const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
-    const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
-    const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
-    const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
-    const fileManagerPath = path.join(this.context.extensionPath, "src", "webview", "UI", "fileManager.js");
-    const eventsPath = path.join(this.context.extensionPath, "src", "webview", "handlers", "events.js");
-    const mainPath = path.join(this.context.extensionPath, "src", "webview", "core", "main.js");
-
-    const toWebviewUri = (filePath) =>
-      this.view ? this.view.webview.asWebviewUri(vscode.Uri.file(filePath)).toString() : "";
-
-    const cssUri = toWebviewUri(cssPath);
-    const editorCssUri = toWebviewUri(editorCssPath);
-    const utilsUri = toWebviewUri(utilsPath);
-    const editorUri = toWebviewUri(editorPath);
-    const fileManagerUri = toWebviewUri(fileManagerPath);
-    const eventsUri = toWebviewUri(eventsPath);
-    const mainUri = toWebviewUri(mainPath);
-
-    // Get translations for webview
-    const translations = getAllTranslations();
-    const locale = getLocale();
-
     try {
+      const { getAllTranslations, getLocale } = require("../locales/i18n");
+      const config = vscode.workspace.getConfiguration("bunnote");
+      const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
+      const editorFontSize = config.get("editorFontSize", 14);
+      const htmlPath = path.join(this.context.extensionPath, "src", "webview", "index.html");
+      const cssPath = path.join(this.context.extensionPath, "src", "webview", "css", "style.css");
+      const editorCssPath = path.join(this.context.extensionPath, "src", "webview", "css", "editor.css");
+      const utilsPath = path.join(this.context.extensionPath, "src", "webview", "utils", "utlis.js");
+      const editorPath = path.join(this.context.extensionPath, "src", "webview", "core", "editor.js");
+      const fileManagerPath = path.join(this.context.extensionPath, "src", "webview", "UI", "fileManager.js");
+      const eventsPath = path.join(this.context.extensionPath, "src", "webview", "handlers", "events.js");
+      const mainPath = path.join(this.context.extensionPath, "src", "webview", "core", "main.js");
+
+      const toWebviewUri = (filePath) => {
+        try {
+          return this.view ? this.view.webview.asWebviewUri(vscode.Uri.file(filePath)).toString() : "";
+        } catch (error) {
+          console.error(`Failed to convert path to webview URI: ${filePath}`, error);
+          return "";
+        }
+      };
+
+      const cssUri = toWebviewUri(cssPath);
+      const editorCssUri = toWebviewUri(editorCssPath);
+      const utilsUri = toWebviewUri(utilsPath);
+      const editorUri = toWebviewUri(editorPath);
+      const fileManagerUri = toWebviewUri(fileManagerPath);
+      const eventsUri = toWebviewUri(eventsPath);
+      const mainUri = toWebviewUri(mainPath);
+
+      const translations = getAllTranslations();
+      const locale = getLocale();
+
+      if (!fs.existsSync(htmlPath)) {
+        throw new Error(`HTML file not found: ${htmlPath}`);
+      }
+
       const html = fs.readFileSync(htmlPath, "utf8");
+      
       return html
         .replace("{{CSS_URI}}", cssUri)
         .replace("{{EDITOR_CSS_URI}}", editorCssUri)
@@ -989,7 +1006,7 @@ class ViewProvider {
         .replace("{{LOCALE}}", locale);
     } catch (err) {
       console.error("Failed to load webview HTML:", err);
-      return "<html><body><h3>Failed to load BunNote view.</h3></body></html>";
+      throw err; // Re-throw to be caught by resolveWebviewView
     }
   }
 }
