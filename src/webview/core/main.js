@@ -45,29 +45,36 @@ if (isMainEditorMode) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initEditor();
-  initEvents();
+  try {
+    initEditor();
+    initEvents();
 
+    if (isMainEditorMode) {
+      const sidebar = document.querySelector('.sidebar');
+      const editorArea = document.querySelector('.editor_area');
+      const editorHeader = document.querySelector('.editor_header');
+      const editorContainer = document.querySelector('.editor_container');
 
-  if (isMainEditorMode) {
-    const sidebar = document.querySelector('.sidebar');
-    const editorArea = document.querySelector('.editor_area');
-    const editorHeader = document.querySelector('.editor_header');
-    const editorContainer = document.querySelector('.editor_container');
+      if (sidebar) sidebar.style.display = 'none';
+      if (editorHeader) editorHeader.style.display = 'none';
+      if (editorArea) {
+        editorArea.style.width = '100%';
+        editorArea.style.height = '100vh';
+        editorArea.style.flex = '1';
+      }
+      if (editorContainer) {
+        editorContainer.style.width = '100%';
+        editorContainer.style.height = '100%';
+      }
 
-    if (sidebar) sidebar.style.display = 'none';
-    if (editorHeader) editorHeader.style.display = 'none';
-    if (editorArea) {
-      editorArea.style.width = '100%';
-      editorArea.style.height = '100vh';
-      editorArea.style.flex = '1';
+      vscode.postMessage({ command: 'ready' });
     }
-    if (editorContainer) {
-      editorContainer.style.width = '100%';
-      editorContainer.style.height = '100%';
+  } catch (error) {
+    console.error('Failed to initialize editor:', error);
+    const loading = document.getElementById('appLoading');
+    if (loading) {
+      loading.innerHTML = '<div style="color: var(--vscode-errorForeground);">Failed to load editor. Please reload the window.</div>';
     }
-
-    vscode.postMessage({ command: 'ready' });
   }
 });
 
@@ -75,5 +82,33 @@ window.addEventListener('load', () => {
   const loading = document.getElementById('appLoading');
   if (loading) loading.style.display = 'none';
   document.body.classList.remove('loading');
+  
+  if (!easyMDE) {
+    console.warn('Editor not initialized, retrying...');
+    try {
+      initEditor();
+      initEvents();
+    } catch (error) {
+      console.error('Retry failed:', error);
+    }
+  }
 });
+
+setTimeout(() => {
+  const loading = document.getElementById('appLoading');
+  if (loading && loading.style.display !== 'none') {
+    console.warn('Loading timeout reached, forcing removal of loading screen');
+    loading.style.display = 'none';
+    document.body.classList.remove('loading');
+    
+    if (!easyMDE) {
+      try {
+        initEditor();
+        initEvents();
+      } catch (error) {
+        console.error('Fallback initialization failed:', error);
+      }
+    }
+  }
+}, 5000);
 
