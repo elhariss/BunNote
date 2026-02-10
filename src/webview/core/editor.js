@@ -1,6 +1,5 @@
-// Editor core - updated
+// Editor core
 document.addEventListener('mousedown', (e) => {
-  // Only hide if click is outside any visible context menu
   const openMenus = document.querySelectorAll('.context_menu.visible');
   if (openMenus.length) {
     let inside = false;
