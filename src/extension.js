@@ -9,7 +9,6 @@ const { initLocalization, t } = require("./locales/i18n");
  * Extension activation function / 拡張機能のアクティベーション関数
  */
 function activate(context) {
-  // Initialize localization / ローカライゼーションを初期化
   initLocalization(context);
 
   const config = vscode.workspace.getConfiguration("bunnote");
