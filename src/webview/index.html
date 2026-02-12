@@ -21,27 +21,65 @@
             position: fixed;
             inset: 0;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
             background: var(--vscode-editor-background, #1e1e1e);
-            color: var(--vscode-editor-foreground, #ffffff);
             z-index: 9999;
         }
 
-        .loading_spinner {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.35);
-            border-top-color: rgba(255, 255, 255, 0.85);
-            animation: loadingSpin 0.8s linear infinite;
+        .skeleton {
+            background: linear-gradient(90deg, 
+                var(--vscode-input-background, #3c3c3c) 0%, 
+                var(--vscode-input-background, #3c3c3c) 40%, 
+                var(--vscode-list-hoverBackground, #2a2d2e) 50%, 
+                var(--vscode-input-background, #3c3c3c) 60%, 
+                var(--vscode-input-background, #3c3c3c) 100%);
+            background-size: 200% 100%;
+            animation: skeletonLoading 1.5s ease-in-out infinite;
+            border-radius: 4px;
         }
 
-        @keyframes loadingSpin {
-            to {
-                transform: rotate(360deg);
-            }
+        @keyframes skeletonLoading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
+
+        .skeleton_header {
+            padding: 26px 18px 12px;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .skeleton_title {
+            height: 48px;
+            width: 60%;
+            margin-bottom: 24px;
+        }
+
+        .skeleton_editor {
+            flex: 1;
+            padding: 0 18px;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .skeleton_line {
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .skeleton_line:nth-child(1) { width: 85%; }
+        .skeleton_line:nth-child(2) { width: 92%; }
+        .skeleton_line:nth-child(3) { width: 78%; }
+        .skeleton_line:nth-child(4) { width: 88%; }
+        .skeleton_line:nth-child(5) { width: 70%; }
+        .skeleton_line:nth-child(6) { width: 90%; }
+        .skeleton_line:nth-child(7) { width: 82%; }
+        .skeleton_line:nth-child(8) { width: 75%; }
     </style>
     <link rel="stylesheet" href="{{CSS_URI}}">
     <link rel="stylesheet" href="{{EDITOR_CSS_URI}}">
@@ -61,8 +99,20 @@
             return text;
         };
     </script>
-    <div class="loading_overlay" id="appLoading" aria-label="Loading">
-        <div class="loading_spinner" role="status" aria-live="polite"></div>
+    <div class="loading_overlay" id="appLoading" aria-label="Loading" role="status" aria-live="polite">
+        <div class="skeleton_header">
+            <div class="skeleton skeleton_title"></div>
+        </div>
+        <div class="skeleton_editor">
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+            <div class="skeleton skeleton_line"></div>
+        </div>
     </div>
     <div class="container">
         <div class="sidebar"></div>
