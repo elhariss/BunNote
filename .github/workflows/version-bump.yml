@@ -70,22 +70,14 @@ jobs:
       
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version.outputs.new_version }}
-          release_name: v${{ steps.version.outputs.new_version }}
-          body_path: /tmp/changelog.txt
-          draft: false
-          prerelease: false
-      
-      - name: Upload VSIX to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bunnote-${{ steps.version.outputs.new_version }}.vsix
-          asset_name: bunnote-${{ steps.version.outputs.new_version }}.vsix
-          asset_content_type: application/zip
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          VSIX_FILE="bunnote-${VERSION}.vsix"
+          
+          # Create release using GitHub CLI
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes-file /tmp/changelog.txt \
+            "${VSIX_FILE}"
