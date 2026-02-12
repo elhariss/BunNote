@@ -3,27 +3,62 @@ name: Publish to Marketplace
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use package.json version)'
+        required: false
+        type: string
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        
-    - name: Install dependencies
-      run: npm ci
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-    - name: Install vsce
-      run: npm install -g @vscode/vsce
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
       
-    - name: Publish to VS Code Marketplace
-      run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
-      env:
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint
+      
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+      
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+      
+      - name: Package extension
+        run: vsce package
+      
+      - name: Publish to VS Code Marketplace
+        run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      
+      - name: Upload VSIX to Release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./bunnote-${{ steps.version.outputs.version }}.vsix
+          asset_name: bunnote-${{ steps.version.outputs.version }}.vsix
+          asset_content_type: application/zip
