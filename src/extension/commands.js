@@ -77,7 +77,18 @@ function registerCommands(context, state, providers) {
         const fileName = title.endsWith(".md") ? title : `${title}.md`;
         
         if (folderItem && folderItem.resourceUri) {
-          const folderPath = folderItem.resourceUri.fsPath;
+          const itemPath = folderItem.resourceUri.fsPath;
+          
+          let folderPath = itemPath;
+          try {
+            const stat = fs.statSync(itemPath);
+            if (!stat.isDirectory()) {
+              folderPath = path.dirname(itemPath);
+            }
+          } catch (err) {
+            folderPath = state.vaultPath;
+          }
+          
           const relativePath = path.relative(state.vaultPath, folderPath);
           const fileInFolder = path.join(relativePath, fileName).replace(/\\/g, '/');
           await editorProvider.openFile(fileInFolder, true);
@@ -122,7 +133,18 @@ function registerCommands(context, state, providers) {
 
       let parentPath = state.vaultPath;
       if (folderItem && folderItem.resourceUri) {
-        parentPath = folderItem.resourceUri.fsPath;
+        const itemPath = folderItem.resourceUri.fsPath;
+        
+        try {
+          const stat = fs.statSync(itemPath);
+          if (stat.isDirectory()) {
+            parentPath = itemPath;
+          } else {
+            parentPath = path.dirname(itemPath);
+          }
+        } catch (err) {
+          parentPath = state.vaultPath;
+        }
       }
 
       const folderPath = path.join(parentPath, safeFolder);
