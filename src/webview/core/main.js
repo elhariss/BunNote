@@ -1,5 +1,21 @@
 const vscode = acquireVsCodeApi();
 
+window.addEventListener('error', (event) => {
+  if (event.message && event.message.includes('ServiceWorker')) {
+    console.warn('Service worker error suppressed (VS Code webview limitation)');
+    event.preventDefault();
+    return false;
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason && event.reason.message && event.reason.message.includes('ServiceWorker')) {
+    console.warn('Service worker promise rejection suppressed (VS Code webview limitation)');
+    event.preventDefault();
+    return false;
+  }
+});
+
 let currentFile = null;
 let currentFilePath = null;
 let fileContent = '';
