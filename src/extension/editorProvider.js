@@ -124,6 +124,7 @@ class EditorProvider {
   }
 
   getHtml(webview) {
+    const { getAllTranslations, getLocale } = require("../locales/i18n");
     const config = vscode.workspace.getConfiguration("bunnote");
     const markerColorMode = config.get("colorMarkers", false) ? "on" : "off";
     const editorFontSize = config.get("editorFontSize", 14);
@@ -147,6 +148,11 @@ class EditorProvider {
     const eventsUri = toWebviewUri(eventsPath);
     const mainUri = toWebviewUri(mainPath);
 
+    const translations = getAllTranslations();
+    const locale = getLocale();
+    
+    const translationsJson = JSON.stringify(translations).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+
     try {
       let html = fs.readFileSync(htmlPath, "utf8");
       html = html
@@ -159,7 +165,9 @@ class EditorProvider {
         .replace("{{MAIN_URI}}", mainUri)
         .replace("{{EDITOR_MODE}}", "main")
         .replace("{{MARKER_COLOR_MODE}}", markerColorMode)
-        .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize));
+        .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize))
+        .replace("{{TRANSLATIONS}}", translationsJson)
+        .replace("{{LOCALE}}", locale);
 
       return html;
     } catch (err) {

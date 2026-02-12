@@ -994,6 +994,8 @@ class ViewProvider {
 
       const translations = getAllTranslations();
       const locale = getLocale();
+      
+      const translationsJson = JSON.stringify(translations).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 
       if (!fs.existsSync(htmlPath)) {
         throw new Error(`HTML file not found: ${htmlPath}`);
@@ -1012,7 +1014,7 @@ class ViewProvider {
         .replace("{{EDITOR_MODE}}", "sidebar")
         .replace("{{MARKER_COLOR_MODE}}", markerColorMode)
         .replace("{{EDITOR_FONT_SIZE}}", String(editorFontSize))
-        .replace("{{TRANSLATIONS}}", JSON.stringify(translations))
+        .replace("{{TRANSLATIONS}}", translationsJson)
         .replace("{{LOCALE}}", locale);
     } catch (err) {
       console.error("Failed to load webview HTML:", err);
