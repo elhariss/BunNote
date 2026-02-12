@@ -81,3 +81,10 @@ jobs:
             --title "v${VERSION}" \
             --notes-file /tmp/changelog.txt \
             "${VSIX_FILE}"
+      
+      - name: Trigger Publish Workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          gh workflow run publish.yml -f version="${VERSION}"
