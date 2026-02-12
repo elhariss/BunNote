@@ -13,6 +13,15 @@ const imageExtensions = new Set([
   ".ico"
 ]);
 
+// Cached regex patterns for performance
+const REGEX_PATTERNS = {
+  urlProtocol: /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
+  controlChars: /[\u0000-\u001F\u007F]/g,
+  backslash: /\\/g,
+  slashesReplace: /[\\/]+/g,
+  invalidFileChars: /[:*?\"<>|]+/g
+};
+
 const sanitizeFileName = (name) => {
   if (!name || typeof name !== "string") return name;
   let n = name.trim();
@@ -21,12 +30,12 @@ const sanitizeFileName = (name) => {
     n = n.replace(/^file:\/\/*/i, "");
   }
 
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(n)) {
-    n = n.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "");
+  if (REGEX_PATTERNS.urlProtocol.test(n)) {
+    n = n.replace(REGEX_PATTERNS.urlProtocol, "");
   }
 
-  n = n.replace(/[\u0000-\u001F\u007F]/g, "");
-  n = n.replace(/\\/g, "/");
+  n = n.replace(REGEX_PATTERNS.controlChars, "");
+  n = n.replace(REGEX_PATTERNS.backslash, "/");
 
   return n;
 };
@@ -99,7 +108,7 @@ function registerCommands(context, state, providers) {
       }
 
       const trimmed = input.trim();
-      const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
+      const cleaned = trimmed.replace(REGEX_PATTERNS.slashesReplace, "-").replace(REGEX_PATTERNS.invalidFileChars, "").trim();
       if (!cleaned) {
         vscode.window.showErrorMessage("Invalid folder name");
         return;
@@ -253,7 +262,7 @@ function registerCommands(context, state, providers) {
         return;
       }
 
-      const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
+      const cleaned = trimmed.replace(REGEX_PATTERNS.slashesReplace, "-").replace(REGEX_PATTERNS.invalidFileChars, "").trim();
       if (!cleaned) {
         vscode.window.showErrorMessage("Invalid file name");
         return;
@@ -349,7 +358,7 @@ function registerCommands(context, state, providers) {
         return;
       }
 
-      const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
+      const cleaned = trimmed.replace(REGEX_PATTERNS.slashesReplace, "-").replace(REGEX_PATTERNS.invalidFileChars, "").trim();
       if (!cleaned) {
         vscode.window.showErrorMessage("Invalid folder name");
         return;

@@ -13,20 +13,30 @@ const imageExtensions = new Set([
   ".ico"
 ]);
 
+// Cached regex patterns for performance
+const REGEX_PATTERNS = {
+  fileProtocol: /^file:\/\/*/i,
+  urlProtocol: /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
+  controlChars: /[\u0000-\u001F\u007F]/g,
+  backslash: /\\/g,
+  slashesReplace: /[\\/]+/g,
+  invalidFileChars: /[:*?\"<>|]+/g
+};
+
 const sanitizeFileName = (name) => {
   if (!name || typeof name !== "string") return name;
   let n = name.trim();
 
   if (n.toLowerCase().startsWith("file:")) {
-    n = n.replace(/^file:\/\/*/i, "");
+    n = n.replace(REGEX_PATTERNS.fileProtocol, "");
   }
 
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(n)) {
-    n = n.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "");
+  if (REGEX_PATTERNS.urlProtocol.test(n)) {
+    n = n.replace(REGEX_PATTERNS.urlProtocol, "");
   }
 
-  n = n.replace(/[\u0000-\u001F\u007F]/g, "");
-  n = n.replace(/\\/g, "/");
+  n = n.replace(REGEX_PATTERNS.controlChars, "");
+  n = n.replace(REGEX_PATTERNS.backslash, "/");
 
   return n;
 };
@@ -87,7 +97,7 @@ class ViewProvider {
     }
 
     if (!this.view) {
-      this.pendingOpenFile = normalized.replace(/\\/g, "/");
+      this.pendingOpenFile = normalized.replace(REGEX_PATTERNS.backslash, "/");
       await vscode.commands.executeCommand("workbench.view.extension.bunNote");
       await vscode.commands.executeCommand("bunNoteEditor.focus");
       return;
@@ -95,7 +105,7 @@ class ViewProvider {
 
     this.view.webview.postMessage({
       command: "openFile",
-      fileName: normalized.replace(/\\/g, "/")
+      fileName: normalized.replace(REGEX_PATTERNS.backslash, "/")
     });
   }
 
@@ -117,7 +127,7 @@ class ViewProvider {
     }
 
     const trimmed = input.trim();
-    const cleaned = trimmed.replace(/[\\/]+/g, "-").replace(/[:*?\"<>|]+/g, "").trim();
+    const cleaned = trimmed.replace(REGEX_PATTERNS.slashesReplace, "-").replace(REGEX_PATTERNS.invalidFileChars, "").trim();
     if (!cleaned) {
       vscode.window.showErrorMessage("Invalid folder name");
       return;
@@ -427,7 +437,7 @@ class ViewProvider {
           return;
         }
 
-        const cleanedPath = imagePath.replace(/^file:\/*/i, '').replace(/\\/g, '/');
+        const cleanedPath = imagePath.replace(REGEX_PATTERNS.fileProtocol, '').replace(REGEX_PATTERNS.backslash, '/');
         const baseDir = safeFileName
           ? path.dirname(path.join(vaultPath, safeFileName))
           : vaultPath;
