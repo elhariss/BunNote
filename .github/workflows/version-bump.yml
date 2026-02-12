@@ -17,11 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,7 +33,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git config url."https://x-access-token:${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
       
       - name: Bump version
         id: version
@@ -73,20 +74,20 @@ jobs:
       - name: Create GitHub Release
         id: create_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.new_version }}"
           VSIX_FILE="bunnote-${VERSION}.vsix"
           
-          # Create release using GitHub CLI
+          # Create release using GitHub CLI (this will trigger the publish workflow if using PAT)
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
             --notes-file /tmp/changelog.txt \
             "${VSIX_FILE}"
-      
-      - name: Trigger Publish Workflow
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
-          gh workflow run publish.yml -f version="${VERSION}"
+          
+          echo "Release created successfully."
+          if [ -n "${{ secrets.PAT_TOKEN }}" ]; then
+            echo "Using PAT_TOKEN - publish workflow will be triggered automatically."
+          else
+            echo "Using GITHUB_TOKEN - you may need to manually trigger the publish workflow or set up a PAT_TOKEN secret."
+          fi
