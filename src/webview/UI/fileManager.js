@@ -1,5 +1,15 @@
 // @ts-nocheck
 
+// Cache DOM queries for better performance
+let cachedTitleInput = null;
+
+function getTitleInput() {
+  if (!cachedTitleInput) {
+    cachedTitleInput = document.getElementById('editorTitleInput');
+  }
+  return cachedTitleInput;
+}
+
 function updateEditor() {
   if (currentFile && fileContent !== undefined) {
     const currentContent = easyMDE.value();
@@ -32,40 +42,44 @@ function updateEditor() {
 }
 
 function updateTitle() {
-  if (editorTitleInput) {
-    editorTitleInput.value = formatTitle(currentFile);
+  const titleInput = getTitleInput();
+  if (titleInput) {
+    titleInput.value = formatTitle(currentFile);
     resizeTitle();
   }
 }
 
 function resizeTitle() {
-  if (!editorTitleInput) {
+  const titleInput = getTitleInput();
+  if (!titleInput) {
     return;
   }
-  editorTitleInput.style.height = 'auto';
-  editorTitleInput.style.height = `${editorTitleInput.scrollHeight}px`;
+  titleInput.style.height = 'auto';
+  titleInput.style.height = `${titleInput.scrollHeight}px`;
 }
 
 function startEdit() {
-  if (!currentFile || isTitleEditing || !editorTitleInput) {
+  const titleInput = getTitleInput();
+  if (!currentFile || isTitleEditing || !titleInput) {
     return;
   }
   isTitleEditing = true;
-  editorTitleInput.focus();
-  const len = editorTitleInput.value.length;
+  titleInput.focus();
+  const len = titleInput.value.length;
   try {
-    editorTitleInput.setSelectionRange(len, len);
+    titleInput.setSelectionRange(len, len);
   } catch (e) { }
   resizeTitle();
 }
 
 function finishEdit(save) {
-  if (!isTitleEditing || !editorTitleInput) {
+  const titleInput = getTitleInput();
+  if (!isTitleEditing || !titleInput) {
     return;
   }
   isTitleEditing = false;
   if (save && currentFile) {
-    const candidate = buildRelPath(editorTitleInput.value);
+    const candidate = buildRelPath(titleInput.value);
     if (candidate && candidate !== currentFile) {
       vscode.postMessage({
         command: 'renameFile',
@@ -117,27 +131,29 @@ function onFolderMove(msg) {
     return;
   }
 
-  if (currentFile === oldPath || currentFile.startsWith(oldPath + '/')) {
+  const oldPathPrefix = oldPath + '/';
+
+  if (currentFile === oldPath || currentFile.startsWith(oldPathPrefix)) {
     currentFile = newPath + currentFile.slice(oldPath.length);
   }
 
   if (lastSavedContent) {
     const nextSavedContent = {};
-    Object.keys(lastSavedContent).forEach((key) => {
-      if (key === oldPath || key.startsWith(oldPath + '/')) {
+    for (const key in lastSavedContent) {
+      if (key === oldPath || key.startsWith(oldPathPrefix)) {
         const nextKey = newPath + key.slice(oldPath.length);
         nextSavedContent[nextKey] = lastSavedContent[key];
       } else {
         nextSavedContent[key] = lastSavedContent[key];
       }
-    });
+    }
     lastSavedContent = nextSavedContent;
   }
 
   if (expandedFolders && expandedFolders.size) {
     const nextExpanded = new Set();
     expandedFolders.forEach((folder) => {
-      if (folder === oldPath || folder.startsWith(oldPath + '/')) {
+      if (folder === oldPath || folder.startsWith(oldPathPrefix)) {
         nextExpanded.add(newPath + folder.slice(oldPath.length));
       } else {
         nextExpanded.add(folder);
