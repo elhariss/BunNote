@@ -51,8 +51,7 @@
     data-locale="{{LOCALE}}"
     style="--bunnote-editor-font-size: {{EDITOR_FONT_SIZE}}px;">
     <script>
-        // Initialize translations
-        window.BUNNOTE_TRANSLATIONS = {{TRANSLATIONS}};
+        window.BUNNOTE_TRANSLATIONS = JSON.parse('{{TRANSLATIONS}}');
         window.BUNNOTE_LOCALE = "{{LOCALE}}";
         window.t = function(key, ...args) {
             let text = window.BUNNOTE_TRANSLATIONS[key] || key;
