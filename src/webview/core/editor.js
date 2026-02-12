@@ -1662,13 +1662,15 @@ function updateEditorStats() {
   if (!cm) return;
   
   const text = cm.getValue() || '';
-    const charCount = text.length;
+  const charCount = text.length;
   
   const words = text.trim().split(/\s+/).filter(word => word.length > 0);
   const wordCount = text.trim().length === 0 ? 0 : words.length;
 
   const wordCountEl = document.getElementById('wordCount');
   const charCountEl = document.getElementById('charCount');
+  const wordsLabel = document.getElementById('wordsLabel');
+  const charactersLabel = document.getElementById('charactersLabel');
   
   if (wordCountEl) {
     wordCountEl.textContent = wordCount.toLocaleString();
@@ -1676,5 +1678,13 @@ function updateEditorStats() {
   
   if (charCountEl) {
     charCountEl.textContent = charCount.toLocaleString();
+  }
+  
+  if (wordsLabel && !wordsLabel.textContent) {
+    wordsLabel.textContent = window.t ? window.t('editor.words') : 'words';
+  }
+  
+  if (charactersLabel && !charactersLabel.textContent) {
+    charactersLabel.textContent = window.t ? window.t('editor.characters') : 'characters';
   }
 }
