@@ -39,7 +39,7 @@ function initEditor() {
       drawTable: `${modKey}-Alt-T`,
       toggleBlockquote: `${modKey}-'`,
       toggleCodeBlock: `${modKey}-Alt-C`,
-      togglePreview: `${modKey}-P`,
+      togglePreview: null,
       toggleSideBySide: null,
       toggleFullScreen: null
     }
@@ -779,6 +779,26 @@ const imageLineCache = new Map();
 const imageLineMarks = new Map();
 let revealedImageLine = null;
 let imageUpdateDelay = 250;
+let imageObserver = null;
+
+function initImageObserver() {
+  if (imageObserver || typeof IntersectionObserver === 'undefined') return;
+  
+  imageObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const img = entry.target;
+      if (entry.isIntersecting && img.dataset.pendingSrc && !img.dataset.loading) {
+        img.dataset.loading = 'true';
+        const url = img.dataset.pendingSrc;
+        requestResolvedImage(url, img);
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '50px',
+    threshold: 0.01
+  });
+}
 
 function isRemoteImageUrl(url) {
   return /^(https?:|data:|vscode-resource:|vscode-webview-resource:)/i.test(url);
@@ -836,7 +856,16 @@ function clearImageMarksForLine(lineIndex) {
   const marks = imageLineMarks.get(lineIndex);
   if (marks && marks.length) {
     marks.forEach(m => {
-      try { m.clear(); } catch (e) { }
+      try {
+        const widget = m.widgetNode;
+        if (widget && imageObserver) {
+          const img = widget.querySelector('img');
+          if (img) {
+            imageObserver.unobserve(img);
+          }
+        }
+        m.clear();
+      } catch (e) { }
     });
   }
   imageLineMarks.delete(lineIndex);
@@ -876,14 +905,26 @@ function getImageRanges(text, ignoreRanges = []) {
 
 function updateImageMarks(fromLine = 0, toLine = null) {
   if (!cm) return;
+  
+  initImageObserver();
+  
   const maxLine = cm.lineCount() - 1;
-  const endLine = typeof toLine === 'number' ? Math.min(toLine, maxLine) : maxLine;
-  const startLine = Math.max(0, fromLine);
+  const viewport = cm.getViewport();
+  const viewportStart = Math.max(0, viewport.from - 5);
+  const viewportEnd = Math.min(maxLine, viewport.to + 5);
+  
+  const requestedStart = Math.max(0, fromLine);
+  const requestedEnd = typeof toLine === 'number' ? Math.min(toLine, maxLine) : maxLine;
+  
+  const startLine = Math.max(requestedStart, viewportStart);
+  const endLine = Math.min(requestedEnd, viewportEnd);
+  
   const cursor = cm.getCursor();
   const activeLine = cursor ? cursor.line : null;
 
   let inCodeBlock = false;
   let fenceChar = null;
+  
   for (let i = 0; i <= endLine; i++) {
     const text = cm.getLine(i) || "";
     const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
@@ -938,10 +979,16 @@ function updateImageMarks(fromLine = 0, toLine = null) {
       img.alt = token.alt || 'Image';
       img.loading = 'lazy';
 
-      img.src = token.url;
-      if (!isRemoteImageUrl(token.url)) {
+      if (isRemoteImageUrl(token.url)) {
+        img.src = token.url;
+      } else {
         img.dataset.pendingSrc = token.url;
-        requestResolvedImage(token.url, img);
+        img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3C/svg%3E';
+        if (imageObserver) {
+          imageObserver.observe(img);
+        } else {
+          requestResolvedImage(token.url, img);
+        }
       }
 
       wrapper.appendChild(img);
@@ -1162,14 +1209,18 @@ function getInlineMarkerRanges(text, cursorCh) {
 }
 
 function updateHiddenSyntax(includeActiveInline = false) {
-  clearHiddenMarks();
-
+  if (!cm) return;
+  
   const cursor = cm.getCursor();
   const lines = cm.lineCount();
+  const viewport = cm.getViewport();
+  const viewportStart = Math.max(0, viewport.from - 10);
+  const viewportEnd = Math.min(lines, viewport.to + 10);
+
+  clearHiddenMarks();
 
   let inCodeBlock = false;
   let fenceChar = null;
-  let cursorInCodeBlock = false;
 
   for (let i = 0; i <= cursor.line && i < lines; i++) {
     const lineText = cm.getLine(i) || "";
@@ -1184,15 +1235,12 @@ function updateHiddenSyntax(includeActiveInline = false) {
         fenceChar = null;
       }
     }
-    if (i === cursor.line) {
-      cursorInCodeBlock = inCodeBlock;
-    }
   }
 
   inCodeBlock = false;
   fenceChar = null;
 
-  for (let i = 0; i < lines; i++) {
+  for (let i = viewportStart; i < viewportEnd; i++) {
     const text = cm.getLine(i) || "";
     const handle = cm.getLineHandle(i);
     let listIgnoreRanges = [];
