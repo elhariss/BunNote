@@ -1,21 +1,5 @@
 const vscode = acquireVsCodeApi();
 
-window.addEventListener('error', (event) => {
-  if (event.message && event.message.includes('ServiceWorker')) {
-    console.warn('Service worker error suppressed (VS Code webview limitation)');
-    event.preventDefault();
-    return false;
-  }
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason && event.reason.message && event.reason.message.includes('ServiceWorker')) {
-    console.warn('Service worker promise rejection suppressed (VS Code webview limitation)');
-    event.preventDefault();
-    return false;
-  }
-});
-
 let currentFile = null;
 let currentFilePath = null;
 let fileContent = '';
@@ -61,53 +45,60 @@ if (isMainEditorMode) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  try {
-    initEditor();
-    initEvents();
+  
+  const waitForEasyMDE = (attempts = 0, maxAttempts = 20) => {
+    if (typeof EasyMDE !== 'undefined') {
+      try {
+        initEditor();
+        initEvents();
 
-    if (isMainEditorMode) {
-      const sidebar = document.querySelector('.sidebar');
-      const editorArea = document.querySelector('.editor_area');
-      const editorHeader = document.querySelector('.editor_header');
-      const editorContainer = document.querySelector('.editor_container');
+        if (isMainEditorMode) {
+          const sidebar = document.querySelector('.sidebar');
+          const editorArea = document.querySelector('.editor_area');
+          const editorHeader = document.querySelector('.editor_header');
+          const editorContainer = document.querySelector('.editor_container');
 
-      if (sidebar) sidebar.style.display = 'none';
-      if (editorHeader) editorHeader.style.display = 'none';
-      if (editorArea) {
-        editorArea.style.width = '100%';
-        editorArea.style.height = '100vh';
-        editorArea.style.flex = '1';
+          if (sidebar) sidebar.style.display = 'none';
+          if (editorHeader) editorHeader.style.display = 'none';
+          if (editorArea) {
+            editorArea.style.width = '100%';
+            editorArea.style.height = '100vh';
+            editorArea.style.flex = '1';
+          }
+          if (editorContainer) {
+            editorContainer.style.width = '100%';
+            editorContainer.style.height = '100%';
+          }
+
+          vscode.postMessage({ command: 'ready' });
+        }
+      } catch (error) {
+        console.error('Failed to initialize editor:', error);
+        const loading = document.getElementById('appLoading');
+        if (loading) {
+          loading.innerHTML = '<div style="padding: 20px; color: var(--vscode-errorForeground);">Failed to load editor. Please reload the window.</div>';
+        }
       }
-      if (editorContainer) {
-        editorContainer.style.width = '100%';
-        editorContainer.style.height = '100%';
+    } else if (attempts < maxAttempts) {
+      setTimeout(() => waitForEasyMDE(attempts + 1, maxAttempts), 100);
+    } else {
+      console.error('EasyMDE failed to load after multiple attempts');
+      const loading = document.getElementById('appLoading');
+      if (loading) {
+        loading.innerHTML = '<div style="padding: 20px; color: var(--vscode-errorForeground);">Failed to load editor library. Please reload the window or check your internet connection.</div>';
       }
-
-      vscode.postMessage({ command: 'ready' });
     }
-  } catch (error) {
-    console.error('Failed to initialize editor:', error);
-    const loading = document.getElementById('appLoading');
-    if (loading) {
-      loading.innerHTML = '<div style="color: var(--vscode-errorForeground);">Failed to load editor. Please reload the window.</div>';
-    }
-  }
+  };
+  
+  waitForEasyMDE();
 });
 
 window.addEventListener('load', () => {
-  const loading = document.getElementById('appLoading');
-  if (loading) loading.style.display = 'none';
-  document.body.classList.remove('loading');
-  
-  if (!easyMDE) {
-    console.warn('Editor not initialized, retrying...');
-    try {
-      initEditor();
-      initEvents();
-    } catch (error) {
-      console.error('Retry failed:', error);
-    }
-  }
+  setTimeout(() => {
+    const loading = document.getElementById('appLoading');
+    if (loading) loading.style.display = 'none';
+    document.body.classList.remove('loading');
+  }, 100);
 });
 
 setTimeout(() => {
@@ -116,15 +107,6 @@ setTimeout(() => {
     console.warn('Loading timeout reached, forcing removal of loading screen');
     loading.style.display = 'none';
     document.body.classList.remove('loading');
-    
-    if (!easyMDE) {
-      try {
-        initEditor();
-        initEvents();
-      } catch (error) {
-        console.error('Fallback initialization failed:', error);
-      }
-    }
   }
 }, 5000);
 
