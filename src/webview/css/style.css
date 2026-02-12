@@ -354,6 +354,11 @@ body[data-editor-mode="sidebar"] .editor_tabs {
     color: var(--vscode-menu-foreground, #9aa0a6);
 }
 
+.context_menu_item .menu-text {
+    flex: 1;
+    font-size: 13px;
+}
+
 .context_menu_separator {
     height: 1px;
     margin: 4px 8px;
