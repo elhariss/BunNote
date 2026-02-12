@@ -1,5 +1,36 @@
 # Change Log
 
+
+## [1.0.8] - 2026-02-12
+
+### Added
+- Skeleton loaders for better loading experience
+- File preview tooltips in vault tree (shows first 5 lines on hover)
+
+### Performance
+- Cached regex patterns across all files for significant performance boost
+- Optimized markdown rendering and syntax hiding
+- Improved typing performance in large documents
+- Faster file operations and validation
+- Reduced memory allocations during editing
+- Cached DOM queries in file manager
+
+### Fixed
+- Word and character count labels now show in main editor view
+- Improved webview initialization reliability
+
+## [1.0.7] - 2026-02-11
+
+### Added
+- Japanese localization support with automatic language detection
+- Bilingual UI (English/Japanese) based on VS Code settings
+- Localized commands, menus, and error messages
+
+### Fixed
+- Drag-and-drop file moving bug (files disappearing when dropped outside folders)
+- Blank page webview loading issue with retry logic
+
+
 ## [1.0.5] - 2026-02-10
 
 ### Added
