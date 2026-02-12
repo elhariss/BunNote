@@ -494,13 +494,14 @@ function initEvents() {
     const getNextNumberAtIndent = (cmInstance, startLine, targetIndentLen) => {
       for (let i = startLine; i >= 0; i--) {
         const text = cmInstance.getLine(i) || "";
-        const match = text.match(EVENT_REGEX_PATTERNS.numberedReplace);
+        const match = text.match(EVENT_REGEX_PATTERNS.numberedMatch);
 
         if (!match) continue;
 
         const indentLen = (match[1] || "").replace(EVENT_REGEX_PATTERNS.tabToSpaces, "    ").length;
         if (indentLen === targetIndentLen) {
-          const num = parseInt(match[2], 10);
+          const markerRaw = match[2] || "1.";
+          const num = parseInt(markerRaw, 10);
           if (Number.isFinite(num)) return num + 1;
         }
 
