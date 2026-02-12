@@ -1,4 +1,35 @@
 // Editor core
+
+// Cached regex patterns for performance
+const REGEX_PATTERNS = {
+  listLine: /^\s*([-+*](?!-)|\d+[.)])[ \t]+/,
+  quoteLine: /^\s*>/,
+  hrLine: /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/,
+  taskChecked: /^\s*([-+*]|\d+[.)])\s+\[[xX]\]/,
+  listIndent: /^(\s*)([-+*]|\d+[.)])\s+/,
+  tabToSpaces: /\t/g,
+  unorderedList: /^(\s*)([-+*])(?!-)([ \t]+)/,
+  orderedList: /^(\s*)(\d+)([.)])([ \t]+)/,
+  taskMarker: /^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/,
+  heading: /^(\s*)(#{1,6})(\s+)/,
+  quote: /^(\s*)(>)(\s*)/,
+  fenceLine: /^\s*([\x60~]{3,})/,
+  fenceLanguage: /^\s*[`~]{3,}\s*([^\s`~]+)?/gm,
+  imageMarkdown: /!\[([^\]]*)\]\(([^)]+)\)/g,
+  urlExtract: /^([^\s]+)(?:\s+"[^"]*")?\s*$/,
+  formattingToken: /(formatting|strong|em|strikethrough|strike)/,
+  bulletListTest: /^\s*[-+*]\s+/,
+  bulletListReplace: /^(\s*)[-+*]\s+/,
+  numberedListTest: /^\s*\d+[.)]\s+/,
+  numberedListReplace: /^(\s*)\d+[.)]\s+/,
+  taskListTest: /^\s*[-+*]\s+\[[ xX]\]\s+/,
+  taskListReplace: /^(\s*)[-+*]\s+\[[ xX]\]\s+/,
+  taskListBullet: /^(\s*)[-+*]\s+/,
+  quoteTest: /^\s*>\s+/,
+  quoteReplace: /^(\s*)>\s+/,
+  isMac: /Mac|iPhone|iPad|iPod/i
+};
+
 document.addEventListener('mousedown', (e) => {
   const openMenus = document.querySelectorAll('.context_menu.visible');
   if (openMenus.length) {
@@ -13,7 +44,7 @@ document.addEventListener('mousedown', (e) => {
 window.addEventListener('scroll', hideAllContextMenus, { passive: true });
 function initEditor() {
   const editorElement = document.getElementById('editor');
-  const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || '');
+  const isMac = REGEX_PATTERNS.isMac.test(navigator.platform || '');
   const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   easyMDE = new EasyMDE({
@@ -97,10 +128,10 @@ function initEditor() {
 
   cm.on("renderLine", (cmInstance, line, element) => {
     const lineText = line.text || cmInstance.getLine(line.lineNo()) || "";
-    const isListLine = /^\s*([-+*](?!-)|\d+[.)])[ \t]+/.test(lineText);
-    const isQuoteLine = /^\s*>/.test(lineText);
-    const isHrLine = /^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/.test(lineText);
-    const isTaskChecked = /^\s*([-+*]|\d+[.)])\s+\[[xX]\]/.test(lineText);
+    const isListLine = REGEX_PATTERNS.listLine.test(lineText);
+    const isQuoteLine = REGEX_PATTERNS.quoteLine.test(lineText);
+    const isHrLine = REGEX_PATTERNS.hrLine.test(lineText);
+    const isTaskChecked = REGEX_PATTERNS.taskChecked.test(lineText);
     const isActiveLine = cmInstance.getCursor().line === line.lineNo();
     element.classList.toggle("cm-inline-list", isListLine && !isActiveLine);
     element.classList.toggle("cm-blockquote-line", isQuoteLine);
@@ -108,10 +139,10 @@ function initEditor() {
     element.classList.toggle("cm-task-checked-line", isTaskChecked);
     element.classList.toggle("cm-inactive-line", !isActiveLine);
 
-    const listIndentMatch = lineText.match(/^(\s*)([-+*]|\d+[.)])\s+/);
+    const listIndentMatch = lineText.match(REGEX_PATTERNS.listIndent);
     if (listIndentMatch) {
       const rawIndent = listIndentMatch[1] || "";
-      const indentLen = rawIndent.replace(/\t/g, "    ").length;
+      const indentLen = rawIndent.replace(REGEX_PATTERNS.tabToSpaces, "    ").length;
       const level = Math.max(0, Math.floor(indentLen / 4));
       if (level > 0) {
         element.classList.add("cm-list-indent");
@@ -255,9 +286,8 @@ function normalizeFenceLang(lang) {
 function collectFenceLanguages(text) {
   const langs = new Set();
   if (!text) return langs;
-  const regex = /^\s*[`~]{3,}\s*([^\s`~]+)?/gm;
   let match;
-  while ((match = regex.exec(text))) {
+  while ((match = REGEX_PATTERNS.fenceLanguage.exec(text))) {
     const lang = normalizeFenceLang(match[1] || "");
     if (lang) {
       langs.add(lang);
@@ -439,14 +469,14 @@ function toggleListPrefix(type) {
     for (let line = fromLine; line <= toLine; line++) {
       const text = cm.getLine(line) || '';
       if (type === 'bullet') {
-        if (/^\s*[-+*]\s+/.test(text)) {
-          cm.replaceRange(text.replace(/^(\s*)[-+*]\s+/, '$1'), { line, ch: 0 }, { line, ch: text.length });
+        if (REGEX_PATTERNS.bulletListTest.test(text)) {
+          cm.replaceRange(text.replace(REGEX_PATTERNS.bulletListReplace, '$1'), { line, ch: 0 }, { line, ch: text.length });
         } else {
           cm.replaceRange(`- ${text}`, { line, ch: 0 }, { line, ch: text.length });
         }
       } else if (type === 'number') {
-        if (/^\s*\d+[.)]\s+/.test(text)) {
-          cm.replaceRange(text.replace(/^(\s*)\d+[.)]\s+/, '$1'), { line, ch: 0 }, { line, ch: text.length });
+        if (REGEX_PATTERNS.numberedListTest.test(text)) {
+          cm.replaceRange(text.replace(REGEX_PATTERNS.numberedListReplace, '$1'), { line, ch: 0 }, { line, ch: text.length });
         } else {
           cm.replaceRange(`1. ${text}`, { line, ch: 0 }, { line, ch: text.length });
         }
@@ -462,11 +492,11 @@ function toggleTaskList() {
   cm.operation(() => {
     for (let line = fromLine; line <= toLine; line++) {
       const text = cm.getLine(line) || '';
-      if (/^\s*[-+*]\s+\[[ xX]\]\s+/.test(text)) {
-        const next = text.replace(/^(\s*)[-+*]\s+\[[ xX]\]\s+/, '$1- ');
+      if (REGEX_PATTERNS.taskListTest.test(text)) {
+        const next = text.replace(REGEX_PATTERNS.taskListReplace, '$1- ');
         cm.replaceRange(next, { line, ch: 0 }, { line, ch: text.length });
-      } else if (/^\s*[-+*]\s+/.test(text)) {
-        const next = text.replace(/^(\s*)[-+*]\s+/, '$1- [ ] ');
+      } else if (REGEX_PATTERNS.bulletListTest.test(text)) {
+        const next = text.replace(REGEX_PATTERNS.taskListBullet, '$1- [ ] ');
         cm.replaceRange(next, { line, ch: 0 }, { line, ch: text.length });
       } else if (text.trim().length === 0) {
         cm.replaceRange('- [ ] ', { line, ch: 0 }, { line, ch: text.length });
@@ -484,8 +514,8 @@ function toggleBlockquote() {
   cm.operation(() => {
     for (let line = fromLine; line <= toLine; line++) {
       const text = cm.getLine(line) || '';
-      if (/^\s*>\s+/.test(text)) {
-        cm.replaceRange(text.replace(/^(\s*)>\s+/, '$1'), { line, ch: 0 }, { line, ch: text.length });
+      if (REGEX_PATTERNS.quoteTest.test(text)) {
+        cm.replaceRange(text.replace(REGEX_PATTERNS.quoteReplace, '$1'), { line, ch: 0 }, { line, ch: text.length });
       } else {
         cm.replaceRange(`> ${text}`, { line, ch: 0 }, { line, ch: text.length });
       }
@@ -561,11 +591,11 @@ function applyListMarkersForLine(lineIndex) {
   const text = cm.getLine(lineIndex) || "";
   clearListMarkersForLine(lineIndex);
 
-  const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
-  const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
+  const unordered = text.match(REGEX_PATTERNS.unorderedList);
+  const ordered = text.match(REGEX_PATTERNS.orderedList);
   if (!unordered && !ordered) return;
 
-  const taskMatch = text.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/);
+  const taskMatch = text.match(REGEX_PATTERNS.taskMarker);
   const isTask = Boolean(taskMatch);
 
   if (isTask) {
@@ -624,7 +654,7 @@ function applyListMarkersForLine(lineIndex) {
 function refreshListMarks(lineIndex) {
   if (!cm) return;
   const text = cm.getLine(lineIndex) || "";
-  const isList = /^\s*([-+*](?!-)|\d+[.)])\s+/.test(text);
+  const isList = REGEX_PATTERNS.listLine.test(text);
   if (!isList) {
     clearListMarkersForLine(lineIndex);
     return;
@@ -643,15 +673,15 @@ function refreshListMarks(lineIndex) {
     return;
   }
 
-  const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
-  const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
+  const unordered = text.match(REGEX_PATTERNS.unorderedList);
+  const ordered = text.match(REGEX_PATTERNS.orderedList);
   let markerStart = unordered ? unordered[1].length : ordered ? ordered[1].length : 0;
   let markerEnd = markerStart + 1;
   if (ordered) {
     markerEnd = markerStart + (ordered[2] + ordered[3]).length;
   }
 
-  const taskMatch = text.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/);
+  const taskMatch = text.match(REGEX_PATTERNS.taskMarker);
   if (taskMatch) {
     const bracketStart = text.indexOf('[', taskMatch[1].length);
     const end = bracketStart >= 0 ? bracketStart + 3 : markerEnd;
@@ -669,7 +699,7 @@ function updateListLineFlag(lineIndex) {
   const handle = cm.getLineHandle(lineIndex);
   if (!handle) return;
   const text = cm.getLine(lineIndex) || "";
-  const isList = /^\s*([-+*](?!-)|\d+[.)])[ \t]+/.test(text);
+  const isList = REGEX_PATTERNS.listLine.test(text);
   if (isList) {
     listLineFlags.set(handle, true);
   } else {
@@ -703,7 +733,7 @@ function hideInlineFormatting(text, lineIndex, ignoreRanges = [], className = 'c
   let foundFormatting = false;
   for (const token of tokens) {
     if (!token.string) continue;
-    if (token.type && /(formatting|strong|em|strikethrough|strike)/.test(token.type)) {
+    if (token.type && REGEX_PATTERNS.formattingToken.test(token.type)) {
       const matched = markRuns(typeof token.start === 'number' ? token.start : 0, token.string);
       if (matched) {
         foundFormatting = true;
@@ -873,21 +903,20 @@ function clearImageMarksForLine(lineIndex) {
 }
 
 function parseImageSyntax(text) {
-  const imageRegex = /!\[([^\]]*)\]\(([^\)]+)\)/g;
   const tokens = [];
   let match;
-  while ((match = imageRegex.exec(text))) {
+  while ((match = REGEX_PATTERNS.imageMarkdown.exec(text))) {
     const full = match[0];
     const alt = (match[1] || '').trim();
     const rawUrl = (match[2] || '').trim();
     const start = match.index;
     const end = start + full.length;
-    const urlMatch = rawUrl.match(/^([^\s]+)(?:\s+"[^"]*")?\s*$/);
+    const urlMatch = rawUrl.match(REGEX_PATTERNS.urlExtract);
     const url = urlMatch ? urlMatch[1] : rawUrl;
     if (!url) continue;
     tokens.push({ start, end, alt, url });
-    if (imageRegex.lastIndex === start) {
-      imageRegex.lastIndex = end;
+    if (REGEX_PATTERNS.imageMarkdown.lastIndex === start) {
+      REGEX_PATTERNS.imageMarkdown.lastIndex = end;
     }
   }
   return tokens;
@@ -927,7 +956,7 @@ function updateImageMarks(fromLine = 0, toLine = null) {
   
   for (let i = 0; i <= endLine; i++) {
     const text = cm.getLine(i) || "";
-    const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
+    const fenceMatch = text.match(REGEX_PATTERNS.fenceLine);
     if (fenceMatch) {
       const fence = fenceMatch[1][0];
       if (!inCodeBlock) {
@@ -1224,7 +1253,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
 
   for (let i = 0; i <= cursor.line && i < lines; i++) {
     const lineText = cm.getLine(i) || "";
-    const fenceMatch = lineText.match(/^\s*([\x60~]{3,})/);
+    const fenceMatch = lineText.match(REGEX_PATTERNS.fenceLine);
     if (fenceMatch) {
       const fence = fenceMatch[1][0];
       if (!inCodeBlock) {
@@ -1249,7 +1278,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
     const isTyping = i === cursor.line && (now - lastTypingAt < typingGraceMs || now - lastCheckboxToggleAt < checkboxGraceMs);
     const suppressMarkers = i === cursor.line && now < suppressMarkersUntil;
 
-    const fenceMatch = text.match(/^\s*([\x60~]{3,})/);
+    const fenceMatch = text.match(REGEX_PATTERNS.fenceLine);
     if (fenceMatch) {
       const fence = fenceMatch[1][0];
       if (!inCodeBlock) {
@@ -1294,12 +1323,12 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    const unordered = text.match(/^(\s*)([-+*])(?!-)([ \t]+)/);
-    const ordered = text.match(/^(\s*)(\d+)([.)])([ \t]+)/);
+    const unordered = text.match(REGEX_PATTERNS.unorderedList);
+    const ordered = text.match(REGEX_PATTERNS.orderedList);
 
     if (unordered || ordered) {
       const isActive = i === cursor.line;
-      const taskMatch = text.match(/^(\s*)([-+*]|\d+[.)])\s+\[([ xX])\]/);
+      const taskMatch = text.match(REGEX_PATTERNS.taskMarker);
       const isTask = Boolean(taskMatch);
 
       const applyListHiding = () => {
@@ -1386,7 +1415,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
       }
     }
 
-    const heading = text.match(/^(\s*)(#{1,6})(\s+)/);
+    const heading = text.match(REGEX_PATTERNS.heading);
     if (heading && heading[2]) {
       const start = heading[1].length;
       const end = start + heading[2].length + (heading[3] ? heading[3].length : 0);
@@ -1400,7 +1429,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    const hr = text.match(/^\s*(([-*_])\s*\2\s*\2(?:\s*\2)*)\s*$/);
+    const hr = text.match(REGEX_PATTERNS.hrLine);
     if (hr) {
       if (i !== cursor.line) {
         hiddenMarks.push(cm.markText(
@@ -1424,7 +1453,7 @@ function updateHiddenSyntax(includeActiveInline = false) {
       continue;
     }
 
-    const quote = text.match(/^(\s*)(>)(\s*)/);
+    const quote = text.match(REGEX_PATTERNS.quote);
     if (quote) {
       const start = quote[1].length;
       const end = start + 1 + (quote[3] ? quote[3].length : 0);
@@ -1486,7 +1515,7 @@ function addCodeCopyButtons() {
 
   for (let i = 0; i < lines; i++) {
     const lineText = cm.getLine(i) || "";
-    const fenceMatch = lineText.match(/^\s*([\x60~]{3,})/);
+    const fenceMatch = lineText.match(REGEX_PATTERNS.fenceLine);
 
     if (fenceMatch) {
       const fence = fenceMatch[1][0];
