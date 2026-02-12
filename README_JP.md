@@ -161,7 +161,6 @@ VS Code MarketplaceまたはExtensionsパネルからBunNoteをインストー�
 | 番号付きリスト | `Ctrl+Alt+L` | `Cmd+Alt+L` |
 | コードブロック | `Ctrl+Alt+C` | `Cmd+Alt+C` |
 | 引用 | `Ctrl+'` | `Cmd+'` |
-| プレビュー | `Ctrl+P` | `Cmd+P` |
 
 ## サポートされているファイルタイプ
 

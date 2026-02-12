@@ -9,7 +9,7 @@
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/elharis.bunnote)](https://marketplace.visualstudio.com/items?itemName=elharis.bunnote)
 [![License](https://img.shields.io/github/license/elhariss/BunNote)](https://github.com/elhariss/BunNote/blob/main/LICENSE)
 
-[English](#english) | [日本語](#japanese)
+[English](https://github.com/elhariss/BunNote) | [日本語](https://github.com/elhariss/BunNote/blob/main/README_JP.md)
 
 </div>
 
@@ -161,7 +161,6 @@ Access settings via `File > Preferences > Settings` and search for "BunNote":
 | Numbered List | `Ctrl+Alt+L` | `Cmd+Alt+L` |
 | Code Block | `Ctrl+Alt+C` | `Cmd+Alt+C` |
 | Blockquote | `Ctrl+'` | `Cmd+'` |
-| Preview | `Ctrl+P` | `Cmd+P` |
 
 ## Supported File Types
 
