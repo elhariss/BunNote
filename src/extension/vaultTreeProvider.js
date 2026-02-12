@@ -37,7 +37,7 @@ const getUniqueDestination = (dir, baseName) => {
 };
 
 class VaultItem extends vscode.TreeItem {
-    constructor({ label, uri, isFolder, isNote }) {
+    constructor({ label, uri, isFolder, isNote, previewContent }) {
         super(label, isFolder ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         this.resourceUri = uri;
         this.contextValue = isFolder ? "bunnoteFolder" : "bunnoteFile";
@@ -51,6 +51,20 @@ class VaultItem extends vscode.TreeItem {
                 title: "Open",
                 arguments: [uri]
             };
+            
+            if (previewContent) {
+                this.tooltip = new vscode.MarkdownString();
+                this.tooltip.isTrusted = true;
+                this.tooltip.supportHtml = true;
+                
+                if (isNote) {
+                    this.tooltip.appendMarkdown(`**${label}**\n\n---\n\n`);
+                    this.tooltip.appendMarkdown(previewContent);
+                } else {
+                    this.tooltip.appendMarkdown(`**${label}**\n\n`);
+                    this.tooltip.appendMarkdown(`*Image file*`);
+                }
+            }
         }
     }
 }
@@ -154,12 +168,24 @@ class VaultTreeProvider {
                 }
 
                 const label = isMarkdown ? entry.name.replace(/\.md$/i, "") : entry.name;
+                let previewContent = null;
+                
+                if (isMarkdown) {
+                    try {
+                        const content = await fs.promises.readFile(fullPath, 'utf-8');
+                        previewContent = this.generatePreview(content);
+                    } catch (err) {
+                        previewContent = '*Unable to load preview*';
+                    }
+                }
+                
                 files.push(
                     new VaultItem({
                         label,
                         uri: vscode.Uri.file(fullPath),
                         isFolder: false,
-                        isNote: isMarkdown
+                        isNote: isMarkdown,
+                        previewContent
                     })
                 );
             }
@@ -169,6 +195,24 @@ class VaultTreeProvider {
         files.sort((a, b) => a.label.localeCompare(b.label));
 
         return [...folders, ...files];
+    }
+
+    generatePreview(content) {
+        if (!content) return '*Empty file*';
+        
+        const lines = content.split('\n').filter(line => line.trim().length > 0);
+        const maxLines = 5;
+        const maxChars = 200;
+        
+        let preview = lines.slice(0, maxLines).join('\n');
+        
+        if (preview.length > maxChars) {
+            preview = preview.substring(0, maxChars) + '...';
+        } else if (lines.length > maxLines) {
+            preview += '\n\n*...*';
+        }
+        
+        return preview || '*Empty file*';
     }
 
     async handleDrop(target, dataTransfer) {
