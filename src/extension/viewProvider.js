@@ -598,6 +598,12 @@ class ViewProvider {
         try {
           await vscode.workspace.fs.delete(vscode.Uri.file(filePath), { useTrash: true });
           vscode.window.showInformationMessage("File deleted: " + msg.fileName);
+          
+          view.webview.postMessage({
+            command: "fileDeleted",
+            fileName: msg.fileName
+          });
+          
           this.refresh();
         } catch (err) {
           vscode.window.showErrorMessage("Failed to delete file: " + err.message);

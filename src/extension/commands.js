@@ -338,6 +338,14 @@ function registerCommands(context, state, providers) {
 
       try {
         await vscode.workspace.fs.delete(uri, { useTrash: true });
+        
+        if (editorProvider && editorProvider.view && editorProvider.view.webview) {
+          editorProvider.view.webview.postMessage({
+            command: "fileDeleted",
+            fileName: relativePath
+          });
+        }
+        
         vaultProvider.refresh();
       } catch (err) {
         vscode.window.showErrorMessage("Failed to delete file: " + err.message);

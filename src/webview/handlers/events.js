@@ -648,7 +648,6 @@ function initEvents() {
         });
         expandedFolders = next;
       }
-      renderFilesList();
     } else if (msg.command === 'fileLoaded') {
       currentFile = msg.fileName;
       fileContent = msg.content;
@@ -672,7 +671,6 @@ function initEvents() {
       }
       fastLoadPending = true;
       updateEditor();
-      renderFilesList();
       startEdit();
       queueRenderUpdate();
     } else if (msg.command === 'openFile') {
@@ -684,6 +682,30 @@ function initEvents() {
       onRename(msg);
     } else if (msg.command === 'folderMoveResult') {
       onFolderMove(msg);
+    } else if (msg.command === 'fileDeleted') {
+      if (currentFile === msg.fileName) {
+        if (autoSaveTimer) {
+          clearTimeout(autoSaveTimer);
+          autoSaveTimer = null;
+        }
+        
+        currentFile = null;
+        currentFilePath = null;
+        fileContent = '';
+        
+        if (lastSavedContent && lastSavedContent[msg.fileName]) {
+          delete lastSavedContent[msg.fileName];
+        }
+        
+        if (easyMDE) {
+          easyMDE.value('');
+        }
+        
+        const titleInput = document.getElementById('editorTitleInput');
+        if (titleInput) {
+          titleInput.value = '';
+        }
+      }
     } else if (msg.command === 'refresh') {
       vscode.postMessage({ command: 'getVault' });
     }
