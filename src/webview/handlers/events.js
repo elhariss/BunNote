@@ -614,16 +614,33 @@ function initEvents() {
     } else if (msg.command === 'updateContent') {
       const isMainEditorMode = document.body.dataset.editorMode === 'main';
 
-      if (isMainEditorMode) {
-        return;
-      }
-
       const timeSinceLastTyping = Date.now() - (lastTypingAt || 0);
       if (timeSinceLastTyping < 2000) {
         return;
       }
 
+      if (isMainEditorMode) {
+        if (easyMDE && msg.content !== undefined) {
+          const currentContent = easyMDE.value();
+          if (currentContent !== msg.content) {
+            fileContent = msg.content;
+            easyMDE.value(msg.content);
+            queueRenderUpdate();
+          }
+        }
+        return;
+      }
+
+      const timeSinceLastSave = Date.now() - (lastLocalSaveAt || 0);
+      if (timeSinceLastSave < 1000) {
+        return;
+      }
+
       if (currentFile) {
+        if (msg.fileName && msg.fileName !== currentFile) {
+          return;
+        }
+        
         const currentContent = easyMDE.value();
         if (currentContent !== msg.content) {
           fileContent = msg.content;

@@ -170,14 +170,21 @@ class ViewProvider {
         this.refresh();
       });
 
-      this.fileWatcher.onDidChange((uri) => {
+      this.fileWatcher.onDidChange(async (uri) => {
         if (this.view) {
           const vaultPath = this.getVaultPath();
           const relativePath = path.relative(vaultPath, uri.fsPath).split(path.sep).join("/");
-          this.view.webview.postMessage({
-            command: "fileChanged",
-            fileName: relativePath
-          });
+          
+          try {
+            const content = await fs.promises.readFile(uri.fsPath, "utf-8");
+            this.view.webview.postMessage({
+              command: "updateContent",
+              fileName: relativePath,
+              content: content
+            });
+          } catch (err) {
+            console.error("Failed to read file for update:", err);
+          }
         }
       });
 
