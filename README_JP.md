@@ -21,6 +21,14 @@
 
 </div>
 
+## デモ
+
+<div align="center">
+
+https://github.com/user-attachments/assets/video.mp4
+
+</div>
+
 ## 機能
 
 ### Markdownエディタ
