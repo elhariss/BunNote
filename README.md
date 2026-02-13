@@ -25,7 +25,7 @@ BunNote is a open-source VS Code extension for creating and managing Markdown no
 
 <div align="center">
 
-https://github.com/user-attachments/assets/video.mp4
+https://github.com/user-attachments/assets/2d5193c3-f4fa-4aea-99b9-8442c4b87026
 
 </div>
 
