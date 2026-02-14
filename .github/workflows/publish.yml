@@ -55,11 +55,9 @@ jobs:
       
       - name: Upload VSIX to Release
         if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./bunnote-${{ steps.version.outputs.version }}.vsix
-          asset_name: bunnote-${{ steps.version.outputs.version }}.vsix
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} \
+            ./bunnote-${{ steps.version.outputs.version }}.vsix \
+            --clobber
