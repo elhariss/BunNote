@@ -118,6 +118,17 @@
         <div class="sidebar"></div>
 
         <div class="editor_area">
+            <div class="empty_state" id="emptyState">
+                <div class="empty_state_content">
+                    <i class="ph ph-file-text empty_state_icon"></i>
+                    <h2 class="empty_state_title" id="emptyStateTitle"></h2>
+                    <p class="empty_state_description" id="emptyStateDescription"></p>
+                    <button class="empty_state_button" id="emptyStateButton">
+                        <i class="ph ph-plus"></i>
+                        <span id="emptyStateButtonText"></span>
+                    </button>
+                </div>
+            </div>
             <div class="editor_header">
                 <div class="editor_title_wrapper">
                     <textarea class="editor_title_input" id="editorTitleInput" rows="1" autocomplete="off"
@@ -252,6 +263,14 @@
             const charactersLabel = document.getElementById('charactersLabel');
             if (wordsLabel) wordsLabel.textContent = window.t('editor.words');
             if (charactersLabel) charactersLabel.textContent = window.t('editor.characters');
+            
+            // Translate empty state
+            const emptyStateTitle = document.getElementById('emptyStateTitle');
+            const emptyStateDescription = document.getElementById('emptyStateDescription');
+            const emptyStateButtonText = document.getElementById('emptyStateButtonText');
+            if (emptyStateTitle) emptyStateTitle.textContent = window.t('editor.emptyStateTitle');
+            if (emptyStateDescription) emptyStateDescription.textContent = window.t('editor.emptyStateDescription');
+            if (emptyStateButtonText) emptyStateButtonText.textContent = window.t('editor.emptyStateButton');
         });
     </script>
 </body>

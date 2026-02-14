@@ -11,7 +11,19 @@ function getTitleInput() {
 }
 
 function updateEditor() {
-  if (currentFile && fileContent !== undefined) {
+  const emptyState = document.getElementById('emptyState');
+  const editorHeader = document.querySelector('.editor_header');
+  const editorContainer = document.querySelector('.editor_container');
+  const editorStats = document.getElementById('editorStats');
+  
+  const hasFile = currentFile && currentFile !== '' && fileContent !== undefined && fileContent !== null;
+  
+  if (hasFile) {
+    if (emptyState) emptyState.classList.remove('visible');
+    if (editorHeader) editorHeader.style.display = '';
+    if (editorContainer) editorContainer.style.display = '';
+    if (editorStats) editorStats.style.display = '';
+    
     const currentContent = easyMDE.value();
     const newContent = fileContent;
 
@@ -36,6 +48,10 @@ function updateEditor() {
       }
     }
   } else {
+    if (emptyState) emptyState.classList.add('visible');
+    if (editorHeader) editorHeader.style.display = 'none';
+    if (editorContainer) editorContainer.style.display = 'none';
+    if (editorStats) editorStats.style.display = 'none';
     easyMDE.value('');
   }
   updateTitle();

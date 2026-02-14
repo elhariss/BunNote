@@ -110,6 +110,10 @@ function initEditor() {
   loadCodeMirrorModes();
 
   initEditorContextMenu();
+  
+  if (typeof updateEditor === 'function') {
+    updateEditor();
+  }
 
   const header = document.querySelector('.editor-header');
   const editorArea = document.querySelector('.editor_area');

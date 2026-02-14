@@ -49,6 +49,13 @@ if (isMainEditorMode) {
 
 document.addEventListener('DOMContentLoaded', () => {
   
+  const emptyStateButton = document.getElementById('emptyStateButton');
+  if (emptyStateButton) {
+    emptyStateButton.addEventListener('click', () => {
+      vscode.postMessage({ command: 'createNote', title: '' });
+    });
+  }
+  
   const waitForEasyMDE = (attempts = 0, maxAttempts = 20) => {
     if (typeof EasyMDE !== 'undefined') {
       try {
