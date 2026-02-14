@@ -151,7 +151,11 @@ class EditorProvider {
     const translations = getAllTranslations();
     const locale = getLocale();
     
-    const translationsJson = JSON.stringify(translations).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+    const translationsJson = JSON.stringify(translations)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026')
+      .replace(/'/g, '\\u0027');
 
     try {
       let html = fs.readFileSync(htmlPath, "utf8");

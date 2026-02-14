@@ -1008,7 +1008,11 @@ class ViewProvider {
       const translations = getAllTranslations();
       const locale = getLocale();
       
-      const translationsJson = JSON.stringify(translations).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+      const translationsJson = JSON.stringify(translations)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/&/g, '\\u0026')
+        .replace(/'/g, '\\u0027');
 
       if (!fs.existsSync(htmlPath)) {
         throw new Error(`HTML file not found: ${htmlPath}`);
