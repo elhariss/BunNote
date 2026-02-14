@@ -494,54 +494,49 @@ body[data-editor-mode="main"] .CodeMirror-scroll {
 .empty_state_content {
   text-align: center;
   max-width: 400px;
-  padding: 1rem;
+  padding: 2rem;
 }
 
 .empty_state_icon {
-  font-size: 32px;
-  color: var(--vscode-foreground);
-  opacity: 0.7;
-  margin-bottom: 1rem;
+  font-size: 35px;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
 }
 
 .empty_state_title {
-  font-size: 27px;
-  font-weight: bold;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--vscode-foreground);
-  letter-spacing: -0.01em;
 }
 
 .empty_state_description {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--vscode-descriptionForeground);
-  margin: 0 0 1rem 0;
-  line-height: 1.4;
-  opacity: 0.7;
+  line-height: 1.6;
+  margin: 0 0 0.9rem 0;
+
 }
 
 .empty_state_button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.5rem;
+  padding: 0.5rem 0.6rem;
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
   border: none;
   width: 100%;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s;
 }
 
 .empty_state_button:hover {
   background: var(--vscode-button-hoverBackground);
-}
-
-.empty_state_button:active {
-  transform: translateY(0);
 }
 
 .empty_state_button i {
