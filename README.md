@@ -21,6 +21,18 @@ BunNote is a open-source VS Code extension for creating and managing Markdown no
 
 </div>
 
+## Why BunNote?
+
+**You can just create .md files, so why use BunNote?**
+
+- **Stay in your workflow** - Notes accessible in the sidebar while you code, no app switching
+- **Quick access** - Sidebar panel keeps your notes one click away
+- **Project context** - Keep notes alongside your code, per-project or global vault
+- **Simple organization** - Drag-and-drop files, folder structure, all in plain .md files
+- **No lock-in** - Plain markdown files you can open anywhere, anytime
+
+If you're happy with just creating .md files, that's great! BunNote is for developers who want that same simplicity but with quick sidebar access while coding.
+
 ## Demo
 
 <div align="center">
@@ -32,7 +44,7 @@ https://github.com/user-attachments/assets/2d5193c3-f4fa-4aea-99b9-8442c4b87026
 ## Features
 
 ### Markdown Editor
-- Full-featured Markdown editor with live preview
+- Full-featured Markdown editor with WYSIWYG editing
 - Syntax highlighting for code blocks
 - Support for task lists, blockquotes, links, and more
 - Clean, distraction-free writing experience

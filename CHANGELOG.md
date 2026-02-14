@@ -1,6 +1,14 @@
 # Change Log
 
 
+## [1.0.12] - 2026-02-13
+
+### Fixed
+- Files now properly close in sidebar editor when deleted
+- Content now syncs between main editor and sidebar editor when editing the same file
+- Improved file deletion handling to prevent file recreation
+
+
 ## [1.0.8] - 2026-02-12
 
 ### Added
